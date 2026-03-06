@@ -9,8 +9,30 @@ import 'login_screen3.dart';
 /// - 사용자 이메일 / 비밀번호 입력 화면
 /// - 카카오 로그인 또는 앱 내 회원가입으로 이동 가능
 
-class LoginScreen1 extends StatelessWidget {
+class LoginScreen1 extends StatefulWidget {
   const LoginScreen1({super.key});
+
+  @override
+  State<LoginScreen1> createState() => _LoginScreen1State();
+}
+
+class _LoginScreen1State extends State<LoginScreen1> {
+  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +107,7 @@ class LoginScreen1 extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             TextField(
+                              controller: _idController,
                               decoration: InputDecoration(
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -112,6 +135,7 @@ class LoginScreen1 extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             TextField(
+                              controller: _passwordController,
                               obscureText: true,
                               decoration: InputDecoration(
                                 isDense: true,
@@ -136,7 +160,25 @@ class LoginScreen1 extends StatelessWidget {
                               height: 48,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  // TODO: 로그인 처리(API연결예정)
+                                  final id = _idController.text.trim();
+                                  final password = _passwordController.text.trim();
+
+                                  if (id.isEmpty && password.isEmpty) {
+                                    _showMessage('아이디와 비밀번호를 모두 입력해주세요.');
+                                    return;
+                                  }
+
+                                  if (id.isEmpty) {
+                                    _showMessage('아이디를 입력해주세요.');
+                                    return;
+                                  }
+
+                                  if (password.isEmpty) {
+                                    _showMessage('비밀번호를 입력해주세요.');
+                                    return;
+                                  }
+
+                                  _showMessage('로그인 요청을 진행합니다.');
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryBackground,

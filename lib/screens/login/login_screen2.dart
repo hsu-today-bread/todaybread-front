@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../models/users/user_register_request.dart';
+import '../../services/login/login_service.dart';
+import '../../services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 
@@ -22,10 +25,16 @@ class _LoginScreen2State extends State<LoginScreen2> {
   /// true → 비밀번호 보임
   /// false → 비밀번호 숨김
   bool _isPasswordVisible = false;
+  bool _isSubmitting = false;
+  final LoginService _loginService = LoginService.instance;
   /// 아이디 입력 컨트롤러
   final TextEditingController _idController = TextEditingController();
   /// 닉네임 입력 컨트롤러
   final TextEditingController _nicknameController = TextEditingController();
+  /// 비밀번호 입력 컨트롤러
+  final TextEditingController _passwordController = TextEditingController();
+  /// 전화번호 입력 컨트롤러
+  final TextEditingController _phoneController = TextEditingController();
 
   /// 아이디 입력 여부 확인
   /// 입력값이 있을 때만 중복확인 버튼 활성화
@@ -38,7 +47,60 @@ class _LoginScreen2State extends State<LoginScreen2> {
     /// 컨트롤러 메모리 해제
     _idController.dispose();
     _nicknameController.dispose();
+    _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _checkEmailDuplicate() async {
+    try {
+      final exists = await _loginService.checkEmail(_idController.text.trim());
+      _showMessage(exists ? '이미 사용 중인 아이디입니다.' : '사용 가능한 아이디입니다.');
+    } catch (e) {
+      _showMessage(ApiException.messageFrom(e));
+    }
+  }
+
+  Future<void> _register() async {
+    final id = _idController.text.trim();
+    final password = _passwordController.text.trim();
+    final nickname = _nicknameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (id.isEmpty || password.isEmpty || nickname.isEmpty || phone.isEmpty) {
+      _showMessage('입력되지 않은 항목이 있습니다. 모든 항목을 입력해주세요.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final request = UserRegisterRequest(
+        email: id,
+        nickName: nickname,
+        password: password,
+        phoneNumber: phone,
+      );
+      final response = await _loginService.register(request);
+      _showMessage(response.message);
+    } catch (e) {
+      _showMessage(ApiException.messageFrom(e));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -114,10 +176,8 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       width: 96,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _hasIdText
-                            ? () {
-                                // TODO: 아이디 중복 확인
-                              }
+                        onPressed: _hasIdText && !_isSubmitting
+                            ? _checkEmailDuplicate
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _hasIdText
@@ -149,6 +209,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  controller: _passwordController,
                   /// 비밀번호 숨김 처리
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
@@ -220,7 +281,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       width: 96,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _hasNicknameText
+                        onPressed: _hasNicknameText && !_isSubmitting
                             ? () {
                                 // TODO: 닉네임 중복 확인
                               }
@@ -260,6 +321,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                 ),
                 const SizedBox(height: 8),
                 TextField(
+                  controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     hintText: '010-1234-6789',
@@ -285,9 +347,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: 회원가입 처리
-                    },
+                    onPressed: _isSubmitting ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBackground,
                       foregroundColor: AppColors.white,
@@ -296,10 +356,21 @@ class _LoginScreen2State extends State<LoginScreen2> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      '가입하기',
-                      style: AppTextStyles.primaryAction,
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            '가입하기',
+                            style: AppTextStyles.primaryAction,
+                          ),
                   ),
                 ),
                 const SizedBox(height: 20),
