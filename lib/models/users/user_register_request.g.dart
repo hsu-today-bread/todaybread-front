@@ -9,16 +9,18 @@ part of 'user_register_request.dart';
 UserRegisterRequest _$UserRegisterRequestFromJson(Map<String, dynamic> json) =>
     UserRegisterRequest(
       email: json['email'] as String,
-      nickName: json['nickName'] as String,
+      nickname: json['nickname'] as String,
+      name: json['name'] as String,
       password: json['password'] as String,
-      phoneNumber: json['phoneNumber'] as String,
+      phone: json['phone'] as String,
     );
 
 Map<String, dynamic> _$UserRegisterRequestToJson(
         UserRegisterRequest instance) =>
     <String, dynamic>{
       'email': instance.email,
-      'nickName': instance.nickName,
+      'nickname': instance.nickname,
+      'name': instance.name,
       'password': instance.password,
-      'phoneNumber': instance.phoneNumber,
+      'phone': instance.phone,
     };

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:todaybread/models/users/user_login_request.dart';
+import 'package:todaybread/services/login/login_service.dart';
+import 'package:todaybread/services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
 import 'login_screen2.dart';
 import 'login_screen3.dart';
@@ -17,8 +20,17 @@ class LoginScreen1 extends StatefulWidget {
 }
 
 class _LoginScreen1State extends State<LoginScreen1> {
+  /// 아이디 입력 컨트롤러
   final TextEditingController _idController = TextEditingController();
+
+  /// 비밀번호 입력 컨트롤러
   final TextEditingController _passwordController = TextEditingController();
+
+  /// 로그인 API 호출 서비스
+  final LoginService _loginService = LoginService.instance;
+
+  /// 로그인 요청 진행 여부
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -27,11 +39,54 @@ class _LoginScreen1State extends State<LoginScreen1> {
     super.dispose();
   }
 
+  /// 공통 스낵바 메시지를 표시합니다.
+  ///
+  /// [message] 사용자에게 보여줄 안내 문구입니다.
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  /// 로그인 입력 검증 후 서버 로그인 요청을 수행합니다.
+  Future<void> _login() async {
+    final id = _idController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (id.isEmpty && password.isEmpty) {
+      _showMessage('아이디와 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    if (id.isEmpty) {
+      _showMessage('아이디를 입력해주세요.');
+      return;
+    }
+
+    if (password.isEmpty) {
+      _showMessage('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await _loginService.login(
+        UserLoginRequest(email: id, password: password),
+      );
+      _showMessage(response.success ? '로그인에 성공했습니다.' : '로그인에 실패했습니다.');
+    } catch (e) {
+      _showMessage(ApiException.messageFrom(e));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -159,27 +214,7 @@ class _LoginScreen1State extends State<LoginScreen1> {
                               width: double.infinity,
                               height: 48,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  final id = _idController.text.trim();
-                                  final password = _passwordController.text.trim();
-
-                                  if (id.isEmpty && password.isEmpty) {
-                                    _showMessage('아이디와 비밀번호를 모두 입력해주세요.');
-                                    return;
-                                  }
-
-                                  if (id.isEmpty) {
-                                    _showMessage('아이디를 입력해주세요.');
-                                    return;
-                                  }
-
-                                  if (password.isEmpty) {
-                                    _showMessage('비밀번호를 입력해주세요.');
-                                    return;
-                                  }
-
-                                  _showMessage('로그인 요청을 진행합니다.');
-                                },
+                                onPressed: _isSubmitting ? null : _login,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryBackground,
                                   foregroundColor: AppColors.white,
@@ -188,13 +223,24 @@ class _LoginScreen1State extends State<LoginScreen1> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                child: const Text(
-                                  '로그인',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                                child: _isSubmitting
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.4,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            AppColors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        '로그인',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -269,13 +315,17 @@ class _LoginScreen1State extends State<LoginScreen1> {
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
+                          onPressed: () async {
+                            final message = await Navigator.push<String>(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const LoginScreen2(),
                               ),
                             );
+                            if (!mounted || message == null || message.isEmpty) {
+                              return;
+                            }
+                            _showMessage(message);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBackground,
@@ -309,6 +359,7 @@ class _LoginScreen1State extends State<LoginScreen1> {
 }
 
 class LoginTopCurveClipper extends CustomClipper<Path> {
+  /// 상단 곡선 배경 Path를 생성합니다.
   @override
   Path getClip(Size size) {
     final path = Path();
@@ -326,6 +377,7 @@ class LoginTopCurveClipper extends CustomClipper<Path> {
     return path;
   }
 
+  /// 정적 곡선이므로 재클리핑이 필요 없습니다.
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

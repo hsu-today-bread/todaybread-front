@@ -25,12 +25,17 @@ class _LoginScreen2State extends State<LoginScreen2> {
   /// true → 비밀번호 보임
   /// false → 비밀번호 숨김
   bool _isPasswordVisible = false;
+  /// 회원가입 요청 진행 여부
   bool _isSubmitting = false;
+
+  /// 로그인/회원가입 API 호출
   final LoginService _loginService = LoginService.instance;
   /// 아이디 입력 컨트롤러
   final TextEditingController _idController = TextEditingController();
   /// 닉네임 입력 컨트롤러
   final TextEditingController _nicknameController = TextEditingController();
+  /// 이름 입력 컨트롤러
+  final TextEditingController _nameController = TextEditingController();
   /// 비밀번호 입력 컨트롤러
   final TextEditingController _passwordController = TextEditingController();
   /// 전화번호 입력 컨트롤러
@@ -41,17 +46,26 @@ class _LoginScreen2State extends State<LoginScreen2> {
   bool get _hasIdText => _idController.text.trim().isNotEmpty;
   /// 닉네임 입력 여부 확인
   bool get _hasNicknameText => _nicknameController.text.trim().isNotEmpty;
+  /// 닉네임 길이 유효 여부(2~10자)
+  bool get _hasValidNicknameLength {
+    final nickname = _nicknameController.text.trim();
+    return nickname.length >= 2 && nickname.length <= 10;
+  }
 
   @override
   void dispose() {
     /// 컨트롤러 메모리 해제
     _idController.dispose();
     _nicknameController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
 
+  /// 공통 스낵바 메시지를 표시합니다.
+  ///
+  /// [message] 사용자에게 보여줄 안내 문구입니다.
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -59,23 +73,84 @@ class _LoginScreen2State extends State<LoginScreen2> {
     );
   }
 
+  /// 아이디/닉네임 중복확인 결과를 팝업으로 표시합니다.
+  ///
+  /// [message] 팝업 본문에 노출할 안내 문구입니다.
+  Future<void> _showDuplicateCheckDialog(String message) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.primaryBackground,
+                foregroundColor: AppColors.white,
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 이메일 중복 여부를 서버에서 확인합니다.
   Future<void> _checkEmailDuplicate() async {
     try {
       final exists = await _loginService.checkEmail(_idController.text.trim());
-      _showMessage(exists ? '이미 사용 중인 아이디입니다.' : '사용 가능한 아이디입니다.');
+      await _showDuplicateCheckDialog(
+        exists ? '이미 사용 중인 아이디입니다.' : '사용 가능한 아이디입니다.',
+      );
     } catch (e) {
-      _showMessage(ApiException.messageFrom(e));
+      await _showDuplicateCheckDialog(ApiException.messageFrom(e));
     }
   }
 
+  /// 닉네임 중복 여부를 서버에서 확인합니다.
+  Future<void> _checkNicknameDuplicate() async {
+    if (!_hasValidNicknameLength) {
+      await _showDuplicateCheckDialog('닉네임은 2자~10자로 입력해주세요.');
+      return;
+    }
+    try {
+      final exists = await _loginService.checkNickname(
+        _nicknameController.text.trim(),
+      );
+      await _showDuplicateCheckDialog(
+        exists ? '이미 사용 중인 닉네임입니다.' : '사용 가능한 닉네임입니다.',
+      );
+    } catch (e) {
+      await _showDuplicateCheckDialog(ApiException.messageFrom(e));
+    }
+  }
+
+  /// 회원가입 입력값을 검증하고 서버에 가입 요청을 전송합니다.
   Future<void> _register() async {
     final id = _idController.text.trim();
     final password = _passwordController.text.trim();
     final nickname = _nicknameController.text.trim();
+    final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
 
-    if (id.isEmpty || password.isEmpty || nickname.isEmpty || phone.isEmpty) {
+    if (id.isEmpty ||
+        password.isEmpty ||
+        nickname.isEmpty ||
+        name.isEmpty ||
+        phone.isEmpty) {
       _showMessage('입력되지 않은 항목이 있습니다. 모든 항목을 입력해주세요.');
+      return;
+    }
+    if (nickname.length < 2 || nickname.length > 10) {
+      _showMessage('닉네임은 2자~10자로 입력해주세요.');
       return;
     }
 
@@ -86,11 +161,19 @@ class _LoginScreen2State extends State<LoginScreen2> {
     try {
       final request = UserRegisterRequest(
         email: id,
-        nickName: nickname,
+        nickname: nickname,
+        name: name,
         password: password,
-        phoneNumber: phone,
+        phone: phone,
       );
       final response = await _loginService.register(request);
+      if (!mounted) {
+        return;
+      }
+      if (response.status) {
+        Navigator.pop(context, response.message);
+        return;
+      }
       _showMessage(response.message);
     } catch (e) {
       _showMessage(ApiException.messageFrom(e));
@@ -146,7 +229,6 @@ class _LoginScreen2State extends State<LoginScreen2> {
                     Expanded(
                       child: TextField(
                         controller: _idController,
-                        ///이메 형태 키보드
                         keyboardType: TextInputType.emailAddress,
                         /// 자동 완성 힌트
                         autofillHints: const [AutofillHints.email],
@@ -255,6 +337,9 @@ class _LoginScreen2State extends State<LoginScreen2> {
                     Expanded(
                       child: TextField(
                         controller: _nicknameController,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           hintText: '닉네임을 입력해주세요',
@@ -282,9 +367,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: _hasNicknameText && !_isSubmitting
-                            ? () {
-                                // TODO: 닉네임 중복 확인
-                              }
+                            ? _checkNicknameDuplicate
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _hasNicknameText
@@ -313,6 +396,34 @@ class _LoginScreen2State extends State<LoginScreen2> {
                 const Text(
                   '* 2자~10자, 한글/영어/숫자만 사용 가능',
                   style: AppTextStyles.helperCaption,
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  '이름',
+                  style: AppTextStyles.formLabel,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _nameController,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    hintText: '이름을 입력해주세요',
+                    hintStyle: AppTextStyles.formHint,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Color(0xFFD9D9D9),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(

@@ -23,6 +23,7 @@ class TodayBreadApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'NoonnuBasicGothic',
       ),
+
       home: const SplashScreen(),
     );
   }

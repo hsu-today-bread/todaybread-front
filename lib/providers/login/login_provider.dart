@@ -5,14 +5,18 @@ import 'package:todaybread/services/network/api_exception.dart';
 
 import 'package:todaybread/services/login/login_service.dart';
 
-
+/// 로그인/회원가입 화면 상태를 관리하는 Provider입니다.
 class AuthProvider extends ChangeNotifier {
+  /// API 요청 진행 상태입니다.
   bool isLoading = false;
+
+  /// 마지막 오류 메시지입니다.
   String? errorMessage;
 
+  /// 인증 관련 서비스 인스턴스입니다.
   final LoginService _service = LoginService.instance;
 
-  /// 이메일 중복 체크
+  /// 이메일 중복 여부를 확인합니다.
   Future<bool> checkEmail(String email) async {
     try {
       return await _service.checkEmail(email);
@@ -23,7 +27,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// 전화번호 중복 체크
+  /// 전화번호 중복 여부를 확인합니다.
   Future<bool> checkPhone(String phone) async {
     try {
       return await _service.checkPhone(phone);
@@ -34,10 +38,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// 회원가입
+  /// 회원가입을 요청합니다.
   Future<bool> register({
     required String email,
     required String nickname,
+    required String name,
     required String password,
     required String phone,
   }) async {
@@ -47,9 +52,10 @@ class AuthProvider extends ChangeNotifier {
 
       final request = UserRegisterRequest(
         email: email,
-        nickName: nickname,
+        nickname: nickname,
+        name: name,
         password: password,
-        phoneNumber: phone,
+        phone: phone,
       );
 
       await _service.register(request);
