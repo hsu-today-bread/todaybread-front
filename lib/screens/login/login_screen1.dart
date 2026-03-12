@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:todaybread/models/users/user_login_request.dart';
+import 'package:todaybread/screens/home/home_screen.dart';
 import 'package:todaybread/services/login/login_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
@@ -77,7 +78,20 @@ class _LoginScreen1State extends State<LoginScreen1> {
       final response = await _loginService.login(
         UserLoginRequest(email: id, password: password),
       );
-      _showMessage(response.success ? '로그인에 성공했습니다.' : '로그인에 실패했습니다.');
+
+      if (!mounted) return;
+
+      if (response.success) {
+        _showMessage('로그인에 성공했습니다.');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      } else {
+        _showMessage('로그인에 실패했습니다.');
+      }
     } catch (e) {
       _showMessage(ApiException.messageFrom(e));
     } finally {

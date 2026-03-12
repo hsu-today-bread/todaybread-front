@@ -27,7 +27,7 @@ class TodayBreadApp extends StatelessWidget {
       // 로그인이 먼저 보이게 하고 싶은면 home: const SplashScreen(),이거 주석 해제하고
       // home: const HomeScreen(), 이거 주석처리하기.
       //home: const SplashScreen(),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 
