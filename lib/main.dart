@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'package:flutter/services.dart';
+import 'screens/home/home_screen.dart';
 
 void main() {
   runApp(const TodayBreadApp());
@@ -23,8 +24,10 @@ class TodayBreadApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'NoonnuBasicGothic',
       ),
-
-      home: const SplashScreen(),
+      // 로그인이 먼저 보이게 하고 싶은면 home: const SplashScreen(),이거 주석 해제하고
+      // home: const HomeScreen(), 이거 주석처리하기.
+      //home: const SplashScreen(),
+      home: const HomeScreen(),
     );
   }
 
