@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/main_bottom_nav_bar.dart';
 
 /// 메인 홈 화면 (HomeScreen)
 ///
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 현재 선택된 정렬 탭 인덱스
   int _selectedSortIndex = 0;
 
-  /// 현재 선택된 하단 네비게이션 인덱스
+  /// 현재 선택된 하단 네비게이션 인덱스(메인 화면부터 순서대로 0,1,2,3)
   int _selectedNavIndex = 0;
 
   /// 정렬 탭 라벨 목록
@@ -110,8 +111,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      /// 하단 네비게이션바
-      bottomNavigationBar: _buildBottomNavBar(),
+      /// 하단 네비게이션바 호츌
+      bottomNavigationBar: MainBottomNavBar(
+        currentIndex: _selectedNavIndex,
+        onTap: (index) {
+          setState(() => _selectedNavIndex = index);
+        },
+      ),
     );
   }
 
@@ -435,47 +441,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  /// 하단 네비게이션바 빌드
-  ///
-  /// - 홈 / 지도로 보기 / 빵 / MY
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedNavIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedNavIndex = index;
-        });
-      },
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: AppColors.primaryBackground,
-      unselectedItemColor: Colors.grey,
-      selectedFontSize: 11,
-      unselectedFontSize: 11,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: '홈',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.map_outlined),
-          activeIcon: Icon(Icons.map),
-          label: '지도로 보기',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.favorite_border),
-          activeIcon: Icon(Icons.favorite),
-          label: '빵',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'MY',
-        ),
-      ],
     );
   }
 
