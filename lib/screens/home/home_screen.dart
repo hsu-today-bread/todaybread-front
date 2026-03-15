@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/main_bottom_nav_bar.dart';
+import '../map/map_screen.dart';
 
 /// 메인 홈 화면 (HomeScreen)
 ///
@@ -111,11 +112,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      /// 하단 네비게이션바 호츌
       bottomNavigationBar: MainBottomNavBar(
         currentIndex: _selectedNavIndex,
         onTap: (index) {
+          if (index == _selectedNavIndex) return; // 현재 탭 누르면 무시
           setState(() => _selectedNavIndex = index);
+
+          // 지도 탭(index 1) 누르면 MapScreen으로 이동
+          if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MapScreen()),
+            );
+          }
+          // 다른 탭은 해당 화면 완성 후 추가 예정
         },
       ),
     );
