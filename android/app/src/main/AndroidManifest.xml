@@ -39,7 +39,7 @@
         <!-- 네이버 지도 Client ID 추가 -->
         <meta-data
             android:name="com.naver.maps.map.CLIENT_ID"
-            android:value="jrxo5fi6nv"/>
+            android:value="${NAVER_MAP_CLIENT_ID}"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

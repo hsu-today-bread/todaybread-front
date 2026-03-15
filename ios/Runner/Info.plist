@@ -46,7 +46,7 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
     <key>NMFClientId</key>
-    <string>jrxo5fi6nv</string>
+    <string>$(NAVER_MAP_CLIENT_ID)</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>주변 빵집을 찾기 위해 위치 정보를 사용합니다.</string>
 </dict>
