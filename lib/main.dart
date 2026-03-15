@@ -2,8 +2,17 @@ import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'package:flutter/services.dart';
 import 'screens/home/home_screen.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
 
-void main() {
+void main() async {
+  // async 추가 + 아래 두 줄 추가
+  WidgetsFlutterBinding.ensureInitialized();
+  await NaverMapSdk.instance.initialize(
+    //clientId: 'jrxo5fi6nv',
+    clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
+    onAuthFailed: (e) => debugPrint('네이버 지도 인증 실패: $e'),
+  );
+
   runApp(const TodayBreadApp());
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -12,6 +21,7 @@ void main() {
     ),
   );
 }
+
 
 class TodayBreadApp extends StatelessWidget {
   const TodayBreadApp({super.key});
