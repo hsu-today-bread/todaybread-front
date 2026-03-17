@@ -7,7 +7,6 @@ import '../../services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 
-
 /// 회원가입 화면 (LoginScreen2)
 ///
 /// - 아이디 / 비밀번호 / 닉네임 / 전화번호 입력
@@ -25,27 +24,38 @@ class _LoginScreen2State extends State<LoginScreen2> {
   /// true → 비밀번호 보임
   /// false → 비밀번호 숨김
   bool _isPasswordVisible = false;
+
   /// 회원가입 요청 진행 여부
   bool _isSubmitting = false;
 
   /// 로그인/회원가입 API 호출
   final LoginService _loginService = LoginService.instance;
+
   /// 아이디 입력 컨트롤러
   final TextEditingController _idController = TextEditingController();
+
   /// 닉네임 입력 컨트롤러
   final TextEditingController _nicknameController = TextEditingController();
+
   /// 이름 입력 컨트롤러
   final TextEditingController _nameController = TextEditingController();
+
   /// 비밀번호 입력 컨트롤러
   final TextEditingController _passwordController = TextEditingController();
+
   /// 전화번호 입력 컨트롤러
   final TextEditingController _phoneController = TextEditingController();
 
   /// 아이디 입력 여부 확인
   /// 입력값이 있을 때만 중복확인 버튼 활성화
   bool get _hasIdText => _idController.text.trim().isNotEmpty;
+
   /// 닉네임 입력 여부 확인
   bool get _hasNicknameText => _nicknameController.text.trim().isNotEmpty;
+
+  /// 전화번호 입력 여부 확인
+  bool get _hasPhoneText => _phoneController.text.trim().isNotEmpty;
+
   /// 닉네임 길이 유효 여부(2~10자)
   bool get _hasValidNicknameLength {
     final nickname = _nicknameController.text.trim();
@@ -68,12 +78,12 @@ class _LoginScreen2State extends State<LoginScreen2> {
   /// [message] 사용자에게 보여줄 안내 문구입니다.
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// 아이디/닉네임 중복확인 결과를 팝업으로 표시합니다.
+  /// 중복확인 결과를 팝업으로 표시합니다.
   ///
   /// [message] 팝업 본문에 노출할 안내 문구입니다.
   Future<void> _showDuplicateCheckDialog(String message) async {
@@ -81,10 +91,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          content: Text(
-            message,
-            textAlign: TextAlign.center,
-          ),
+          content: Text(message, textAlign: TextAlign.center),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(
@@ -108,7 +115,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
     try {
       final exists = await _loginService.checkEmail(_idController.text.trim());
       await _showDuplicateCheckDialog(
-        exists ? '이미 사용 중인 아이디입니다.' : '사용 가능한 아이디입니다.',
+        exists ? '이미 등록된 이메일입니다.' : '사용 가능한 이메일입니다.',
       );
     } catch (e) {
       await _showDuplicateCheckDialog(ApiException.messageFrom(e));
@@ -127,6 +134,20 @@ class _LoginScreen2State extends State<LoginScreen2> {
       );
       await _showDuplicateCheckDialog(
         exists ? '이미 사용 중인 닉네임입니다.' : '사용 가능한 닉네임입니다.',
+      );
+    } catch (e) {
+      await _showDuplicateCheckDialog(ApiException.messageFrom(e));
+    }
+  }
+
+  /// 전화번호 중복 여부를 서버에서 확인합니다.
+  Future<void> _checkPhoneDuplicate() async {
+    try {
+      final exists = await _loginService.checkPhone(
+        _phoneController.text.trim(),
+      );
+      await _showDuplicateCheckDialog(
+        exists ? '이미 등록된 전화번호입니다.' : '사용 가능한 전화번호입니다.',
       );
     } catch (e) {
       await _showDuplicateCheckDialog(ApiException.messageFrom(e));
@@ -200,12 +221,10 @@ class _LoginScreen2State extends State<LoginScreen2> {
           backgroundColor: AppColors.primaryBackground,
           elevation: 0,
           scrolledUnderElevation: 0,
-          title: const Text(
-            '회원가입',
-            style: AppTextStyles.appBarTitle,
-          ),
+          title: const Text('회원가입', style: AppTextStyles.appBarTitle),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
+
             /// 로그인스크린1로 이동
             onPressed: () {
               Navigator.pop(context);
@@ -219,10 +238,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                const Text(
-                  '아이디',
-                  style: AppTextStyles.formLabel,
-                ),
+                const Text('이메일', style: AppTextStyles.formLabel),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -230,6 +246,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       child: TextField(
                         controller: _idController,
                         keyboardType: TextInputType.emailAddress,
+
                         /// 자동 완성 힌트
                         autofillHints: const [AutofillHints.email],
                         onChanged: (_) => setState(() {}),
@@ -285,13 +302,11 @@ class _LoginScreen2State extends State<LoginScreen2> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  '비밀번호',
-                  style: AppTextStyles.formLabel,
-                ),
+                const Text('비밀번호', style: AppTextStyles.formLabel),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _passwordController,
+
                   /// 비밀번호 숨김 처리
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
@@ -300,6 +315,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       horizontal: 14,
                       vertical: 14,
                     ),
+
                     /// 비밀번호 표시 토글 버튼
                     suffixIcon: IconButton(
                       onPressed: () {
@@ -319,27 +335,20 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Color(0xFFD9D9D9),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  '닉네임',
-                  style: AppTextStyles.formLabel,
-                ),
+                const Text('닉네임', style: AppTextStyles.formLabel),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _nicknameController,
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(10),
-                        ],
+                        inputFormatters: [LengthLimitingTextInputFormatter(10)],
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           hintText: '닉네임을 입력해주세요',
@@ -398,10 +407,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                   style: AppTextStyles.helperCaption,
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  '이름',
-                  style: AppTextStyles.formLabel,
-                ),
+                const Text('이름', style: AppTextStyles.formLabel),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _nameController,
@@ -418,40 +424,71 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Color(0xFFD9D9D9),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  '전화번호',
-                  style: AppTextStyles.formLabel,
-                ),
+                const Text('전화번호', style: AppTextStyles.formLabel),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: '010-1234-6789',
-                    hintStyle: AppTextStyles.formHint,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: Color(0xFFD9D9D9),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: '01012346789',
+                          hintStyle: AppTextStyles.formHint,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD9D9D9),
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 96,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _hasPhoneText && !_isSubmitting
+                            ? _checkPhoneDuplicate
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _hasPhoneText
+                              ? AppColors.primaryBackground
+                              : const Color(0xFFEAEAEA),
+                          foregroundColor: _hasPhoneText
+                              ? AppColors.white
+                              : const Color(0xFF8D8D8D),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          '중복확인',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          style: AppTextStyles.duplicateCheckButton,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const Spacer(),
                 SizedBox(

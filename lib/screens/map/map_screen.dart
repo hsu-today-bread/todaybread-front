@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
-import '../../widgets/main_bottom_nav_bar.dart';
 import '../../utils/app_colors.dart';
-import '../home/home_screen.dart';
 
 /// 지도로 보기 화면
 class MapScreen extends StatefulWidget {
@@ -13,9 +11,6 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // 현재 선택된 하단 네비게이션 인덱스 (지도 탭 = 1)
-  int _selectedNavIndex = 1;
-
   NaverMapController? _mapController;
 
   // 더미 빵집 데이터 (나중에 서버 API로 교체 예정)
@@ -23,20 +18,6 @@ class _MapScreenState extends State<MapScreen> {
     {'id': '1', 'name': '성심당', 'lat': 37.5665, 'lng': 126.9780},
     {'id': '2', 'name': '뚜레쥬르', 'lat': 37.5670, 'lng': 126.9790},
   ];
-
-  void _onNavTap(int index) {
-    if (index == _selectedNavIndex) return;
-    setState(() => _selectedNavIndex = index);
-
-    // 탭에 따라 화면 이동
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    }
-    // 다른 탭은 해당 화면 완성 후 추가
-  }
 
   // 지도 준비 완료 후 마커 추가
   void _onMapReady(NaverMapController controller) {
@@ -73,14 +54,10 @@ class _MapScreenState extends State<MapScreen> {
           children: [
             Text(
               name,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('마감 임박 상품이 있어요!',
-                style: TextStyle(color: Colors.grey)),
+            const Text('마감 임박 상품이 있어요!', style: TextStyle(color: Colors.grey)),
           ],
         ),
       ),
@@ -108,10 +85,6 @@ class _MapScreenState extends State<MapScreen> {
           locationButtonEnable: true, // 내 위치 버튼
         ),
         onMapReady: _onMapReady,
-      ),
-      bottomNavigationBar: MainBottomNavBar(
-        currentIndex: _selectedNavIndex,
-        onTap: _onNavTap,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
+
 class LoadingLottie extends StatelessWidget {
   final String assetPath;
   final double width;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
 import 'package:flutter/services.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 void main() async {
@@ -9,7 +8,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NaverMapSdk.instance.initialize(
     //clientId: 'jrxo5fi6nv',
-    clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
+    //clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
     onAuthFailed: (e) => debugPrint('네이버 지도 인증 실패: $e'),
   );
 
@@ -22,7 +21,6 @@ void main() async {
   );
 }
 
-
 class TodayBreadApp extends StatelessWidget {
   const TodayBreadApp({super.key});
 
@@ -31,12 +29,9 @@ class TodayBreadApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: '오늘의 빵',
-      theme: ThemeData(
-        fontFamily: 'NoonnuBasicGothic',
-      ),
-      home: const HomeScreen(),
-      //home: const SplashScreen(),
+      theme: ThemeData(fontFamily: 'NoonnuBasicGothic'),
+      //home: const MainShell(),
+      home: const SplashScreen(),
     );
   }
-
 }

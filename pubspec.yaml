@@ -37,6 +37,7 @@ dependencies:
   retrofit: 4.8.0
   json_annotation: ^4.9.0
   flutter_naver_map: ^1.2.3
+  flutter_secure_storage: ^9.2.2
 
 
 

@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:todaybread/models/users/user_login_request.dart';
-import 'package:todaybread/screens/home/home_screen.dart';
+import 'package:todaybread/screens/main/main_shell.dart';
+import 'package:todaybread/services/auth/auth_service.dart';
 import 'package:todaybread/services/login/login_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
@@ -45,9 +47,9 @@ class _LoginScreen1State extends State<LoginScreen1> {
   /// [message] 사용자에게 보여줄 안내 문구입니다.
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// 로그인 입력 검증 후 서버 로그인 요청을 수행합니다.
@@ -56,12 +58,12 @@ class _LoginScreen1State extends State<LoginScreen1> {
     final password = _passwordController.text.trim();
 
     if (id.isEmpty && password.isEmpty) {
-      _showMessage('아이디와 비밀번호를 모두 입력해주세요.');
+      _showMessage('이메일와 비밀번호를 모두 입력해주세요.');
       return;
     }
 
     if (id.isEmpty) {
-      _showMessage('아이디를 입력해주세요.');
+      _showMessage('이메일를 입력해주세요.');
       return;
     }
 
@@ -82,12 +84,17 @@ class _LoginScreen1State extends State<LoginScreen1> {
       if (!mounted) return;
 
       if (response.success) {
+        debugPrint(
+          '[LoginScreen1] login success access=${response.accessToken != null} refresh=${response.refreshToken != null}',
+        );
+        // 로그인 성공 시 받은 JWT를 먼저 저장해 두어야
+        // 이후 화면에서 호출하는 보호 API에 자동으로 토큰이 붙습니다.
+        await AuthService.instance.saveLoginTokens(response);
+        if (!mounted) return;
         _showMessage('로그인에 성공했습니다.');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const HomeScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const MainShell()),
         );
       } else {
         _showMessage('로그인에 실패했습니다.');
@@ -122,16 +129,10 @@ class _LoginScreen1State extends State<LoginScreen1> {
                   width: double.infinity,
                   child: ClipPath(
                     clipper: LoginTopCurveClipper(),
-                    child: Container(
-                      color: AppColors.primaryBackground,
-                    ),
+                    child: Container(color: AppColors.primaryBackground),
                   ),
                 ),
-                Expanded(
-                  child: Container(
-                    color: AppColors.white,
-                  ),
-                ),
+                Expanded(child: Container(color: AppColors.white)),
               ],
             ),
             SafeArea(
@@ -143,7 +144,7 @@ class _LoginScreen1State extends State<LoginScreen1> {
                     children: [
                       const SizedBox(height: 36),
                       const Text(
-                        '아이디와 비밀번호를 입력하여\n로그인 해주세요',
+                        '이메일과 비밀번호를 입력하여\n로그인 해주세요',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
@@ -168,7 +169,7 @@ class _LoginScreen1State extends State<LoginScreen1> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '아이디',
+                              '이메일',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
@@ -243,9 +244,10 @@ class _LoginScreen1State extends State<LoginScreen1> {
                                         height: 22,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.4,
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            AppColors.white,
-                                          ),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                AppColors.white,
+                                              ),
                                         ),
                                       )
                                     : const Text(
@@ -260,7 +262,6 @@ class _LoginScreen1State extends State<LoginScreen1> {
                             const SizedBox(height: 16),
                             Center(
                               child: GestureDetector(
-
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -336,7 +337,9 @@ class _LoginScreen1State extends State<LoginScreen1> {
                                 builder: (_) => const LoginScreen2(),
                               ),
                             );
-                            if (!mounted || message == null || message.isEmpty) {
+                            if (!mounted ||
+                                message == null ||
+                                message.isEmpty) {
                               return;
                             }
                             _showMessage(message);
@@ -350,7 +353,7 @@ class _LoginScreen1State extends State<LoginScreen1> {
                             ),
                           ),
                           child: const Text(
-                            '앱 내 회원가입',
+                            '이메일 회원가입',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
