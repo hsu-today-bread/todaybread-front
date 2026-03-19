@@ -118,7 +118,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                         ),
                       ),
                       child: const Text(
-                        '아이디 찾기',
+                        '이메일 찾기',
                         style: AppTextStyles.primaryAction,
                       ),
                     ),
@@ -128,7 +128,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
 
                   /// 아이디 라벨 (비밀번호 찾기)
                   const Text(
-                    '아이디',
+                    '이메일',
                     style: AppTextStyles.formLabel,
                   ),
                   const SizedBox(height: 8),

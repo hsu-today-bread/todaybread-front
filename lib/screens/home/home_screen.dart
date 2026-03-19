@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/app_colors.dart';
-import '../../widgets/main_bottom_nav_bar.dart';
-import '../map/map_screen.dart';
 
 /// 메인 홈 화면 (HomeScreen)
 ///
@@ -21,9 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   /// 현재 선택된 정렬 탭 인덱스
   int _selectedSortIndex = 0;
-
-  /// 현재 선택된 하단 네비게이션 인덱스(메인 화면부터 순서대로 0,1,2,3)
-  int _selectedNavIndex = 0;
 
   /// 정렬 탭 라벨 목록
   final List<String> _sortLabels = ['전체', '거리순', '가격순', '할인순'];
@@ -106,27 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildSearchSection(),
 
           /// 정렬 탭 + 상품 리스트
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
-      ),
-
-      bottomNavigationBar: MainBottomNavBar(
-        currentIndex: _selectedNavIndex,
-        onTap: (index) {
-          if (index == _selectedNavIndex) return; // 현재 탭 누르면 무시
-          setState(() => _selectedNavIndex = index);
-
-          // 지도 탭(index 1) 누르면 MapScreen으로 이동
-          if (index == 1) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const MapScreen()),
-            );
-          }
-          // 다른 탭은 해당 화면 완성 후 추가 예정
-        },
       ),
     );
   }
@@ -193,11 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const TextField(
                 decoration: InputDecoration(
                   hintText: '',
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey,
-                    size: 22,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey, size: 22),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -217,11 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: IconButton(
               onPressed: _showFilterBottomSheet,
-              icon: const Icon(
-                Icons.tune,
-                color: Colors.white,
-                size: 22,
-              ),
+              icon: const Icon(Icons.tune, color: Colors.white, size: 22),
             ),
           ),
         ],
@@ -279,9 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF3D3D3D)
-                        : Colors.white,
+                    color: isSelected ? const Color(0xFF3D3D3D) : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSelected
@@ -380,11 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Colors.amber,
-                        ),
+                        const Icon(Icons.star, size: 14, color: Colors.amber),
                         const SizedBox(width: 2),
                         Text(
                           item['rating'] as String,
@@ -428,10 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const Text(
                           '남은시간',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -475,9 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
@@ -518,10 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       /// 근처 레이블
                       const Text(
                         '근처',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
                       ),
 
                       /// 거리 슬라이더
@@ -550,10 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       /// 멀리 레이블
                       const Text(
                         '멀리',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -620,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (match) => '${match[1]},',
+      (match) => '${match[1]},',
     );
   }
 }
