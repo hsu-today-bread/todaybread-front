@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import '../../utils/app_colors.dart';
+import '../home/home_screen.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// 지도로 보기 화면
 class MapScreen extends StatefulWidget {
@@ -20,8 +22,33 @@ class _MapScreenState extends State<MapScreen> {
   ];
 
   // 지도 준비 완료 후 마커 추가
-  void _onMapReady(NaverMapController controller) {
+  Future<void> _onMapReady(NaverMapController controller) async {
     _mapController = controller;
+
+    // 내 위치 파란 점 표시 활성화 ← 이 줄 추가
+    controller.getLocationOverlay().setIsVisible(true);
+
+    // 위치 권한 요청
+    LocationPermission permission = await Geolocator.requestPermission();
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      // 권한 거부 시 서울 기본값 유지
+      _addBakeryMarkers();
+      return;
+    }
+
+    // 현재 위치 가져오기
+    Position position = await Geolocator.getCurrentPosition();
+
+    // 지도 카메라를 내 위치로 이동
+    await _mapController?.updateCamera(
+      NCameraUpdate.scrollAndZoomTo(
+        target: NLatLng(position.latitude, position.longitude),
+        zoom: 14,
+      ),
+    );
+
     _addBakeryMarkers();
   }
 
@@ -78,10 +105,6 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: NaverMap(
         options: const NaverMapViewOptions(
-          initialCameraPosition: NCameraPosition(
-            target: NLatLng(37.5665, 126.9780), // 서울 기본값, 추후 내 위치로 변경
-            zoom: 14,
-          ),
           locationButtonEnable: true, // 내 위치 버튼
         ),
         onMapReady: _onMapReady,

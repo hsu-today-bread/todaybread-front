@@ -7,8 +7,7 @@ void main() async {
   // async 추가 + 아래 두 줄 추가
   WidgetsFlutterBinding.ensureInitialized();
   await NaverMapSdk.instance.initialize(
-    //clientId: 'jrxo5fi6nv',
-    //clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
+    clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
     onAuthFailed: (e) => debugPrint('네이버 지도 인증 실패: $e'),
   );
 
