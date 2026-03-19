@@ -1,11 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:todaybread/models/users/user_login_request.dart';
+import 'package:provider/provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/screens/main/main_shell.dart';
-import 'package:todaybread/services/auth/auth_service.dart';
-import 'package:todaybread/services/login/login_service.dart';
-import 'package:todaybread/services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
 import 'login_screen2.dart';
 import 'login_screen3.dart';
@@ -28,9 +26,6 @@ class _LoginScreen1State extends State<LoginScreen1> {
 
   /// 비밀번호 입력 컨트롤러
   final TextEditingController _passwordController = TextEditingController();
-
-  /// 로그인 API 호출 서비스
-  final LoginService _loginService = LoginService.instance;
 
   /// 로그인 요청 진행 여부
   bool _isSubmitting = false;
@@ -76,38 +71,36 @@ class _LoginScreen1State extends State<LoginScreen1> {
       _isSubmitting = true;
     });
 
-    try {
-      final response = await _loginService.login(
-        UserLoginRequest(email: id, password: password),
-      );
+    final authProvider = context.read<AuthProvider>();
+    final response = await authProvider.login(email: id, password: password);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (response.success) {
-        debugPrint(
-          '[LoginScreen1] login success access=${response.accessToken != null} refresh=${response.refreshToken != null}',
-        );
-        // 로그인 성공 시 받은 JWT를 먼저 저장해 두어야
-        // 이후 화면에서 호출하는 보호 API에 자동으로 토큰이 붙습니다.
-        await AuthService.instance.saveLoginTokens(response);
-        if (!mounted) return;
-        _showMessage('로그인에 성공했습니다.');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainShell()),
-        );
-      } else {
-        _showMessage('로그인에 실패했습니다.');
-      }
-    } catch (e) {
-      _showMessage(ApiException.messageFrom(e));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (response == null) {
+      _showMessage(authProvider.errorMessage ?? '로그인에 실패했습니다.');
+      return;
     }
+
+    if (response.success) {
+      debugPrint(
+        '[LoginScreen1] login success access=${response.accessToken != null} refresh=${response.refreshToken != null}',
+      );
+      debugPrint('[LoginScreen1] nickname=${response.nickname}');
+      debugPrint('[LoginScreen1] name=${response.name}');
+      debugPrint('[LoginScreen1] phone=${response.phone}');
+      _showMessage('로그인에 성공했습니다.');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+      return;
+    }
+
+    _showMessage('로그인에 실패했습니다.');
   }
 
   @override

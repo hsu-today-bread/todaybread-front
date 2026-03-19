@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:todaybread/models/users/user_register_request.dart';
+import 'package:todaybread/services/auth/auth_service.dart';
+import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 
 import 'package:todaybread/services/login/login_service.dart';
+
+import '../../models/users/user_login_request.dart';
+import '../../models/users/user_login_response.dart';
 
 /// 로그인/회원가입 화면 상태를 관리하는 Provider입니다.
 class AuthProvider extends ChangeNotifier {
@@ -15,6 +20,38 @@ class AuthProvider extends ChangeNotifier {
 
   /// 인증 관련 서비스 인스턴스입니다.
   final LoginService _service = LoginService.instance;
+
+  Future<UserLoginResponse?> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final response = await _service.login(
+        UserLoginRequest(email: email, password: password),
+      );
+
+      if (response.success) {
+        await UserLocalStore.saveUser(
+          nickname: response.nickname,
+          name: response.name,
+          phone: response.phone,
+        );
+        await AuthService.instance.saveLoginTokens(response);
+      }
+
+      return response;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 
   /// 이메일 중복 여부를 확인합니다.
   Future<bool> checkEmail(String email) async {

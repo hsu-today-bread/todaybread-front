@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../services/local/user_local_store.dart';
+
 /// 마이페이지 프로필 상세 화면
-class MyPageScreen2 extends StatelessWidget {
+class MyPageScreen2 extends StatefulWidget {
   const MyPageScreen2({super.key});
+  @override
+  State<MyPageScreen2> createState() => _MyPageScreen2State();
+}
+class _MyPageScreen2State extends State<MyPageScreen2>{
+
+
+  final nicknameController =
+  TextEditingController(text: UserLocalStore.getNickname());
+  final nameController =
+  TextEditingController(text: UserLocalStore.getName());
+  final phoneController =
+  TextEditingController(text: UserLocalStore.getPhone());
+
 
   // TODO: 백엔드에 현재 로그인 사용자 정보 조회 API(예: GET /api/user/me)가 추가되면
   // 닉네임 / 이름 / 휴대폰 번호를 더미 문자열이 아니라 실제 응답값으로 교체할 것.
@@ -13,6 +28,16 @@ class MyPageScreen2 extends StatelessWidget {
   //
   // TODO: 로그아웃 API(POST /api/auth/logout)와 연결되면
   // 저장된 JWT 토큰 삭제 후 로그인 화면으로 이동 처리할 것.
+
+  @override
+  void dispose(){
+    nicknameController.dispose();
+    nameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -165,20 +190,20 @@ class MyPageScreen2 extends StatelessWidget {
           // 사용자 정보 조회 API 연동 후 실제 로그인한 사용자의 값으로 교체해야 합니다.
           _buildMenuRow(
             title: '닉네임',
-            value: '최원재',
+            value: nicknameController.text.toString(),
             onTap: () {},
             isFirst: true,
           ),
           _buildDivider(),
           _buildMenuRow(
             title: '이름',
-            value: '최원재',
+            value: nameController.text.toString(),
             onTap: () {},
           ),
           _buildDivider(),
           _buildMenuRow(
             title: '휴대폰 번호 변경',
-            value: '010-1111-2323',
+            value: phoneController.text.toString(),
             onTap: () {},
           ),
           _buildDivider(),

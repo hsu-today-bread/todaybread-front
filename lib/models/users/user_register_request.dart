@@ -20,6 +20,7 @@ class UserRegisterRequest {
   final String password;
 
   /// 전화번호
+  ///
   final String phone;
 
   /// 회원가입 요청 모델을 생성합니다.

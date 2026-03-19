@@ -11,6 +11,9 @@ UserLoginResponse _$UserLoginResponseFromJson(Map<String, dynamic> json) =>
       success: json['success'] as bool,
       accessToken: json['accessToken'] as String?,
       refreshToken: json['refreshToken'] as String?,
+      nickname: json['nickname'] as String,
+      name: json['name'] as String,
+      phone: json['phone'] as String,
     );
 
 Map<String, dynamic> _$UserLoginResponseToJson(UserLoginResponse instance) =>
@@ -18,4 +21,7 @@ Map<String, dynamic> _$UserLoginResponseToJson(UserLoginResponse instance) =>
       'success': instance.success,
       'accessToken': instance.accessToken,
       'refreshToken': instance.refreshToken,
+      'nickname': instance.nickname,
+      'name': instance.name,
+      'phone': instance.phone,
     };
