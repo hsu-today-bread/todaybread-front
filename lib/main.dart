@@ -12,10 +12,13 @@ void main() async {
   // async 추가 + 아래 두 줄 추가
   WidgetsFlutterBinding.ensureInitialized();
   await UserLocalStore.init();
-  await NaverMapSdk.instance.initialize(
+  await FlutterNaverMap().init(
     clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
     onAuthFailed: (e) => debugPrint('네이버 지도 인증 실패: $e'),
   );
+
+  debugPrint('Client ID 확인: ${const String.fromEnvironment('NAVER_MAP_CLIENT_ID')}');
+
 
   runApp(const TodayBreadApp());
   SystemChrome.setSystemUIOverlayStyle(
@@ -37,8 +40,8 @@ class TodayBreadApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '오늘의 빵',
         theme: ThemeData(fontFamily: 'NoonnuBasicGothic'),
-        //home: const MainShell(),
-        home: const SplashScreen(),
+        home: const MainShell(),
+        //home: const SplashScreen(),
       ),
     );
   }
