@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todaybread/screens/wish/wish_screen.dart';
 
 import '../../widgets/main_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
@@ -25,7 +26,7 @@ class _MainShellState extends State<MainShell>
   late final List<Widget> _pages = [
     const HomeScreen(),
     const MapScreen(),
-    const _BreadPlaceholderScreen(),
+    const WishScreen(),
     const MyPageScreen1(),
   ];
 
