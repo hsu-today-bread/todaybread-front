@@ -40,8 +40,8 @@ class TodayBreadApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '오늘의 빵',
         theme: ThemeData(fontFamily: 'NoonnuBasicGothic'),
-        home: const MainShell(),
-        //home: const SplashScreen(),
+        //home: const MainShell(),
+        home: const SplashScreen(),
       ),
     );
   }
