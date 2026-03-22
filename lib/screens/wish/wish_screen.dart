@@ -52,6 +52,7 @@ class _WishScreenState extends State<WishScreen> {
                       maxLength: 10,
                       decoration: InputDecoration(
                         hintText: '등록할 키워드를 입력해주세요',
+                        hintStyle: const TextStyle(color: Color(0xFFBBBBBB)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -88,6 +89,7 @@ class _WishScreenState extends State<WishScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -97,26 +99,6 @@ class _WishScreenState extends State<WishScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              if(_keywords.isNotEmpty)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: (){
-                      setState(() {
-                        _keywords.clear();
-                      });
-                    },
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Text(
-                      '전체 삭제',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
 
               Wrap(
                   spacing: 8, // 태그 사이 가로 간격
