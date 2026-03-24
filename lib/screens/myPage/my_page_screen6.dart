@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:todaybread/providers/boss/boss_provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/screens/main/main_shell.dart';
 
 import '../../utils/app_colors.dart';
 
@@ -50,10 +54,39 @@ class _MyScreen6State extends State<MyPageScreen6> {
       await _showMessageDialog('사업자 번호는 숫자 10자리로 입력해주세요.');
       return;
     }
+
+    final bossProvider = context.read<BossProvider>();
+    final authProvider = context.read<AuthProvider>();
+
+    final response = await bossProvider.approveBoss(
+      bossNumber: _businessNumberController.text.trim(),
+      authProvider: authProvider,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (response == null) {
+      await _showMessageDialog(bossProvider.errorMessage ?? '사업자 인증에 실패했습니다.');
+      return;
+    }
+
+    await _showMessageDialog(response.message);
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const MainShell()),
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<BossProvider>().isLoading;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Color(0xFFF7F7F7),
@@ -112,7 +145,7 @@ class _MyScreen6State extends State<MyPageScreen6> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _verifyBusinessNumber,
+                    onPressed: isLoading ? null : _verifyBusinessNumber,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBackground,
                       foregroundColor: Colors.white,
@@ -121,13 +154,24 @@ class _MyScreen6State extends State<MyPageScreen6> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      '인증하기',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            '인증하기',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                 ),
               ],

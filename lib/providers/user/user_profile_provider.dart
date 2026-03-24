@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:todaybread/models/users/user_update_request.dart';
 import 'package:todaybread/models/users/user_update_response.dart';
 import 'package:todaybread/services/login/login_service.dart';
+import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/user/user_service.dart';
 
@@ -14,6 +15,23 @@ class UserProfileProvider extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   UserUpdateResponse? profile;
+  String? _nickname;
+  String? _name;
+  String? _phone;
+
+  String get nickname => _nickname ?? UserLocalStore.getNickname();
+  String get name => _name ?? UserLocalStore.getName();
+  String get phone => _phone ?? UserLocalStore.getPhone();
+
+  /// 로컬 저장소 기준으로 현재 프로필 상태를 동기화합니다.
+  void hydrateFromLocal({bool notify = false}) {
+    _nickname = UserLocalStore.getNickname();
+    _name = UserLocalStore.getName();
+    _phone = UserLocalStore.getPhone();
+    if (notify) {
+      notifyListeners();
+    }
+  }
 
   /// 내 프로필을 수정합니다.
   Future<UserUpdateResponse?> updateProfile({
@@ -31,6 +49,9 @@ class UserProfileProvider extends ChangeNotifier {
       );
 
       profile = response;
+      _nickname = response.nickname;
+      _name = response.name;
+      _phone = response.phone;
       return response;
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);

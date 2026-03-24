@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../../providers/user/user_profile_provider.dart';
-import '../../services/local/user_local_store.dart';
 import '../../utils/app_colors.dart';
 
 enum MyPageEditType { nickname, name, phone }
@@ -18,8 +18,8 @@ class MyPageEditScreen extends StatefulWidget {
 
 class _MyPageEditScreenState extends State<MyPageEditScreen> {
   late final TextEditingController _controller;
-  final UserProfileProvider _profileProvider = UserProfileProvider();
   bool _isSaving = false;
+  bool _didInitController = false;
 
   String get _title {
     switch (widget.type) {
@@ -54,27 +54,31 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
     }
   }
 
-  String get _initialValue {
+  String _initialValue(UserProfileProvider profileProvider) {
     switch (widget.type) {
       case MyPageEditType.nickname:
-        return UserLocalStore.getNickname();
+        return profileProvider.nickname;
       case MyPageEditType.name:
-        return UserLocalStore.getName();
+        return profileProvider.name;
       case MyPageEditType.phone:
-        return UserLocalStore.getPhone();
+        return profileProvider.phone;
     }
   }
 
   @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: _initialValue);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInitController) {
+      return;
+    }
+    final profileProvider = context.read<UserProfileProvider>();
+    _controller = TextEditingController(text: _initialValue(profileProvider));
+    _didInitController = true;
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _profileProvider.dispose();
     super.dispose();
   }
 
@@ -90,24 +94,42 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
 
     final nickname = widget.type == MyPageEditType.nickname
         ? value
-        : UserLocalStore.getNickname();
+        : context.read<UserProfileProvider>().nickname;
     final name = widget.type == MyPageEditType.name
         ? value
-        : UserLocalStore.getName();
+        : context.read<UserProfileProvider>().name;
     final phone = widget.type == MyPageEditType.phone
         ? value
-        : UserLocalStore.getPhone();
-
-    await UserLocalStore.saveUser(nickname: nickname, name: name, phone: phone);
+        : context.read<UserProfileProvider>().phone;
 
     if (!mounted) {
+      return;
+    }
+
+    final profileProvider = context.read<UserProfileProvider>();
+    final response = await profileProvider.updateProfile(
+      nickname: nickname,
+      name: name,
+      phone: phone,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (response == null) {
+      setState(() {
+        _isSaving = false;
+      });
+      await _showDuplicateCheckDialog(
+        profileProvider.errorMessage ?? '정보 수정에 실패했습니다.',
+      );
       return;
     }
 
     setState(() {
       _isSaving = false;
     });
-
     Navigator.pop(context, true);
   }
 
@@ -149,7 +171,9 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
           return;
         }
 
-        final exists = await _profileProvider.checkNickname(value);
+        final exists = await context.read<UserProfileProvider>().checkNickname(
+          value,
+        );
         if (!mounted) {
           return;
         }
@@ -161,7 +185,9 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
         await _showDuplicateCheckDialog('사용 가능한 이름입니다.');
         return;
       case MyPageEditType.phone:
-        final exists = await _profileProvider.checkPhone(value);
+        final exists = await context.read<UserProfileProvider>().checkPhone(
+          value,
+        );
         if (!mounted) {
           return;
         }
