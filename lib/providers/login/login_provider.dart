@@ -119,6 +119,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isBoss => role == UserRole.boss;
 
   Future<void> refreshRoleFromStoredToken({bool notify = true}) async {
+    // 사업자 인증 후에는 새 JWT가 저장되므로, 그 토큰을 다시 읽어
+    // 하단 탭과 마이페이지 UI가 즉시 BOSS 상태로 바뀌게 한다.
     final accessToken = await _tokenStorage.readAccessToken();
     role = _roleFromToken(accessToken);
     if (notify) {
@@ -132,6 +134,7 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
+      // 백엔드 access token payload의 role 값을 그대로 사용한다.
       final payload = AuthService.instance.parseJwtPayload(token);
       final rawRole = payload['role']?.toString().toUpperCase();
       if (rawRole == 'BOSS') {

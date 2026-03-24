@@ -19,6 +19,8 @@ class UserProfileProvider extends ChangeNotifier {
   String? _name;
   String? _phone;
 
+  // 화면은 local store를 직접 읽지 않고 이 provider만 보도록 맞췄다.
+  // 메모리에 값이 없을 때만 fallback으로 로컬 값을 읽는다.
   String get nickname => _nickname ?? UserLocalStore.getNickname();
   String get name => _name ?? UserLocalStore.getName();
   String get phone => _phone ?? UserLocalStore.getPhone();
@@ -48,6 +50,8 @@ class UserProfileProvider extends ChangeNotifier {
         UserUpdateRequest(nickname: nickname, name: name, phone: phone),
       );
 
+      // 서버 응답 기준으로 provider 메모리 상태도 함께 갱신한다.
+      // 실제 Hive 저장은 UserService 내부에서 처리한다.
       profile = response;
       _nickname = response.nickname;
       _name = response.name;

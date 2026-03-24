@@ -28,6 +28,8 @@ class BossProvider extends ChangeNotifier {
       lastResponse = response;
 
       if (response.success) {
+        // 사업자 인증 성공 시 백엔드가 BOSS 권한이 반영된 새 토큰을 발급한다.
+        // 저장된 토큰을 다시 읽어 role 기반 UI를 갱신한다.
         await authProvider.refreshRoleFromStoredToken();
       }
 

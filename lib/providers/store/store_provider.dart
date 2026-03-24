@@ -23,6 +23,7 @@ class StoreProvider extends ChangeNotifier {
       notifyListeners();
 
       final response = await _service.getStatus();
+      // 사장님 탭 진입 시 서버 기준으로 "매장 있음/없음" 상태를 확정한다.
       store = response.storeCommonResponse;
       hasFetchedStatus = true;
       return response;
@@ -43,6 +44,7 @@ class StoreProvider extends ChangeNotifier {
       notifyListeners();
 
       final response = await _service.createStore(request);
+      // 등록 성공 후에는 별도 재조회 없이 현재 매장 정보를 바로 화면에 반영한다.
       store = response;
       hasFetchedStatus = true;
       return response;

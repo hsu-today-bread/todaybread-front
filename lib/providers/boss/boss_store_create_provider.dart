@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 
 class BossStoreCreateProvider extends ChangeNotifier {
+  // 매장 등록은 여러 step을 한 화면에서 처리하므로
+  // 현재 step index와 입력 중인 draft 값을 이 provider에 모아둔다.
   int currentStep = 0;
   String? errorMessage;
 
@@ -75,6 +77,8 @@ class BossStoreCreateProvider extends ChangeNotifier {
   }
 
   bool nextStep() {
+    // step 이동 전에 현재 단계 입력값만 검증한다.
+    // 최종 서버 전송 검증은 buildRequest/createStore 시점에서 한 번 더 걸린다.
     final error = _validateCurrentStep();
     if (error != null) {
       errorMessage = error;
@@ -104,6 +108,8 @@ class BossStoreCreateProvider extends ChangeNotifier {
     final parsedLongitude = double.tryParse(longitude);
 
     if (parsedLatitude == null || parsedLongitude == null) {
+      // 백엔드 StoreCommonRequest는 BigDecimal 위도/경도를 필수로 받는다.
+      // 지금은 임시 입력값을 받아 double로 보내고, 값이 없으면 예외로 막는다.
       throw const FormatException('위도/경도 정보가 없습니다.');
     }
 
@@ -122,6 +128,8 @@ class BossStoreCreateProvider extends ChangeNotifier {
   }
 
   String buildOrderTime() {
+    // 백엔드 orderTime은 문자열이므로, 화면에서 고른 시작/종료 시각을
+    // 단순 표시 문자열 형태로 묶어서 보낸다.
     final start = formatTime(startTime);
     final end = formatTime(endTime);
     if (start.isEmpty || end.isEmpty) {
@@ -196,6 +204,7 @@ class BossStoreCreateProvider extends ChangeNotifier {
   }
 
   void _syncAfterChange() {
+    // 입력이 바뀌는 즉시 화면이 다시 그려져야 로고/시간 선택 결과가 바로 보인다.
     errorMessage = null;
     notifyListeners();
   }

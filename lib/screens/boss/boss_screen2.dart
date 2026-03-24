@@ -18,6 +18,7 @@ class _BossScreen2State extends State<BossScreen2> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<StoreProvider>();
+      // 매장 관리 진입 시 서버 기준으로 현재 사장님이 이미 매장을 등록했는지 조회한다.
       if (!provider.hasFetchedStatus) {
         provider.fetchStatus();
       }
@@ -45,10 +46,12 @@ class _BossScreen2State extends State<BossScreen2> {
                     }
 
                     if (storeProvider.hasStore && storeProvider.store != null) {
+                      // 등록된 매장이 있으면 empty 상태 대신 관리 탭 화면을 보여준다.
                       final store = storeProvider.store!;
                       return _StoreManagementView(store: store);
                     }
 
+                    // 아직 등록된 매장이 없으면 로띠 + 등록 버튼 empty state를 보여준다.
                     return Column(
                       children: [
                         const Spacer(),
@@ -153,6 +156,7 @@ class _StoreManagementView extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
+          // 매장 관리 화면은 기본 정보 / 운영 정보 두 탭으로 나눠서 보여준다.
           Container(
             height: 48,
             decoration: BoxDecoration(
@@ -298,6 +302,7 @@ class _InfoSection extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {
+                  // TODO: 실제 수정 화면이 준비되면 각 항목별 상세 수정 화면으로 연결
                   // TODO: 각 항목별 수정 화면 연결
                 },
                 icon: const Icon(

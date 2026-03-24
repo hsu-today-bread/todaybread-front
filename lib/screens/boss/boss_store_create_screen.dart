@@ -12,6 +12,8 @@ class BossStoreCreateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
+      // 매장 등록 step 입력값은 이 화면 생명주기 동안만 유지하면 되므로
+      // 전역이 아니라 화면 진입 시 생성하는 local provider로 둔다.
       create: (_) => BossStoreCreateProvider(),
       child: const _BossStoreCreateView(),
     );
@@ -57,6 +59,8 @@ class _BossStoreCreateView extends StatelessWidget {
                 const SizedBox(height: 26),
                 Expanded(
                   child: SingleChildScrollView(
+                    // 멀티페이지로 나누지 않고, currentStep 값에 따라
+                    // 한 화면 안에서 다른 입력 뷰를 보여준다.
                     child: _StoreCreateStepBody(step: provider.currentStep),
                   ),
                 ),
@@ -169,6 +173,8 @@ class _BossStoreCreateView extends StatelessWidget {
   Future<void> _handlePrimaryAction(BuildContext context) async {
     final provider = context.read<BossStoreCreateProvider>();
     final wasLastStep = provider.isLastStep;
+
+    // 다음/완료 버튼은 항상 현재 step 유효성 검사를 먼저 통과해야 한다.
     final isValid = provider.nextStep();
     if (!isValid) {
       return;
@@ -180,6 +186,9 @@ class _BossStoreCreateView extends StatelessWidget {
 
     final storeProvider = context.read<StoreProvider>();
     try {
+      // 마지막 step에서는 draft 상태를 StoreCommonRequest로 묶어
+      // 실제 가게 등록 API를 호출한다. UI가 서비스를 직접 부르지 않고
+      // StoreProvider를 거치도록 분리한 이유가 여기 있다.
       final response = await storeProvider.createStore(provider.buildRequest());
       if (!context.mounted) {
         return;
@@ -273,6 +282,8 @@ class _StoreCreateStepBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<BossStoreCreateProvider>();
 
+    // step 번호에 따라 완전히 다른 입력 view를 반환한다.
+    // 현재는 주소 -> 이름 -> 전화번호 -> 로고 -> 영업시간 -> 소개글 순서다.
     switch (step) {
       case 0:
         return Column(
@@ -579,6 +590,7 @@ class _StoreCreateStepBody extends StatelessWidget {
   }
 
   Future<void> _showLogoPicker(BuildContext context) async {
+    // 서버 업로드 스펙이 아직 없어서, 지금은 로컬 asset 선택만 흉내낸다.
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
