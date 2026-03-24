@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../../utils/app_colors.dart';
+import 'my_page_screen6.dart';
 import 'my_page_screen2.dart';
 
 /// 마이페이지 화면 1
@@ -126,47 +127,60 @@ class _MyPageScreen1State extends State<MyPageScreen1> {
   Widget _buildAccountCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-          border: Border.all(color: const Color(0xFFE6E6E6)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.check, color: Color(0xFF4CD964), size: 20),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '일반 사용자 계정 이용중',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '사업자 번호 입력하고 사장님 계정으로 변경하기',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF9A9A9A)),
-                  ),
-                ],
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MyPageScreen6()),
+          );
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 8,
+                offset: Offset(0, 3),
               ),
-            ),
-            const Icon(Icons.chevron_right, size: 28, color: Color(0xFF8E8E8E)),
-          ],
+            ],
+            border: Border.all(color: const Color(0xFFE6E6E6)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.check, color: Color(0xFF4CD964), size: 20),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '일반 사용자 계정 이용중',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '사업자 번호 입력하고 사장님 계정으로 변경하기',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF9A9A9A)),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                size: 28,
+                color: Color(0xFF8E8E8E),
+              ),
+            ],
+          ),
         ),
       ),
     );
