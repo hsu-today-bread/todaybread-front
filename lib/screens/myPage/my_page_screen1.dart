@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/user/user_profile_provider.dart';
 import '../../utils/app_colors.dart';
+import 'my_page_screen6.dart';
 import 'my_page_screen2.dart';
 
 /// 마이페이지 화면 1
@@ -44,6 +48,8 @@ class _MyPageScreen1State extends State<MyPageScreen1> {
   }
 
   Widget _buildProfileSection() {
+    final nickname = context.watch<UserProfileProvider>().nickname;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
@@ -80,11 +86,11 @@ class _MyPageScreen1State extends State<MyPageScreen1> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(width: 72),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '닉네임',
+                  nickname,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: Colors.black,
@@ -124,49 +130,77 @@ class _MyPageScreen1State extends State<MyPageScreen1> {
   }
 
   Widget _buildAccountCard() {
+    final isBoss = context.watch<AuthProvider>().isBoss;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-          border: Border.all(color: const Color(0xFFE6E6E6)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.check, color: Color(0xFF4CD964), size: 20),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '일반 사용자 계정 이용중',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '사업자 번호 입력하고 사장님 계정으로 변경하기',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF9A9A9A)),
-                  ),
-                ],
+      child: InkWell(
+        onTap: isBoss
+            ? null
+            : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyPageScreen6()),
+                );
+              },
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 8,
+                offset: Offset(0, 3),
               ),
-            ),
-            const Icon(Icons.chevron_right, size: 28, color: Color(0xFF8E8E8E)),
-          ],
+            ],
+            border: Border.all(color: const Color(0xFFE6E6E6)),
+          ),
+          child: Row(
+            children: [
+              if (isBoss)
+                const Icon(
+                  Icons.check_circle,
+                  color: Color(0xFF4CD964),
+                  size: 20,
+                ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isBoss ? '사업자 계정 이용중' : '일반 사용자 계정 이용중',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isBoss
+                          ? '사업자 인증이 완료된 계정입니다.'
+                          : '사업자 번호 입력하고 사장님 계정으로 변경하기',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF9A9A9A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!isBoss)
+                const Icon(
+                  Icons.chevron_right,
+                  size: 28,
+                  color: Color(0xFF8E8E8E),
+                ),
+            ],
+          ),
         ),
       ),
     );

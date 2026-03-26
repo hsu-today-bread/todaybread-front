@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/screens/boss/boss_screen1.dart';
 import 'package:todaybread/screens/wish/wish_screen.dart';
 
 import '../../widgets/main_bottom_nav_bar.dart';
@@ -22,13 +25,6 @@ class _MainShellState extends State<MainShell>
   late final AnimationController _transitionController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
-
-  late final List<Widget> _pages = [
-    const HomeScreen(),
-    const MapScreen(),
-    const WishScreen(),
-    const MyPageScreen1(),
-  ];
 
   @override
   void initState() {
@@ -72,40 +68,40 @@ class _MainShellState extends State<MainShell>
 
   @override
   Widget build(BuildContext context) {
+    final role = context.watch<AuthProvider>().role;
+    final pages = _pagesForRole(role);
+
+    if (_selectedIndex >= pages.length) {
+      _selectedIndex = pages.length - 1;
+    }
+
     return Scaffold(
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: IndexedStack(index: _selectedIndex, children: _pages),
+          child: IndexedStack(index: _selectedIndex, children: pages),
         ),
       ),
       bottomNavigationBar: MainBottomNavBar(
         currentIndex: _selectedIndex,
         onTap: _onTap,
+        role: role,
       ),
     );
   }
-}
 
-class _BreadPlaceholderScreen extends StatelessWidget {
-  const _BreadPlaceholderScreen();
+  List<Widget> _pagesForRole(UserRole role) {
+    if (role == UserRole.boss) {
+      return const [
+        HomeScreen(),
+        MapScreen(),
+        WishScreen(),
+        BossScreen1(),
+        MyPageScreen1(),
+      ];
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Text(
-            '탭 화면 준비 중입니다.',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6F6F6F),
-            ),
-          ),
-        ),
-      ),
-    );
+    return const [HomeScreen(), MapScreen(), WishScreen(), MyPageScreen1()];
   }
 }

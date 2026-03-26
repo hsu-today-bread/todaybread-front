@@ -65,7 +65,7 @@ class AuthService {
         return reissuedTokens != null;
       }
 
-      final payload = _parseJwtPayload(accessToken);
+      final payload = parseJwtPayload(accessToken);
       final exp = payload['exp'];
       if (exp is! num) {
         debugPrint('[AuthService] invalid exp in access token, trying reissue');
@@ -143,7 +143,7 @@ class AuthService {
     }
   }
 
-  Map<String, dynamic> _parseJwtPayload(String token) {
+  Map<String, dynamic> parseJwtPayload(String token) {
     final parts = token.split('.');
     if (parts.length != 3) {
       throw const FormatException('Invalid JWT format');
