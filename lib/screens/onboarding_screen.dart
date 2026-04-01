@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../utils/app_assets.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
-import 'login/login_screen1.dart';
+import 'login/login_screen.dart';
 
 ///온보딩 화면
 ///
@@ -14,7 +14,6 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     ///상태바 스타일 설정
     ///
     /// - statusBarColor : 상태바 배경 색상
@@ -51,16 +50,10 @@ class OnboardingScreen extends StatelessWidget {
                   child: ClipPath(
                     /// 커스텀 곡선 모양을 만들기 위한 클리퍼
                     clipper: TopCurveClipper(),
-                    child: Container(
-                      color: AppColors.primaryBackground,
-                    ),
+                    child: Container(color: AppColors.primaryBackground),
                   ),
                 ),
-                Expanded(
-                  child: Container(
-                    color: AppColors.white,
-                  ),
-                ),
+                Expanded(child: Container(color: AppColors.white)),
               ],
             ),
             SafeArea(
@@ -94,12 +87,12 @@ class OnboardingScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
-                          /// 버튼 클릭 시 LoginScreen1 이동
+                          /// 버튼 클릭 시 LoginScreen 이동
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const LoginScreen1(),
+                                builder: (_) => const LoginScreen(),
                               ),
                             );
                           },

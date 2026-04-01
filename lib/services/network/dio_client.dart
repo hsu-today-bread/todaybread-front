@@ -12,6 +12,7 @@ class DioClient {
   DioClient._();
 
   static const String _baseUrl = 'http://10.0.2.2:8080';
+  static String get baseUrl => _baseUrl;
 
   /// 앱 내에서 하나만 사용하는 Dio 싱글턴 인스턴스입니다.
   static final Dio _dio = createPlainDio()

@@ -4,19 +4,20 @@ import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
 import '../../utils/app_colors.dart';
-import 'my_page_screen6.dart';
-import 'my_page_screen2.dart';
+import 'boss_account_verification_screen.dart';
+import 'my_profile_screen.dart';
 
-/// 마이페이지 화면 1
-class MyPageScreen1 extends StatefulWidget {
-  const MyPageScreen1({super.key});
+/// 마이페이지 메인 화면
+/// 프로필 요약, 계정 상태, 주문 내역을 보여준다.
+class MyPageHomeScreen extends StatefulWidget {
+  const MyPageHomeScreen({super.key});
 
   @override
-  State<MyPageScreen1> createState() => _MyPageScreen1State();
+  State<MyPageHomeScreen> createState() => _MyPageHomeScreenState();
 }
 
-class _MyPageScreen1State extends State<MyPageScreen1> {
-  // TODO: 마이페이지 리뷰 API 연동 후 서버 응답 모델로 교체
+class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
+  // TODO: 마이페이지 리뷰 API 연동 후 교체
   // 리뷰 데이터가 있으면 아래 카드 리스트 형태로 노출하고,
   // 없으면 "주문 내역이 없습니다" 문구를 보여준다.
   final List<Map<String, dynamic>> _reviewList = [];
@@ -104,7 +105,9 @@ class _MyPageScreen1State extends State<MyPageScreen1> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const MyPageScreen2()),
+                      MaterialPageRoute(
+                        builder: (_) => const MyProfileScreen(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -140,7 +143,9 @@ class _MyPageScreen1State extends State<MyPageScreen1> {
             : () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const MyPageScreen6()),
+                  MaterialPageRoute(
+                    builder: (_) => const BossAccountVerificationScreen(),
+                  ),
                 );
               },
         borderRadius: BorderRadius.circular(14),

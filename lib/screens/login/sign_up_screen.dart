@@ -1,35 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
-import '../../models/users/user_register_request.dart';
-import '../../services/login/login_service.dart';
-import '../../services/network/api_exception.dart';
+import '../../providers/login/login_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 
-/// 회원가입 화면 (LoginScreen2)
+/// 회원가입 화면
 ///
 /// - 아이디 / 비밀번호 / 닉네임 / 전화번호 입력
 /// - 아이디 및 닉네임 중복 확인 기능
 /// - 비밀번호 보기/숨기기 기능 제공
-class LoginScreen2 extends StatefulWidget {
-  const LoginScreen2({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen2> createState() => _LoginScreen2State();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreen2State extends State<LoginScreen2> {
+class _SignUpScreenState extends State<SignUpScreen> {
   /// 비밀번호 표시 여부
   /// true → 비밀번호 보임
   /// false → 비밀번호 숨김
   bool _isPasswordVisible = false;
-
-  /// 회원가입 요청 진행 여부
-  bool _isSubmitting = false;
-
-  /// 로그인/회원가입 API 호출
-  final LoginService _loginService = LoginService.instance;
 
   /// 아이디 입력 컨트롤러
   final TextEditingController _idController = TextEditingController();
@@ -112,14 +105,15 @@ class _LoginScreen2State extends State<LoginScreen2> {
 
   /// 이메일 중복 여부를 서버에서 확인합니다.
   Future<void> _checkEmailDuplicate() async {
-    try {
-      final exists = await _loginService.checkEmail(_idController.text.trim());
-      await _showDuplicateCheckDialog(
-        exists ? '이미 등록된 이메일입니다.' : '사용 가능한 이메일입니다.',
-      );
-    } catch (e) {
-      await _showDuplicateCheckDialog(ApiException.messageFrom(e));
+    final authProvider = context.read<AuthProvider>();
+    final exists = await authProvider.checkEmail(_idController.text.trim());
+    if (!mounted) {
+      return;
     }
+    await _showDuplicateCheckDialog(
+      authProvider.errorMessage ??
+          (exists ? '이미 등록된 이메일입니다.' : '사용 가능한 이메일입니다.'),
+    );
   }
 
   /// 닉네임 중복 여부를 서버에서 확인합니다.
@@ -128,30 +122,30 @@ class _LoginScreen2State extends State<LoginScreen2> {
       await _showDuplicateCheckDialog('닉네임은 2자~10자로 입력해주세요.');
       return;
     }
-    try {
-      final exists = await _loginService.checkNickname(
-        _nicknameController.text.trim(),
-      );
-      await _showDuplicateCheckDialog(
-        exists ? '이미 사용 중인 닉네임입니다.' : '사용 가능한 닉네임입니다.',
-      );
-    } catch (e) {
-      await _showDuplicateCheckDialog(ApiException.messageFrom(e));
+    final authProvider = context.read<AuthProvider>();
+    final exists = await authProvider.checkNickname(
+      _nicknameController.text.trim(),
+    );
+    if (!mounted) {
+      return;
     }
+    await _showDuplicateCheckDialog(
+      authProvider.errorMessage ??
+          (exists ? '이미 사용 중인 닉네임입니다.' : '사용 가능한 닉네임입니다.'),
+    );
   }
 
   /// 전화번호 중복 여부를 서버에서 확인합니다.
   Future<void> _checkPhoneDuplicate() async {
-    try {
-      final exists = await _loginService.checkPhone(
-        _phoneController.text.trim(),
-      );
-      await _showDuplicateCheckDialog(
-        exists ? '이미 등록된 전화번호입니다.' : '사용 가능한 전화번호입니다.',
-      );
-    } catch (e) {
-      await _showDuplicateCheckDialog(ApiException.messageFrom(e));
+    final authProvider = context.read<AuthProvider>();
+    final exists = await authProvider.checkPhone(_phoneController.text.trim());
+    if (!mounted) {
+      return;
     }
+    await _showDuplicateCheckDialog(
+      authProvider.errorMessage ??
+          (exists ? '이미 등록된 전화번호입니다.' : '사용 가능한 전화번호입니다.'),
+    );
   }
 
   /// 회원가입 입력값을 검증하고 서버에 가입 요청을 전송합니다.
@@ -175,40 +169,31 @@ class _LoginScreen2State extends State<LoginScreen2> {
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.register(
+      email: id,
+      nickname: nickname,
+      name: name,
+      password: password,
+      phone: phone,
+    );
 
-    try {
-      final request = UserRegisterRequest(
-        email: id,
-        nickname: nickname,
-        name: name,
-        password: password,
-        phone: phone,
-      );
-      final response = await _loginService.register(request);
-      if (!mounted) {
-        return;
-      }
-      if (response.status) {
-        Navigator.pop(context, response.message);
-        return;
-      }
-      _showMessage(response.message);
-    } catch (e) {
-      _showMessage(ApiException.messageFrom(e));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    if (!mounted) {
+      return;
     }
+
+    if (success) {
+      Navigator.pop(context, '회원가입이 완료되었습니다.');
+      return;
+    }
+
+    _showMessage(authProvider.errorMessage ?? '회원가입에 실패했습니다.');
   }
 
   @override
   Widget build(BuildContext context) {
+    final isSubmitting = context.watch<AuthProvider>().isLoading;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: AppColors.primaryBackground,
@@ -275,7 +260,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       width: 96,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _hasIdText && !_isSubmitting
+                        onPressed: _hasIdText && !isSubmitting
                             ? _checkEmailDuplicate
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -375,7 +360,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       width: 96,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _hasNicknameText && !_isSubmitting
+                        onPressed: _hasNicknameText && !isSubmitting
                             ? _checkNicknameDuplicate
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -464,7 +449,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                       width: 96,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: _hasPhoneText && !_isSubmitting
+                        onPressed: _hasPhoneText && !isSubmitting
                             ? _checkPhoneDuplicate
                             : null,
                         style: ElevatedButton.styleFrom(
@@ -495,7 +480,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _register,
+                    onPressed: isSubmitting ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBackground,
                       foregroundColor: AppColors.white,
@@ -504,7 +489,7 @@ class _LoginScreen2State extends State<LoginScreen2> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: _isSubmitting
+                    child: isSubmitting
                         ? const SizedBox(
                             width: 22,
                             height: 22,

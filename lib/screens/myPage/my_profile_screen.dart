@@ -1,29 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
+import 'package:todaybread/screens/splash_screen.dart';
+import 'package:todaybread/utils/app_colors.dart';
 
-import 'my_page_screen3.dart';
-import 'my_page_screen4.dart';
-import 'my_page_screen5.dart';
+import 'my_page_edit_screen.dart';
 
 /// 마이페이지 프로필 상세 화면
-class MyPageScreen2 extends StatefulWidget {
-  const MyPageScreen2({super.key});
+/// 닉네임, 이름, 휴대폰 번호 수정 진입과 계정 관리 메뉴를 제공한다.
+class MyProfileScreen extends StatefulWidget {
+  const MyProfileScreen({super.key});
   @override
-  State<MyPageScreen2> createState() => _MyPageScreen2State();
+  State<MyProfileScreen> createState() => _MyProfileScreenState();
 }
 
-class _MyPageScreen2State extends State<MyPageScreen2> {
-  // TODO: 백엔드에 현재 로그인 사용자 정보 조회 API(예: GET /api/user/me)가 추가되면
-  // 닉네임 / 이름 / 휴대폰 번호를 더미 문자열이 아니라 실제 응답값으로 교체할 것.
-  //
-  // TODO: 백엔드에 수정 API(예: PATCH /api/user/me)가 추가되면
-  // 각 항목 탭 시 수정 화면 또는 바텀시트로 연결할 것.
-  //
-  // TODO: 로그아웃 API(POST /api/auth/logout)와 연결되면
-  // 저장된 JWT 토큰 삭제 후 로그인 화면으로 이동 처리할 것.
-
+class _MyProfileScreenState extends State<MyProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -172,34 +165,33 @@ class _MyPageScreen2State extends State<MyPageScreen2> {
           _buildMenuRow(
             title: '닉네임',
             value: profileProvider.nickname,
-            onTap: () => _openEditScreen(const MyPageScreen3()),
+            onTap: () => _openEditScreen(
+              const MyPageEditScreen(type: MyPageEditType.nickname),
+            ),
             isFirst: true,
           ),
           _buildDivider(),
           _buildMenuRow(
             title: '이름',
             value: profileProvider.name,
-            onTap: () => _openEditScreen(const MyPageScreen4()),
+            onTap: () => _openEditScreen(
+              const MyPageEditScreen(type: MyPageEditType.name),
+            ),
           ),
           _buildDivider(),
           _buildMenuRow(
             title: '휴대폰 번호 변경',
             value: profileProvider.phone,
-            onTap: () => _openEditScreen(const MyPageScreen5()),
+            onTap: () => _openEditScreen(
+              const MyPageEditScreen(type: MyPageEditType.phone),
+            ),
           ),
           _buildDivider(),
-          _buildMenuRow(
-            title: '로그아웃',
-            onTap: () {
-              // TODO: 로그아웃 API 연동 및 토큰 삭제 처리
-            },
-          ),
+          _buildMenuRow(title: '로그아웃', onTap: _showLogoutDialog),
           _buildDivider(),
           _buildMenuRow(
             title: '회원 탈퇴',
-            onTap: () {
-              // TODO: 회원 탈퇴 API 연동
-            },
+            onTap: _showWithdrawDialog,
             isLast: true,
           ),
         ],
@@ -269,5 +261,162 @@ class _MyPageScreen2State extends State<MyPageScreen2> {
       context,
       MaterialPageRoute(builder: (_) => screen),
     );
+  }
+
+  Future<void> _showLogoutDialog() async {
+    await _showConfirmDialog(
+      title: '로그아웃 전 주의사항',
+      message: '현재 계정에서 로그아웃하시겠습니까?\n\n언제든 다시 로그인할 수 있습니다',
+      buttonLabel: '로그 아웃',
+      onConfirm: _handleLogout,
+    );
+  }
+
+  Future<void> _showWithdrawDialog() async {
+    await _showConfirmDialog(
+      title: '회원탈퇴 전 주의사항',
+      message: '회원탈퇴를 하시겠습니까?\n\n회원 탈퇴 시 모든 계정 정보와 이용 기록이 삭제되며 복구할 수 없습니다',
+      buttonLabel: '회원 탈퇴',
+      onConfirm: _handleWithdraw,
+    );
+  }
+
+  Future<void> _showConfirmDialog({
+    required String title,
+    required String message,
+    required String buttonLabel,
+    required Future<void> Function() onConfirm,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close, color: Colors.black),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: Color(0xFF5F5F5F),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (authProvider.errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        authProvider.errorMessage!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFD64545),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: authProvider.isLoading ? null : onConfirm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBackground,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: authProvider.isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                buttonLabel,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _handleLogout() async {
+    final authProvider = context.read<AuthProvider>();
+    final profileProvider = context.read<UserProfileProvider>();
+    final success = await authProvider.logout();
+    if (!mounted) {
+      return;
+    }
+    if (!success) {
+      return;
+    }
+
+    profileProvider.clearProfile(notify: true);
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SplashScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _handleWithdraw() async {
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.withdraw();
+    if (!mounted) {
+      return;
+    }
+    if (success) {
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const SplashScreen()),
+        (route) => false,
+      );
+    }
   }
 }

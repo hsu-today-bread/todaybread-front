@@ -7,14 +7,18 @@ import 'package:todaybread/screens/main/main_shell.dart';
 
 import '../../utils/app_colors.dart';
 
-class MyPageScreen6 extends StatefulWidget {
-  const MyPageScreen6({super.key});
+/// 사업자 계정 인증 화면
+/// 사업자 번호를 입력받아 사장님 계정 전환을 진행한다.
+class BossAccountVerificationScreen extends StatefulWidget {
+  const BossAccountVerificationScreen({super.key});
 
   @override
-  State<MyPageScreen6> createState() => _MyScreen6State();
+  State<BossAccountVerificationScreen> createState() =>
+      _BossAccountVerificationScreenState();
 }
 
-class _MyScreen6State extends State<MyPageScreen6> {
+class _BossAccountVerificationScreenState
+    extends State<BossAccountVerificationScreen> {
   final TextEditingController _businessNumberController =
       TextEditingController();
 

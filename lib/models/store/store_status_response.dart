@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:todaybread/models/store/store_common_response.dart';
 
 part 'store_status_response.g.dart';
 
@@ -7,9 +6,8 @@ part 'store_status_response.g.dart';
 @JsonSerializable()
 class StoreStatusResponse {
   final bool hasStore;
-  final StoreCommonResponse? storeCommonResponse;
 
-  StoreStatusResponse({required this.hasStore, this.storeCommonResponse});
+  StoreStatusResponse({required this.hasStore});
 
   factory StoreStatusResponse.fromJson(Map<String, dynamic> json) =>
       _$StoreStatusResponseFromJson(json);

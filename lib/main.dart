@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/providers/boss/boss_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
@@ -10,7 +11,6 @@ import 'package:todaybread/screens/splash_screen.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/services/local/keyword_local_store.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart'; // 추가
-
 
 void main() async {
   // async 추가 + 아래 두 줄 추가
@@ -48,6 +48,7 @@ class TodayBreadApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => UserProfileProvider()..hydrateFromLocal(),
         ),
+        ChangeNotifierProvider(create: (_) => BreadProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => BossProvider()),
         ChangeNotifierProvider(create: (_) => KeywordProvider()),
@@ -56,7 +57,7 @@ class TodayBreadApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '오늘의 빵',
         theme: ThemeData(fontFamily: 'NoonnuBasicGothic'),
-        home: const MainShell(),
+        home: const SplashScreen(),
         //home: const SplashScreen(),
       ),
     );

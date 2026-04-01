@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
-import 'package:todaybread/screens/boss/boss_screen1.dart';
+import 'package:todaybread/providers/user/user_profile_provider.dart';
+import 'package:todaybread/screens/boss/boss_dashboard_screen.dart';
 import 'package:todaybread/screens/wish/wish_screen.dart';
 
 import '../../widgets/main_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
 import '../map/map_screen.dart';
-import '../myPage/my_page_screen1.dart';
+import '../myPage/my_page_home_screen.dart';
 
 /// 앱의 메인 탭 구조를 관리하는 셸 화면입니다.
 class MainShell extends StatefulWidget {
@@ -30,6 +31,13 @@ class _MainShellState extends State<MainShell>
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<UserProfileProvider>().hydrateFromLocal(notify: true);
+      context.read<AuthProvider>().refreshRoleFromStoredToken();
+    });
     _transitionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 220),
@@ -97,11 +105,11 @@ class _MainShellState extends State<MainShell>
         HomeScreen(),
         MapScreen(),
         WishScreen(),
-        BossScreen1(),
-        MyPageScreen1(),
+        BossDashboardScreen(),
+        MyPageHomeScreen(),
       ];
     }
 
-    return const [HomeScreen(), MapScreen(), WishScreen(), MyPageScreen1()];
+    return const [HomeScreen(), MapScreen(), WishScreen(), MyPageHomeScreen()];
   }
 }

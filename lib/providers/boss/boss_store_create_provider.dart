@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 
 class BossStoreCreateProvider extends ChangeNotifier {
@@ -14,7 +15,7 @@ class BossStoreCreateProvider extends ChangeNotifier {
   String description = '';
   String latitude = '';
   String longitude = '';
-  String? logoAssetPath;
+  final List<XFile> imageFiles = [];
   TimeOfDay? startTime;
   TimeOfDay? endTime;
   TimeOfDay? lastOrderTime;
@@ -56,8 +57,31 @@ class BossStoreCreateProvider extends ChangeNotifier {
     _syncAfterChange();
   }
 
-  void selectLogo(String assetPath) {
-    logoAssetPath = assetPath;
+  String? replaceImages(List<XFile> files) {
+    if (files.length > 5) {
+      return '매장 이미지는 최대 5장까지 선택할 수 있습니다.';
+    }
+    imageFiles
+      ..clear()
+      ..addAll(files.take(5));
+    _syncAfterChange();
+    return null;
+  }
+
+  String? addImage(XFile file) {
+    if (imageFiles.length >= 5) {
+      return '매장 이미지는 최대 5장까지 선택할 수 있습니다.';
+    }
+    imageFiles.add(file);
+    _syncAfterChange();
+    return null;
+  }
+
+  void removeImageAt(int index) {
+    if (index < 0 || index >= imageFiles.length) {
+      return;
+    }
+    imageFiles.removeAt(index);
     _syncAfterChange();
   }
 
@@ -175,8 +199,8 @@ class BossStoreCreateProvider extends ChangeNotifier {
         }
         return null;
       case 3:
-        if (logoAssetPath == null || logoAssetPath!.isEmpty) {
-          return '매장 로고를 선택해주세요.';
+        if (imageFiles.isEmpty) {
+          return '매장 이미지를 1장 이상 선택해주세요.';
         }
         return null;
       case 4:

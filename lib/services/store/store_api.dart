@@ -1,22 +1,37 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
-import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
+import 'package:todaybread/models/store/store_image_response.dart';
+import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/models/store/store_status_response.dart';
 
 part 'store_api.g.dart';
 
-/// 가게 관련 REST API 정의입니다.
 @RestApi()
 abstract class StoreApi {
   factory StoreApi(Dio dio, {String baseUrl}) = _StoreApi;
 
-  @GET('/api/store/status')
+  @GET('/api/boss/store/status')
   Future<StoreStatusResponse> getStatus();
 
-  @POST('/api/store/add-store')
-  Future<StoreCommonResponse> createStore(@Body() StoreCommonRequest request);
+  @GET('/api/boss/store')
+  Future<StoreInfoResponse> getStoreInfo();
 
-  @PUT('/api/store/update-store')
-  Future<StoreCommonResponse> updateStore(@Body() StoreCommonRequest request);
+  @MultiPart()
+  @POST('/api/boss/store')
+  Future<StoreInfoResponse> createStore(
+    @Part(name: 'request', contentType: 'application/json') File request,
+    @Part(name: 'images') List<File> images,
+  );
+
+  @PUT('/api/boss/store')
+  Future<StoreCommonResponse> updateStore(@Body() Map<String, dynamic> request);
+
+  @MultiPart()
+  @PUT('/api/boss/store/images')
+  Future<List<StoreImageResponse>> updateImages(
+    @Part(name: 'images') List<File> images,
+  );
 }

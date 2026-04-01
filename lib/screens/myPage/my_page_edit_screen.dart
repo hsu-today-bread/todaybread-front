@@ -7,6 +7,8 @@ import '../../utils/app_colors.dart';
 
 enum MyPageEditType { nickname, name, phone }
 
+/// 마이페이지 공통 정보 수정 화면
+/// 닉네임, 이름, 휴대폰 번호 수정을 타입별로 처리한다.
 class MyPageEditScreen extends StatefulWidget {
   const MyPageEditScreen({super.key, required this.type});
 

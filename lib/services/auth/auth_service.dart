@@ -16,6 +16,7 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   final AuthTokenStorage _tokenStorage = AuthTokenStorage.instance;
+  final Dio _dio = DioClient.instance;
 
   /// 로그인 성공 직후 받은 토큰을 저장합니다.
   Future<void> saveLoginTokens(UserLoginResponse response) async {
@@ -37,6 +38,21 @@ class AuthService {
   /// 저장된 토큰을 모두 비웁니다.
   Future<void> clearTokens() async {
     await _tokenStorage.clearTokens();
+  }
+
+  Future<bool> logout() async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/api/auth/logout',
+      );
+      final success = response.data?['success'] == true;
+      if (success) {
+        await clearTokens();
+      }
+      return success;
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
   }
 
   /// 스플래시 진입 시 저장된 access token이 실제로 유효한지 확인합니다.
