@@ -35,6 +35,17 @@ class UserProfileProvider extends ChangeNotifier {
     }
   }
 
+  void clearProfile({bool notify = false}) {
+    _nickname = null;
+    _name = null;
+    _phone = null;
+    profile = null;
+    errorMessage = null;
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
   /// 내 프로필을 수정합니다.
   Future<UserUpdateResponse?> updateProfile({
     required String nickname,

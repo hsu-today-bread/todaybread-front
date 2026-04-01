@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
+import 'package:todaybread/models/store/store_image_response.dart';
+import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/models/store/store_status_response.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/store/store_service.dart';
@@ -11,10 +14,12 @@ class StoreProvider extends ChangeNotifier {
 
   bool isLoading = false;
   bool hasFetchedStatus = false;
+  bool hasRegisteredStore = false;
   String? errorMessage;
-  StoreCommonResponse? store;
+  StoreInfoResponse? storeInfo;
 
-  bool get hasStore => store != null;
+  bool get hasStore => hasRegisteredStore;
+  StoreCommonResponse? get store => storeInfo?.store;
 
   Future<StoreStatusResponse?> fetchStatus() async {
     try {
@@ -23,12 +28,17 @@ class StoreProvider extends ChangeNotifier {
       notifyListeners();
 
       final response = await _service.getStatus();
-      // 사장님 탭 진입 시 서버 기준으로 "매장 있음/없음" 상태를 확정한다.
-      store = response.storeCommonResponse;
+      hasRegisteredStore = response.hasStore;
+      storeInfo = null;
+      if (response.hasStore) {
+        storeInfo = await _service.getStoreInfo();
+      }
       hasFetchedStatus = true;
       return response;
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
+      hasRegisteredStore = false;
+      storeInfo = null;
       hasFetchedStatus = true;
       return null;
     } finally {
@@ -37,15 +47,18 @@ class StoreProvider extends ChangeNotifier {
     }
   }
 
-  Future<StoreCommonResponse?> createStore(StoreCommonRequest request) async {
+  Future<StoreInfoResponse?> createStore(
+    StoreCommonRequest request,
+    List<XFile> images,
+  ) async {
     try {
       isLoading = true;
       errorMessage = null;
       notifyListeners();
 
-      final response = await _service.createStore(request);
-      // 등록 성공 후에는 별도 재조회 없이 현재 매장 정보를 바로 화면에 반영한다.
-      store = response;
+      final response = await _service.createStore(request, images);
+      hasRegisteredStore = true;
+      storeInfo = response;
       hasFetchedStatus = true;
       return response;
     } catch (e) {
@@ -64,7 +77,32 @@ class StoreProvider extends ChangeNotifier {
       notifyListeners();
 
       final response = await _service.updateStore(request);
-      store = response;
+      hasRegisteredStore = true;
+      storeInfo =
+          (storeInfo ?? StoreInfoResponse(store: response, images: const []))
+              .copyWith(store: response);
+      hasFetchedStatus = true;
+      return response;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<StoreImageResponse>?> updateImages(List<XFile> images) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final response = await _service.updateImages(images);
+      hasRegisteredStore = true;
+      if (storeInfo != null) {
+        storeInfo = storeInfo!.copyWith(images: response);
+      }
       hasFetchedStatus = true;
       return response;
     } catch (e) {

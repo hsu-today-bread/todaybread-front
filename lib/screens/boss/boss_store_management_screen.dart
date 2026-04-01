@@ -1,27 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/models/store/store_common_response.dart';
+import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
+import 'package:todaybread/screens/boss/boss_store_edit_screen.dart';
 import 'package:todaybread/screens/boss/boss_store_create_screen.dart';
+import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
-class BossScreen2 extends StatefulWidget {
-  const BossScreen2({super.key});
+/// 사장님 매장관리 메인 화면입니다.
+///
+/// 매장 존재 여부를 확인한 뒤 빈 상태, 등록 화면, 수정 진입 화면 중
+/// 현재 상태에 맞는 화면을 보여줍니다.
+class BossStoreManagementScreen extends StatefulWidget {
+  const BossStoreManagementScreen({super.key});
 
   @override
-  State<BossScreen2> createState() => _BossScreen2State();
+  State<BossStoreManagementScreen> createState() =>
+      _BossStoreManagementScreenState();
 }
 
-class _BossScreen2State extends State<BossScreen2> {
+class _BossStoreManagementScreenState extends State<BossStoreManagementScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<StoreProvider>();
-      // 매장 관리 진입 시 서버 기준으로 현재 사장님이 이미 매장을 등록했는지 조회한다.
-      if (!provider.hasFetchedStatus) {
-        provider.fetchStatus();
-      }
+      // 매장 수정/이미지 교체 후에도 최신 상태를 보장하려고
+      // 진입할 때마다 서버 기준으로 다시 조회한다.
+      provider.fetchStatus();
     });
   }
 
@@ -45,10 +53,42 @@ class _BossScreen2State extends State<BossScreen2> {
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    if (storeProvider.hasStore && storeProvider.store != null) {
-                      // 등록된 매장이 있으면 empty 상태 대신 관리 탭 화면을 보여준다.
-                      final store = storeProvider.store!;
-                      return _StoreManagementView(store: store);
+                    if (storeProvider.storeInfo != null) {
+                      return _StoreManagementView(
+                        storeInfo: storeProvider.storeInfo!,
+                      );
+                    }
+
+                    if (storeProvider.hasStore) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              '매장 정보를 불러오지 못했습니다',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              storeProvider.errorMessage ?? '잠시 후 다시 시도해주세요.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6F6F6F),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton(
+                              onPressed: storeProvider.fetchStatus,
+                              child: const Text('다시 시도'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
 
                     // 아직 등록된 매장이 없으면 로띠 + 등록 버튼 empty state를 보여준다.
@@ -146,9 +186,9 @@ class _BossScreen2State extends State<BossScreen2> {
 }
 
 class _StoreManagementView extends StatelessWidget {
-  final dynamic store;
+  final StoreInfoResponse storeInfo;
 
-  const _StoreManagementView({required this.store});
+  const _StoreManagementView({required this.storeInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +219,8 @@ class _StoreManagementView extends StatelessWidget {
           Expanded(
             child: TabBarView(
               children: [
-                _StoreBasicInfoTab(store: store),
-                _StoreOperationInfoTab(store: store),
+                _StoreBasicInfoTab(storeInfo: storeInfo),
+                _StoreOperationInfoTab(store: storeInfo.store),
               ],
             ),
           ),
@@ -191,41 +231,76 @@ class _StoreManagementView extends StatelessWidget {
 }
 
 class _StoreBasicInfoTab extends StatelessWidget {
-  final dynamic store;
+  final StoreInfoResponse storeInfo;
 
-  const _StoreBasicInfoTab({required this.store});
+  const _StoreBasicInfoTab({required this.storeInfo});
 
   @override
   Widget build(BuildContext context) {
-    final isOpen = _isStoreOpen(store.endTime as String);
+    final StoreCommonResponse store = storeInfo.store;
+    final isOpen = _isStoreOpen(store.endTime);
+    final primaryImageUrl = storeInfo.images.isEmpty
+        ? null
+        : _resolveImageUrl(storeInfo.images.first.imageUrl);
 
     return ListView(
       children: [
         _InfoSection(
-          title: '로고',
+          title: '매장 이미지',
+          onEdit: () => _openEdit(context, StoreEditMode.image),
           child: Container(
             width: 96,
             height: 96,
             decoration: BoxDecoration(
               color: const Color(0xFFF3F3F3),
               borderRadius: BorderRadius.circular(18),
+              image: primaryImageUrl == null
+                  ? null
+                  : DecorationImage(
+                      image: NetworkImage(primaryImageUrl),
+                      fit: BoxFit.cover,
+                    ),
             ),
-            child: const Icon(
-              Icons.storefront_rounded,
-              size: 42,
-              color: Color(0xFF7D7D7D),
-            ),
+            child: primaryImageUrl == null
+                ? const Icon(
+                    Icons.storefront_rounded,
+                    size: 42,
+                    color: Color(0xFF7D7D7D),
+                  )
+                : null,
           ),
         ),
         _InfoSection(
           title: '매장 위치',
           value: '${store.addressLine1}\n${store.addressLine2}',
+          onEdit: () => _openEdit(context, StoreEditMode.location),
         ),
-        _InfoSection(title: '매장 이름', value: store.name as String),
-        _InfoSection(title: '매장 전화번호', value: store.phone as String),
+        _InfoSection(
+          title: '매장 이름',
+          value: store.name,
+          onEdit: () => _openEdit(context, StoreEditMode.name),
+        ),
+        _InfoSection(
+          title: '매장 전화번호',
+          value: store.phone,
+          onEdit: () => _openEdit(context, StoreEditMode.phone),
+        ),
         _InfoSection(title: '영업 상태', value: isOpen ? '영업중' : '영업 종료'),
-        _InfoSection(title: '매장 소개', value: store.description as String),
+        _InfoSection(
+          title: '매장 소개',
+          value: store.description,
+          onEdit: () => _openEdit(context, StoreEditMode.description),
+        ),
       ],
+    );
+  }
+
+  Future<void> _openEdit(BuildContext context, StoreEditMode mode) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BossStoreEditScreen(storeInfo: storeInfo, mode: mode),
+      ),
     );
   }
 
@@ -247,6 +322,13 @@ class _StoreBasicInfoTab extends StatelessWidget {
     }
     return false;
   }
+
+  String _resolveImageUrl(String imageUrl) {
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    return '${DioClient.baseUrl}$imageUrl';
+  }
 }
 
 class _StoreOperationInfoTab extends StatelessWidget {
@@ -258,12 +340,33 @@ class _StoreOperationInfoTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        _InfoSection(title: '영업 시간', value: store.orderTime as String),
+        _InfoSection(
+          title: '영업 시간',
+          value: store.orderTime as String,
+          onEdit: () => _openEdit(context),
+        ),
         _InfoSection(
           title: '운영 정보',
           value: '종료 ${store.endTime} / 라스트 오더 ${store.lastOrderTime}',
+          onEdit: () => _openEdit(context),
         ),
       ],
+    );
+  }
+
+  Future<void> _openEdit(BuildContext context) async {
+    final storeInfo = context.read<StoreProvider>().storeInfo;
+    if (storeInfo == null) {
+      return;
+    }
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BossStoreEditScreen(
+          storeInfo: storeInfo,
+          mode: StoreEditMode.operation,
+        ),
+      ),
     );
   }
 }
@@ -272,8 +375,14 @@ class _InfoSection extends StatelessWidget {
   final String title;
   final String? value;
   final Widget? child;
+  final VoidCallback? onEdit;
 
-  const _InfoSection({required this.title, this.value, this.child});
+  const _InfoSection({
+    required this.title,
+    this.value,
+    this.child,
+    this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -300,18 +409,16 @@ class _InfoSection extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  // TODO: 실제 수정 화면이 준비되면 각 항목별 상세 수정 화면으로 연결
-                  // TODO: 각 항목별 수정 화면 연결
-                },
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  size: 20,
-                  color: Color(0xFF6F6F6F),
+              if (onEdit != null)
+                IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 20,
+                    color: Color(0xFF6F6F6F),
+                  ),
+                  visualDensity: VisualDensity.compact,
                 ),
-                visualDensity: VisualDensity.compact,
-              ),
             ],
           ),
           const SizedBox(height: 10),

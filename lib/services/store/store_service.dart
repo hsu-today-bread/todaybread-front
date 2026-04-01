@@ -1,5 +1,11 @@
+import 'dart:io';
+import 'dart:convert';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
+import 'package:todaybread/models/store/store_image_response.dart';
+import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/models/store/store_status_response.dart';
 import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/services/store/store_api.dart';
@@ -16,11 +22,40 @@ class StoreService {
     return await _api.getStatus();
   }
 
-  Future<StoreCommonResponse> createStore(StoreCommonRequest request) async {
-    return await _api.createStore(request);
+  Future<StoreInfoResponse> getStoreInfo() async {
+    return await _api.getStoreInfo();
+  }
+
+  Future<StoreInfoResponse> createStore(
+    StoreCommonRequest request,
+    List<XFile> images,
+  ) async {
+    final directory = await Directory.systemTemp.createTemp(
+      'todaybread_store_',
+    );
+    final requestFile = File('${directory.path}/request.json');
+    await requestFile.writeAsString(jsonEncode(request.toJson()));
+
+    final imageFiles = images.map((image) => File(image.path)).toList();
+
+    try {
+      return await _api.createStore(requestFile, imageFiles);
+    } finally {
+      if (await requestFile.exists()) {
+        await requestFile.delete();
+      }
+      if (await directory.exists()) {
+        await directory.delete();
+      }
+    }
   }
 
   Future<StoreCommonResponse> updateStore(StoreCommonRequest request) async {
-    return await _api.updateStore(request);
+    return await _api.updateStore(request.toJson());
+  }
+
+  Future<List<StoreImageResponse>> updateImages(List<XFile> images) async {
+    final imageFiles = images.map((image) => File(image.path)).toList();
+    return await _api.updateImages(imageFiles);
   }
 }

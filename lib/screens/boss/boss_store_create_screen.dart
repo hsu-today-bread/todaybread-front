@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/boss/boss_store_create_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
@@ -189,7 +192,10 @@ class _BossStoreCreateView extends StatelessWidget {
       // 마지막 step에서는 draft 상태를 StoreCommonRequest로 묶어
       // 실제 가게 등록 API를 호출한다. UI가 서비스를 직접 부르지 않고
       // StoreProvider를 거치도록 분리한 이유가 여기 있다.
-      final response = await storeProvider.createStore(provider.buildRequest());
+      final response = await storeProvider.createStore(
+        provider.buildRequest(),
+        provider.imageFiles,
+      );
       if (!context.mounted) {
         return;
       }
@@ -396,7 +402,7 @@ class _StoreCreateStepBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '매장 로고를 등록해주세요',
+              '매장 이미지를 등록해주세요',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -415,7 +421,7 @@ class _StoreCreateStepBody extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: const Color(0xFFD9D9D9)),
                 ),
-                child: provider.logoAssetPath == null
+                child: provider.imageFiles.isEmpty
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
@@ -426,7 +432,7 @@ class _StoreCreateStepBody extends StatelessWidget {
                           ),
                           SizedBox(height: 14),
                           Text(
-                            '이미지 선택',
+                            '이미지 최대 5장 선택',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -435,35 +441,70 @@ class _StoreCreateStepBody extends StatelessWidget {
                           ),
                         ],
                       )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Stack(
-                          fit: StackFit.expand,
+                    : Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Image.asset(
-                              provider.logoAssetPath!,
-                              fit: BoxFit.cover,
+                            Text(
+                              '선택된 이미지 ${provider.imageFiles.length}/5',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
                             ),
-                            Positioned(
-                              right: 12,
-                              top: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xB3000000),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  '다시 선택',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                            const SizedBox(height: 14),
+                            Expanded(
+                              child: GridView.builder(
+                                itemCount: provider.imageFiles.length,
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 10,
+                                      mainAxisSpacing: 10,
+                                    ),
+                                itemBuilder: (context, index) {
+                                  final imageFile = provider.imageFiles[index];
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Image.file(
+                                          File(imageFile.path),
+                                          fit: BoxFit.cover,
+                                        ),
+                                        Positioned(
+                                          right: 6,
+                                          top: 6,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              context
+                                                  .read<
+                                                    BossStoreCreateProvider
+                                                  >()
+                                                  .removeImageAt(index);
+                                            },
+                                            child: Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xB3000000),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -590,7 +631,9 @@ class _StoreCreateStepBody extends StatelessWidget {
   }
 
   Future<void> _showLogoPicker(BuildContext context) async {
-    // 서버 업로드 스펙이 아직 없어서, 지금은 로컬 asset 선택만 흉내낸다.
+    final provider = context.read<BossStoreCreateProvider>();
+    final picker = ImagePicker();
+
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -606,7 +649,7 @@ class _StoreCreateStepBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  '매장 로고 선택',
+                  '매장 이미지 선택',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -616,24 +659,50 @@ class _StoreCreateStepBody extends StatelessWidget {
                 const SizedBox(height: 16),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.image_outlined),
-                  title: const Text('기본 로고 사용'),
-                  onTap: () {
-                    context.read<BossStoreCreateProvider>().selectLogo(
-                      'assets/images/logo.png',
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('갤러리에서 선택'),
+                  subtitle: const Text('여러 장 선택 가능, 최대 5장'),
+                  onTap: () async {
+                    final images = await picker.pickMultiImage(
+                      imageQuality: 85,
                     );
+                    if (!context.mounted) {
+                      return;
+                    }
+                    final message = provider.replaceImages(images);
                     Navigator.of(bottomSheetContext).pop();
+                    if (!context.mounted || message == null) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(message)));
                   },
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.storefront_outlined),
-                  title: const Text('빵 이미지 사용'),
-                  onTap: () {
-                    context.read<BossStoreCreateProvider>().selectLogo(
-                      'assets/images/img_bread.png',
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('카메라로 촬영'),
+                  subtitle: const Text('한 장씩 추가, 최대 5장'),
+                  onTap: () async {
+                    final image = await picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
                     );
+                    if (!context.mounted) {
+                      return;
+                    }
+                    String? message;
+                    if (image != null) {
+                      message = provider.addImage(image);
+                    }
                     Navigator.of(bottomSheetContext).pop();
+                    if (!context.mounted || message == null) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(message)));
                   },
                 ),
               ],

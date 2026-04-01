@@ -8,6 +8,7 @@ part of 'store_common_response.dart';
 
 StoreCommonResponse _$StoreCommonResponseFromJson(Map<String, dynamic> json) =>
     StoreCommonResponse(
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
       phone: json['phone'] as String,
       description: json['description'] as String,
@@ -23,6 +24,7 @@ StoreCommonResponse _$StoreCommonResponseFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$StoreCommonResponseToJson(
         StoreCommonResponse instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'name': instance.name,
       'phone': instance.phone,
       'description': instance.description,

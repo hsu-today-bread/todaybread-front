@@ -8,24 +8,24 @@ import '../../utils/app_text_styles.dart';
 ///
 /// - 전화번호로 아이디 찾기
 /// - 아이디 + 전화번호로 비밀번호 찾기
-class LoginScreen3 extends StatefulWidget {
-  const LoginScreen3({super.key});
+class AccountRecoveryScreen extends StatefulWidget {
+  const AccountRecoveryScreen({super.key});
 
   @override
-  State<LoginScreen3> createState() => _LoginScreen3State();
+  State<AccountRecoveryScreen> createState() => _AccountRecoveryScreenState();
 }
 
-class _LoginScreen3State extends State<LoginScreen3> {
+class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
   /// 아이디 찾기용 전화번호 입력 컨트롤러
   final TextEditingController _findIdPhoneController = TextEditingController();
 
   /// 비밀번호 찾기용 아이디 입력 컨트롤러
   final TextEditingController _findPasswordIdController =
-  TextEditingController();
+      TextEditingController();
 
   /// 비밀번호 찾기용 전화번호 입력 컨트롤러
   final TextEditingController _findPasswordPhoneController =
-  TextEditingController();
+      TextEditingController();
 
   @override
   void dispose() {
@@ -49,13 +49,11 @@ class _LoginScreen3State extends State<LoginScreen3> {
           backgroundColor: AppColors.primaryBackground,
           elevation: 0,
           scrolledUnderElevation: 0,
-          title: const Text(
-            '아이디/비밀번호 찾기',
-            style: AppTextStyles.appBarTitle,
-          ),
+          title: const Text('아이디/비밀번호 찾기', style: AppTextStyles.appBarTitle),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            /// 이전 화면(LoginScreen1)으로 이동
+
+            /// 이전 화면(LoginScreen)으로 이동
             onPressed: () {
               Navigator.pop(context);
             },
@@ -69,10 +67,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /// 전화번호 라벨 (아이디 찾기)
-                  const Text(
-                    '전화번호',
-                    style: AppTextStyles.formLabel,
-                  ),
+                  const Text('전화번호', style: AppTextStyles.formLabel),
                   const SizedBox(height: 8),
 
                   /// 아이디 찾기용 전화번호 입력 필드
@@ -91,9 +86,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Color(0xFFD9D9D9),
-                        ),
+                        borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
@@ -127,10 +120,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                   const SizedBox(height: 44),
 
                   /// 아이디 라벨 (비밀번호 찾기)
-                  const Text(
-                    '이메일',
-                    style: AppTextStyles.formLabel,
-                  ),
+                  const Text('이메일', style: AppTextStyles.formLabel),
                   const SizedBox(height: 8),
 
                   /// 비밀번호 찾기용 아이디 입력 필드
@@ -148,9 +138,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Color(0xFFD9D9D9),
-                        ),
+                        borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
@@ -159,10 +147,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                   const SizedBox(height: 24),
 
                   /// 전화번호 라벨 (비밀번호 찾기)
-                  const Text(
-                    '전화번호',
-                    style: AppTextStyles.formLabel,
-                  ),
+                  const Text('전화번호', style: AppTextStyles.formLabel),
                   const SizedBox(height: 8),
 
                   /// 비밀번호 찾기용 전화번호 입력 필드
@@ -181,9 +166,7 @@ class _LoginScreen3State extends State<LoginScreen3> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Color(0xFFD9D9D9),
-                        ),
+                        borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),

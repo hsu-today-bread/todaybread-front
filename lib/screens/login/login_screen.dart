@@ -1,26 +1,26 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/user/user_profile_provider.dart';
 import 'package:todaybread/screens/main/main_shell.dart';
 import '../../utils/app_colors.dart';
-import 'login_screen2.dart';
-import 'login_screen3.dart';
+import 'account_recovery_screen.dart';
+import 'sign_up_screen.dart';
 
-/// 로그인 화면 (LoginScreen1)
+/// 로그인 화면
 ///
 /// - 사용자 이메일 / 비밀번호 입력 화면
 /// - 카카오 로그인 또는 앱 내 회원가입으로 이동 가능
 
-class LoginScreen1 extends StatefulWidget {
-  const LoginScreen1({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<LoginScreen1> createState() => _LoginScreen1State();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreen1State extends State<LoginScreen1> {
+class _LoginScreenState extends State<LoginScreen> {
   /// 아이디 입력 컨트롤러
   final TextEditingController _idController = TextEditingController();
 
@@ -86,12 +86,13 @@ class _LoginScreen1State extends State<LoginScreen1> {
     }
 
     if (response.success) {
+      context.read<UserProfileProvider>().hydrateFromLocal(notify: true);
       debugPrint(
-        '[LoginScreen1] login success access=${response.accessToken != null} refresh=${response.refreshToken != null}',
+        '[LoginScreen] login success access=${response.accessToken != null} refresh=${response.refreshToken != null}',
       );
-      debugPrint('[LoginScreen1] nickname=${response.nickname}');
-      debugPrint('[LoginScreen1] name=${response.name}');
-      debugPrint('[LoginScreen1] phone=${response.phone}');
+      debugPrint('[LoginScreen] nickname=${response.nickname}');
+      debugPrint('[LoginScreen] name=${response.name}');
+      debugPrint('[LoginScreen] phone=${response.phone}');
       _showMessage('로그인에 성공했습니다.');
       Navigator.pushReplacement(
         context,
@@ -259,7 +260,8 @@ class _LoginScreen1State extends State<LoginScreen1> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const LoginScreen3(),
+                                      builder: (_) =>
+                                          const AccountRecoveryScreen(),
                                     ),
                                   );
                                 },
@@ -327,7 +329,7 @@ class _LoginScreen1State extends State<LoginScreen1> {
                             final message = await Navigator.push<String>(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const LoginScreen2(),
+                                builder: (_) => const SignUpScreen(),
                               ),
                             );
                             if (!mounted ||

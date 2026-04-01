@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
-import 'package:todaybread/screens/boss/boss_screen2.dart';
-import 'package:todaybread/screens/boss/boss_screen3.dart';
-import 'package:todaybread/screens/boss/boss_screen4.dart';
-import 'package:todaybread/screens/boss/boss_screen5.dart';
-import 'package:todaybread/screens/boss/boss_screen6.dart';
+import 'package:todaybread/screens/boss/boss_bread_management_screen.dart';
+import 'package:todaybread/screens/boss/boss_order_history_screen.dart';
+import 'package:todaybread/screens/boss/boss_review_management_screen.dart';
+import 'package:todaybread/screens/boss/boss_sales_screen.dart';
+import 'package:todaybread/screens/boss/boss_store_management_screen.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
-class BossScreen1 extends StatelessWidget {
-  const BossScreen1({super.key});
+/// 사장님 홈 화면입니다.
+///
+/// 각 관리 메뉴의 진입점 역할만 담당하고,
+/// 실제 상세 관리 화면은 각 도메인 화면으로 바로 연결합니다.
+class BossDashboardScreen extends StatelessWidget {
+  const BossDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -77,55 +81,67 @@ class BossScreen1 extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-                decoration: BoxDecoration(
+              Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  onTap: () {
+                    // TODO: Replace with the finalized boss order-history screen flow.
+                    _push(context, const BossOrderHistoryScreen());
+                  },
                   borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryBackground, Color(0xFF2F8E84)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1F000000),
-                      blurRadius: 18,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '사업자 계정 이용중',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '매장과 메뉴, 주문과 리뷰를 한 곳에서 관리해보세요.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.45,
-                        color: Color(0xFFF2FFFC),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: const [
-                        _BossStatusChip(label: '매장 관리'),
-                        SizedBox(width: 8),
-                        _BossStatusChip(label: '메뉴 관리'),
-                        SizedBox(width: 8),
-                        _BossStatusChip(label: '주문 확인'),
+                  child: Ink(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x1A000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 10),
+                        ),
                       ],
                     ),
-                  ],
+                    child: const Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '주문내역 확인하기',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '주문 내역은 실시간으로 확인해주세요',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  height: 1.45,
+                                  color: Color(0xFF757575),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          '>',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF9A9A9A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -142,35 +158,35 @@ class BossScreen1 extends StatelessWidget {
                 title: '매장관리',
                 subtitle: '매장 정보와 운영 상태를 관리합니다.',
                 icon: Icons.store_mall_directory_outlined,
-                onTap: () => _push(context, const BossScreen2()),
+                onTap: () => _push(context, const BossStoreManagementScreen()),
               ),
               const SizedBox(height: 12),
               _BossMenuTile(
                 title: '메뉴관리',
                 subtitle: '메뉴 추가와 수정, 품절 처리를 진행합니다.',
                 icon: Icons.restaurant_menu_outlined,
-                onTap: () => _push(context, const BossScreen3()),
+                onTap: () => _push(context, const BossBreadManagementScreen()),
               ),
               const SizedBox(height: 12),
               _BossMenuTile(
                 title: '매출관리',
                 subtitle: '일별/월별 매출 현황을 확인합니다.',
                 icon: Icons.bar_chart_rounded,
-                onTap: () => _push(context, const BossScreen4()),
+                onTap: () => _push(context, const BossSalesScreen()),
               ),
               const SizedBox(height: 12),
               _BossMenuTile(
                 title: '리뷰관리',
                 subtitle: '고객 리뷰를 확인하고 관리합니다.',
                 icon: Icons.rate_review_outlined,
-                onTap: () => _push(context, const BossScreen5()),
+                onTap: () => _push(context, const BossReviewManagementScreen()),
               ),
               const SizedBox(height: 12),
               _BossMenuTile(
                 title: '주문내역',
                 subtitle: '접수된 주문과 처리 상태를 확인합니다.',
                 icon: Icons.receipt_long_outlined,
-                onTap: () => _push(context, const BossScreen6()),
+                onTap: () => _push(context, const BossOrderHistoryScreen()),
               ),
             ],
           ),
@@ -181,31 +197,6 @@ class BossScreen1 extends StatelessWidget {
 
   void _push(BuildContext context, Widget screen) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
-  }
-}
-
-class _BossStatusChip extends StatelessWidget {
-  final String label;
-
-  const _BossStatusChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0x33FFFFFF),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-      ),
-    );
   }
 }
 

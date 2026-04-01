@@ -10,6 +10,7 @@ class MapScreen extends StatefulWidget {
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
+
 /// 기기의 현재 위치를 가져오는 코드
 ///
 /// 위치 권환을 허용하지 않으면 Future가 오류를 반환함
@@ -36,7 +37,8 @@ Future<Position> _determinePosition() async {
   if (permission == LocationPermission.deniedForever) {
     // 권환을 영원히 허용하지 않음을 선택시, 그에 맞게 처리
     return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.');
+      'Location permissions are permanently denied, we cannot request permissions.',
+    );
   }
 
   // 위치 권환 허용 시, 현재 위치 반환
@@ -44,7 +46,6 @@ Future<Position> _determinePosition() async {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  NaverMapController? _mapController;
   NCameraPosition? _initialPosition;
 
   @override
@@ -56,7 +57,8 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _loadInitialPosition() async {
     final position = await _determinePosition(); // 결과 기다렸다가 받기
     setState(() {
-      _initialPosition = NCameraPosition( // _initialPosition에 저장!
+      _initialPosition = NCameraPosition(
+        // _initialPosition에 저장!
         target: NLatLng(position.latitude, position.longitude),
         zoom: 14,
       );
@@ -80,16 +82,14 @@ class _MapScreenState extends State<MapScreen> {
           : NaverMap(
               options: NaverMapViewOptions(
                 // 보여줄 요소들( ex) building은 건물 )
-                activeLayerGroups: [
-                  NLayerGroup.building,
-                ],
+                activeLayerGroups: [NLayerGroup.building],
                 // 초기 위치 잡는 코드, 한성대학교로 해놨음
                 initialCameraPosition: _initialPosition!,
                 // 지도 타입 설정(basic은 기본이고, 다른 모드도 가능)
                 mapType: NMapType.basic,
                 locationButtonEnable: true,
               ),
-      ),
+            ),
     );
   }
 }

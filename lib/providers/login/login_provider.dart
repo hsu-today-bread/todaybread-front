@@ -64,7 +64,20 @@ class AuthProvider extends ChangeNotifier {
   /// 이메일 중복 여부를 확인합니다.
   Future<bool> checkEmail(String email) async {
     try {
+      errorMessage = null;
       return await _service.checkEmail(email);
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// 닉네임 중복 여부를 확인합니다.
+  Future<bool> checkNickname(String nickname) async {
+    try {
+      errorMessage = null;
+      return await _service.checkNickname(nickname);
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
       notifyListeners();
@@ -75,6 +88,7 @@ class AuthProvider extends ChangeNotifier {
   /// 전화번호 중복 여부를 확인합니다.
   Future<bool> checkPhone(String phone) async {
     try {
+      errorMessage = null;
       return await _service.checkPhone(phone);
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
@@ -93,6 +107,7 @@ class AuthProvider extends ChangeNotifier {
   }) async {
     try {
       isLoading = true;
+      errorMessage = null;
       notifyListeners();
 
       final request = UserRegisterRequest(
@@ -126,6 +141,43 @@ class AuthProvider extends ChangeNotifier {
     if (notify) {
       notifyListeners();
     }
+  }
+
+  // 마이페이지에서 로그아웃 팝업 확인 클릭 시 토큰을 반납하고
+  //api/auth/logout을 호출
+  Future<bool> logout() async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final success = await AuthService.instance.logout();
+      if (!success) {
+        errorMessage = '로그아웃에 실패했습니다.';
+        return false;
+      }
+
+      await UserLocalStore.clearUser();
+      role = UserRole.unknown;
+      return true;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> withdraw() async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    errorMessage = '회원 탈퇴 API가 아직 백엔드에 구현되지 않았습니다.';
+    isLoading = false;
+    notifyListeners();
+    return false;
   }
 
   UserRole _roleFromToken(String? token) {
