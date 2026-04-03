@@ -7,6 +7,7 @@ part 'user_update_request.g.dart';
 class UserUpdateRequest {
   final String nickname;
   final String name;
+  @JsonKey(name: 'phoneNumber')
   final String phone;
 
   UserUpdateRequest({

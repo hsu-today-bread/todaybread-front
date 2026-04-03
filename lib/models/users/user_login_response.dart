@@ -16,7 +16,6 @@ class UserLoginResponse {
   /// access token 만료 시 재발급에 사용하는 refresh token
   final String? refreshToken;
 
-
   /// 사용할 닉네임
   final String nickname;
 
@@ -25,6 +24,7 @@ class UserLoginResponse {
 
   /// 전화번호
   ///
+  @JsonKey(name: 'phoneNumber')
   final String phone;
 
   /// 로그인 응답 모델을 생성
@@ -34,7 +34,7 @@ class UserLoginResponse {
     this.refreshToken,
     required this.nickname,
     required this.name,
-    required this.phone
+    required this.phone,
   });
 
   /// JSON 맵을 [UserLoginResponse]로 변환합니다.

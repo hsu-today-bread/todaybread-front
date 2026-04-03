@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/bread/bread_common_request.dart';
 import 'package:todaybread/models/bread/bread_common_response.dart';
+import 'package:todaybread/models/bread/bread_detail_response.dart';
+import 'package:todaybread/models/bread/nearyby_bread_response.dart';
 import 'package:todaybread/services/bread/bread_api.dart';
 import 'package:todaybread/services/network/dio_client.dart';
 
@@ -17,6 +19,19 @@ class BreadService {
   static final BreadService instance = BreadService._();
 
   final BreadApi _api = BreadApi(DioClient.instance);
+
+  Future<List<NearbyBreadResponse>> getNearbyBreads({
+    required double lat,
+    required double lng,
+    required int radius,
+    required String sort,
+  }) async {
+    return await _api.getNearbyBreads(lat, lng, radius, sort);
+  }
+
+  Future<BreadDetailResponse> getBreadDetail(int breadId) async {
+    return await _api.getBreadDetail(breadId);
+  }
 
   Future<List<BreadCommonResponse>> getMyBreads() async {
     return await _api.getMyBreads();

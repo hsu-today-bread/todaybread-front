@@ -9,13 +9,13 @@ part of 'user_register_response.dart';
 UserRegisterResponse _$UserRegisterResponseFromJson(
         Map<String, dynamic> json) =>
     UserRegisterResponse(
-      status: json['status'] as bool,
+      success: json['success'] as bool,
       message: json['message'] as String,
     );
 
 Map<String, dynamic> _$UserRegisterResponseToJson(
         UserRegisterResponse instance) =>
     <String, dynamic>{
-      'status': instance.status,
+      'success': instance.success,
       'message': instance.message,
     };

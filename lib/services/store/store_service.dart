@@ -2,8 +2,11 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:todaybread/models/store/favourite_store_response.dart';
+import 'package:todaybread/models/store/favourite_store_toggle_response.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
+import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/models/store/store_image_response.dart';
 import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/models/store/store_status_response.dart';
@@ -24,6 +27,18 @@ class StoreService {
 
   Future<StoreInfoResponse> getStoreInfo() async {
     return await _api.getStoreInfo();
+  }
+
+  Future<StoreDetailResponse> getStoreDetail(int storeId) async {
+    return await _api.getStoreDetail(storeId);
+  }
+
+  Future<List<FavouriteStoreResponse>> getFavouriteStores() async {
+    return await _api.getFavouriteStores();
+  }
+
+  Future<FavouriteStoreToggleResponse> toggleFavouriteStore(int storeId) async {
+    return await _api.toggleFavouriteStore({'storeId': storeId});
   }
 
   Future<StoreInfoResponse> createStore(

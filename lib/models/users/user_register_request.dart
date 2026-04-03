@@ -21,6 +21,7 @@ class UserRegisterRequest {
 
   /// 전화번호
   ///
+  @JsonKey(name: 'phoneNumber')
   final String phone;
 
   /// 회원가입 요청 모델을 생성합니다.
@@ -33,8 +34,8 @@ class UserRegisterRequest {
   });
 
   /// JSON 맵을 [UserRegisterRequest]로 변환합니다.
-  factory UserRegisterRequest.fromJson(Map<String, dynamic> json)
-  => _$UserRegisterRequestFromJson(json);
+  factory UserRegisterRequest.fromJson(Map<String, dynamic> json) =>
+      _$UserRegisterRequestFromJson(json);
 
   /// 현재 객체를 JSON 맵으로 변환합니다.
   Map<String, dynamic> toJson() => _$UserRegisterRequestToJson(this);

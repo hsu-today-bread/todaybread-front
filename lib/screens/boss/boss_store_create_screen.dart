@@ -8,6 +8,7 @@ import 'package:todaybread/providers/boss/boss_store_create_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/widgets/business_hours_editor.dart';
 
 class BossStoreCreateScreen extends StatelessWidget {
   const BossStoreCreateScreen({super.key});
@@ -519,7 +520,7 @@ class _StoreCreateStepBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '매장 영업시간을 입력해주세요',
+              '요일별 영업시간을 설정해주세요',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -528,7 +529,7 @@ class _StoreCreateStepBody extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              '라스트 오더는 고객이 음식을 픽업하는 마지막 시간입니다',
+              '요일별로 개별 설정할 수 있고, 공통 시간으로 전체/평일/주말 일괄 적용도 가능합니다.',
               style: TextStyle(
                 fontSize: 13,
                 height: 1.45,
@@ -536,44 +537,24 @@ class _StoreCreateStepBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 22),
-            _TimeFieldTile(
-              title: '시작',
-              value: provider.formatTime(provider.startTime),
-              onTap: () => _pickTime(
-                context,
-                initialTime:
-                    provider.startTime ?? const TimeOfDay(hour: 9, minute: 0),
-                onSelected: context
-                    .read<BossStoreCreateProvider>()
-                    .updateStartTime,
-              ),
-            ),
-            const SizedBox(height: 14),
-            _TimeFieldTile(
-              title: '종료',
-              value: provider.formatTime(provider.endTime),
-              onTap: () => _pickTime(
-                context,
-                initialTime:
-                    provider.endTime ?? const TimeOfDay(hour: 22, minute: 0),
-                onSelected: context
-                    .read<BossStoreCreateProvider>()
-                    .updateEndTime,
-              ),
-            ),
-            const SizedBox(height: 14),
-            _TimeFieldTile(
-              title: '라스트 오더',
-              value: provider.formatTime(provider.lastOrderTime),
-              onTap: () => _pickTime(
-                context,
-                initialTime:
-                    provider.lastOrderTime ??
-                    const TimeOfDay(hour: 21, minute: 30),
-                onSelected: context
-                    .read<BossStoreCreateProvider>()
-                    .updateLastOrderTime,
-              ),
+            BusinessHoursEditor(
+              template: provider.templateBusinessHours,
+              businessHours: provider.businessHours,
+              onTemplateChanged: context
+                  .read<BossStoreCreateProvider>()
+                  .updateTemplateBusinessHours,
+              onApplyTemplateToAll: context
+                  .read<BossStoreCreateProvider>()
+                  .applyTemplateToAll,
+              onApplyTemplateToWeekdays: context
+                  .read<BossStoreCreateProvider>()
+                  .applyTemplateToWeekdays,
+              onApplyTemplateToWeekend: context
+                  .read<BossStoreCreateProvider>()
+                  .applyTemplateToWeekend,
+              onDayChanged: context
+                  .read<BossStoreCreateProvider>()
+                  .updateBusinessHours,
             ),
           ],
         );
@@ -613,20 +594,6 @@ class _StoreCreateStepBody extends StatelessWidget {
         );
       default:
         return const SizedBox.shrink();
-    }
-  }
-
-  Future<void> _pickTime(
-    BuildContext context, {
-    required TimeOfDay initialTime,
-    required ValueChanged<TimeOfDay> onSelected,
-  }) async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-    );
-    if (time != null) {
-      onSelected(time);
     }
   }
 
@@ -725,66 +692,6 @@ class _StoreCreateStepBody extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
       ),
-    );
-  }
-}
-
-class _TimeFieldTile extends StatelessWidget {
-  final String title;
-  final String value;
-  final VoidCallback onTap;
-
-  const _TimeFieldTile({
-    required this.title,
-    required this.value,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 10),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Ink(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFD9D9D9)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    value.isEmpty ? '시간을 선택해주세요' : value,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: value.isEmpty
-                          ? const Color(0xFF9C9C9C)
-                          : Colors.black,
-                    ),
-                  ),
-                ),
-                const Icon(Icons.schedule_outlined, color: Color(0xFF7D7D7D)),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

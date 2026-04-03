@@ -52,3 +52,7 @@ android/gradle.properties
 
 # Local Custom files.
 custom
+
+
+*.hprof
+android/*.hprof

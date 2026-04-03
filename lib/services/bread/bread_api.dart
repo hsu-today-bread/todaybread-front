@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:todaybread/models/bread/bread_common_response.dart';
+import 'package:todaybread/models/bread/bread_detail_response.dart';
+import 'package:todaybread/models/bread/nearyby_bread_response.dart';
 
 part 'bread_api.g.dart';
 
@@ -12,6 +14,17 @@ part 'bread_api.g.dart';
 @RestApi()
 abstract class BreadApi {
   factory BreadApi(Dio dio, {String baseUrl}) = _BreadApi;
+
+  @GET('/api/bread/nearby')
+  Future<List<NearbyBreadResponse>> getNearbyBreads(
+    @Query('lat') double lat,
+    @Query('lng') double lng,
+    @Query('radius') int radius,
+    @Query('sort') String sort,
+  );
+
+  @GET('/api/bread/detail/{breadId}')
+  Future<BreadDetailResponse> getBreadDetail(@Path('breadId') int breadId);
 
   @GET('/api/boss/bread')
   Future<List<BreadCommonResponse>> getMyBreads();

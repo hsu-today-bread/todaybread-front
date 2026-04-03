@@ -6,6 +6,7 @@ import 'package:todaybread/services/login/login_service.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/user/user_service.dart';
+import 'package:todaybread/utils/user_input_helper.dart';
 
 /// 사용자 프로필 상태를 관리하는 Provider입니다.
 class UserProfileProvider extends ChangeNotifier {
@@ -57,8 +58,14 @@ class UserProfileProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
+      final normalizedPhone = UserInputHelper.normalizePhoneNumber(phone);
+
       final response = await _service.updateProfile(
-        UserUpdateRequest(nickname: nickname, name: name, phone: phone),
+        UserUpdateRequest(
+          nickname: nickname,
+          name: name,
+          phone: normalizedPhone,
+        ),
       );
 
       // 서버 응답 기준으로 provider 메모리 상태도 함께 갱신한다.
@@ -93,7 +100,9 @@ class UserProfileProvider extends ChangeNotifier {
   Future<bool> checkPhone(String phone) async {
     try {
       errorMessage = null;
-      return await _loginService.checkPhone(phone);
+      return await _loginService.checkPhone(
+        UserInputHelper.normalizePhoneNumber(phone),
+      );
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
       notifyListeners();

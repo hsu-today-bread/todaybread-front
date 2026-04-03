@@ -1,5 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:todaybread/models/bread/nearyby_bread_response.dart';
+import 'package:todaybread/screens/bread/bread_detail_screen.dart';
+import 'package:todaybread/services/bread/bread_service.dart';
+import 'package:todaybread/utils/display_helper.dart';
+import 'package:todaybread/widgets/bread_list_card.dart';
+
+import '../../services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
 
 /// 메인 홈 화면 (HomeScreen)
@@ -17,6 +27,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final BreadService _breadService = BreadService.instance;
+  Timer? _clockTimer;
+
   /// 현재 선택된 정렬 탭 인덱스
   int _selectedSortIndex = 0;
 
@@ -30,54 +43,25 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 거리 슬라이더 눈금 라벨 목록
   final List<String> _distanceLabels = ['3km', '5km', '10km'];
 
-  /// 더미 상품 데이터 목록(서버랑 연동할 때 여기 수정하면 됨)
-  final List<Map<String, dynamic>> _items = [
-    {
-      'name': '파리 바게트 딸기케이크',
-      'distance': '0.7km',
-      'rating': '4.9',
-      'price': 9600,
-      'originalPrice': 14500,
-      'remainingTime': '08:12:44:28',
-      'imagePlaceholder': Colors.brown.shade200,
-    },
-    {
-      'name': '파리 바게트 딸기케이크',
-      'distance': '0.7km',
-      'rating': '4.9',
-      'price': 9600,
-      'originalPrice': 14500,
-      'remainingTime': '08:12:44:28',
-      'imagePlaceholder': Colors.orange.shade200,
-    },
-    {
-      'name': '파리 바게트 딸기케이크',
-      'distance': '0.7km',
-      'rating': '4.9',
-      'price': 9600,
-      'originalPrice': 14500,
-      'remainingTime': '08:12:44:28',
-      'imagePlaceholder': Colors.blueGrey.shade200,
-    },
-    {
-      'name': '파리 바게트 딸기케이크',
-      'distance': '0.7km',
-      'rating': '4.9',
-      'price': 9600,
-      'originalPrice': 14500,
-      'remainingTime': '08:12:44:28',
-      'imagePlaceholder': Colors.brown.shade200,
-    },
-    {
-      'name': '파리 바게트 딸기케이크',
-      'distance': '0.7km',
-      'rating': '4.9',
-      'price': 9600,
-      'originalPrice': 14500,
-      'remainingTime': '08:12:44:28',
-      'imagePlaceholder': Colors.amber.shade200,
-    },
-  ];
+  List<NearbyBreadResponse> _items = [];
+  bool _isLoadingItems = false;
+  bool _hasLoadedItems = false;
+  String? _loadError;
+  double? _currentLatitude;
+  double? _currentLongitude;
+
+  @override
+  void initState() {
+    super.initState();
+    _startClockTimer();
+    _fetchNearbyItems();
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,26 +181,54 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _startClockTimer() {
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    });
+  }
+
   /// 정렬 탭 + 상품 리스트 빌드
   Widget _buildContent() {
     return Column(
       children: [
-        /// 정렬 탭 행
         _buildSortTabs(),
-
         const SizedBox(height: 8),
-
-        /// 상품 카드 스크롤 리스트
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _items.length,
-            itemBuilder: (context, index) {
-              return _buildItemCard(_items[index]);
-            },
-          ),
-        ),
+        Expanded(child: _buildContentBody()),
       ],
+    );
+  }
+
+  Widget _buildContentBody() {
+    if (_isLoadingItems && !_hasLoadedItems) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null && _items.isEmpty) {
+      return _buildMessageState(
+        message: _loadError!,
+        actionLabel: '다시 시도',
+        onPressed: _fetchNearbyItems,
+      );
+    }
+
+    if (_hasLoadedItems && _items.isEmpty) {
+      return _buildMessageState(
+        message: '현재 위치 기준으로 표시할 상품이 없습니다.',
+        actionLabel: '새로고침',
+        onPressed: _fetchNearbyItems,
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _items.length,
+      itemBuilder: (context, index) {
+        return _buildItemCard(_items[index]);
+      },
     );
   }
 
@@ -240,6 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     _selectedSortIndex = index;
                   });
+                  _fetchNearbyItems();
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -277,139 +290,23 @@ class _HomeScreenState extends State<HomeScreen> {
   ///
   /// - 좌측: 상품 이미지 (현재 컬러 박스로 대체)
   /// - 우측: 상품명, 거리, 별점, 가격(할인가/원가), 남은 시간
-  Widget _buildItemCard(Map<String, dynamic> item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  Widget _buildItemCard(NearbyBreadResponse item) {
+    return BreadListCard(
+      name: item.name,
+      imageUrl: item.imageUrl,
+      distanceText: DisplayHelper.formatDistanceKm(item.distance),
+      salePrice: item.salePrice,
+      originalPrice: item.originalPrice,
+      remainingTimeText: _buildRemainingTime(item),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                BreadDetailScreen(breadId: item.id, storeId: item.storeId),
           ),
-        ],
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            /// 상품 이미지 영역
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-              ),
-              child: Container(
-                width: 120,
-                color: item['imagePlaceholder'] as Color,
-
-                /// TODO: 실제 이미지 연동 시 Image.network() 또는 Image.asset()으로 교체
-                child: const Center(
-                  child: Icon(
-                    Icons.bakery_dining,
-                    size: 40,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-            ),
-
-            /// 상품 정보 영역
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// 상품명
-                    Text(
-                      item['name'] as String,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    /// 거리 + 별점 행
-                    Row(
-                      children: [
-                        Text(
-                          item['distance'] as String,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.star, size: 14, color: Colors.amber),
-                        const SizedBox(width: 2),
-                        Text(
-                          item['rating'] as String,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    /// 가격 행: 할인가 + 원가(취소선)
-                    Row(
-                      children: [
-                        Text(
-                          '${_formatPrice(item['price'] as int)}원',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${_formatPrice(item['originalPrice'] as int)}원',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    /// 남은 시간 행
-                    Row(
-                      children: [
-                        const Text(
-                          '남은시간',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          item['remainingTime'] as String,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -539,6 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _distanceFilter = tempDistance;
                         });
                         Navigator.pop(context);
+                        _fetchNearbyItems();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
@@ -565,13 +463,142 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 가격을 천 단위 콤마 포함 문자열로 변환
-  ///
-  /// ex) 14500 → '14,500'
-  String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]},',
+  Widget _buildMessageState({
+    required String message,
+    required String actionLabel,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5E5E5E),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            OutlinedButton(
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryBackground,
+                side: const BorderSide(color: AppColors.primaryBackground),
+              ),
+              child: Text(actionLabel),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  Future<void> _fetchNearbyItems() async {
+    setState(() {
+      _isLoadingItems = true;
+      _loadError = null;
+    });
+
+    try {
+      final coordinates = await _ensureCoordinates();
+      final response = await _breadService.getNearbyBreads(
+        lat: coordinates.lat,
+        lng: coordinates.lng,
+        radius: _selectedRadiusKm,
+        sort: _selectedSortQuery,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _items = response;
+        _hasLoadedItems = true;
+        _isLoadingItems = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _items = [];
+        _hasLoadedItems = true;
+        _isLoadingItems = false;
+        _loadError = _messageFrom(error);
+      });
+    }
+  }
+
+  Future<({double lat, double lng})> _ensureCoordinates() async {
+    if (_currentLatitude != null && _currentLongitude != null) {
+      return (lat: _currentLatitude!, lng: _currentLongitude!);
+    }
+
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('위치 서비스를 켜주세요.');
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('위치 권한을 허용해야 근처 상품을 불러올 수 있습니다.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('위치 권한이 영구적으로 거부되었습니다. 설정에서 권한을 허용해주세요.');
+    }
+
+    final position = await Geolocator.getCurrentPosition();
+    _currentLatitude = position.latitude;
+    _currentLongitude = position.longitude;
+    return (lat: position.latitude, lng: position.longitude);
+  }
+
+  int get _selectedRadiusKm {
+    if (_distanceFilter < 0.34) {
+      return 3;
+    }
+    if (_distanceFilter < 0.67) {
+      return 5;
+    }
+    return 10;
+  }
+
+  String get _selectedSortQuery {
+    switch (_selectedSortIndex) {
+      case 1:
+        return 'distance';
+      case 2:
+        return 'price';
+      case 3:
+        return 'discount';
+      default:
+        return 'none';
+    }
+  }
+
+  String _buildRemainingTime(NearbyBreadResponse item) {
+    return DisplayHelper.buildLastOrderRemainingTimeText(
+      isSelling: item.isSelling,
+      lastOrderTime: item.lastOrderTime,
+    );
+  }
+
+  String _messageFrom(Object error) {
+    if (error is Exception) {
+      final raw = error.toString();
+      if (raw.startsWith('Exception: ')) {
+        return raw.replaceFirst('Exception: ', '');
+      }
+    }
+    return ApiException.messageFrom(error);
   }
 }
