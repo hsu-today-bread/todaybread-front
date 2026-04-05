@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../providers/login/login_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import '../../utils/user_input_helper.dart';
 
 /// 회원가입 화면
 ///
@@ -137,8 +138,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   /// 전화번호 중복 여부를 서버에서 확인합니다.
   Future<void> _checkPhoneDuplicate() async {
+    final phone = _phoneController.text.trim();
+    if (!UserInputHelper.isValidPhoneNumber(phone)) {
+      await _showDuplicateCheckDialog('전화번호는 010-1234-5678 형식으로 입력해주세요.');
+      return;
+    }
+
     final authProvider = context.read<AuthProvider>();
-    final exists = await authProvider.checkPhone(_phoneController.text.trim());
+    final exists = await authProvider.checkPhone(phone);
     if (!mounted) {
       return;
     }
@@ -166,6 +173,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
     if (nickname.length < 2 || nickname.length > 10) {
       _showMessage('닉네임은 2자~10자로 입력해주세요.');
+      return;
+    }
+    if (!UserInputHelper.isValidEmail(id)) {
+      _showMessage('올바른 이메일 형식으로 입력해주세요.');
+      return;
+    }
+    if (password.length < UserInputHelper.minPasswordLength) {
+      _showMessage('비밀번호는 최소 10자 이상 입력해주세요.');
+      return;
+    }
+    if (!UserInputHelper.isValidPhoneNumber(phone)) {
+      _showMessage('전화번호는 010-1234-5678 형식으로 입력해주세요.');
       return;
     }
 
@@ -325,6 +344,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 6),
+                const Text(
+                  '* 최소 10자 이상 입력해주세요.',
+                  style: AppTextStyles.helperCaption,
+                ),
                 const SizedBox(height: 24),
                 const Text('닉네임', style: AppTextStyles.formLabel),
                 const SizedBox(height: 8),
@@ -423,9 +447,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: TextField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: const [
+                          PhoneNumberTextInputFormatter(),
+                        ],
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
-                          hintText: '01012346789',
+                          hintText: '010-1234-5678',
                           hintStyle: AppTextStyles.formHint,
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(
@@ -474,6 +501,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '* 010-1234-5678 형식으로 입력해주세요.',
+                  style: AppTextStyles.helperCaption,
                 ),
                 const Spacer(),
                 SizedBox(

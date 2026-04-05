@@ -8,6 +8,7 @@ import 'package:todaybread/screens/boss/boss_store_edit_screen.dart';
 import 'package:todaybread/screens/boss/boss_store_create_screen.dart';
 import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/utils/business_hours_helper.dart';
 
 /// 사장님 매장관리 메인 화면입니다.
 ///
@@ -238,7 +239,7 @@ class _StoreBasicInfoTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final StoreCommonResponse store = storeInfo.store;
-    final isOpen = _isStoreOpen(store.endTime);
+    final isOpen = isStoreOpenNow(store.businessHours);
     final primaryImageUrl = storeInfo.images.isEmpty
         ? null
         : _resolveImageUrl(storeInfo.images.first.imageUrl);
@@ -304,25 +305,6 @@ class _StoreBasicInfoTab extends StatelessWidget {
     );
   }
 
-  bool _isStoreOpen(String endTime) {
-    final now = TimeOfDay.now();
-    final parts = endTime.split(':');
-    if (parts.length < 2) {
-      return false;
-    }
-    final end = TimeOfDay(
-      hour: int.tryParse(parts[0]) ?? 0,
-      minute: int.tryParse(parts[1]) ?? 0,
-    );
-    if (now.hour < end.hour) {
-      return true;
-    }
-    if (now.hour == end.hour && now.minute <= end.minute) {
-      return true;
-    }
-    return false;
-  }
-
   String _resolveImageUrl(String imageUrl) {
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
@@ -332,22 +314,29 @@ class _StoreBasicInfoTab extends StatelessWidget {
 }
 
 class _StoreOperationInfoTab extends StatelessWidget {
-  final dynamic store;
+  final StoreCommonResponse store;
 
   const _StoreOperationInfoTab({required this.store});
 
   @override
   Widget build(BuildContext context) {
+    final weeklySummary = store.businessHours
+        .map(
+          (value) =>
+              '${weekdayLabel(value.dayOfWeek)}요일  ${buildBusinessHoursSummary(isClosed: value.isClosed, startTime: value.startTime, endTime: value.endTime, lastOrderTime: value.lastOrderTime)}',
+        )
+        .join('\n');
+
     return ListView(
       children: [
         _InfoSection(
-          title: '영업 시간',
-          value: store.orderTime as String,
+          title: '오늘 영업시간',
+          value: buildTodayBusinessHoursText(store.businessHours),
           onEdit: () => _openEdit(context),
         ),
         _InfoSection(
-          title: '운영 정보',
-          value: '종료 ${store.endTime} / 라스트 오더 ${store.lastOrderTime}',
+          title: '주간 영업시간',
+          value: weeklySummary,
           onEdit: () => _openEdit(context),
         ),
       ],

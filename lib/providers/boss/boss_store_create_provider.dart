@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:todaybread/models/store/business_hours_request.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
+import 'package:todaybread/utils/business_hours_helper.dart';
 
 class BossStoreCreateProvider extends ChangeNotifier {
-  // 매장 등록은 여러 step을 한 화면에서 처리하므로
-  // 현재 step index와 입력 중인 draft 값을 이 provider에 모아둔다.
+  BossStoreCreateProvider()
+    : templateBusinessHours = const BusinessHoursRequest(
+        dayOfWeek: 1,
+        isClosed: false,
+        startTime: defaultBusinessStartTime,
+        endTime: defaultBusinessEndTime,
+        lastOrderTime: defaultBusinessLastOrderTime,
+      ),
+      businessHours = List.generate(
+        7,
+        (index) => BusinessHoursRequest(
+          dayOfWeek: index + 1,
+          isClosed: false,
+          startTime: defaultBusinessStartTime,
+          endTime: defaultBusinessEndTime,
+          lastOrderTime: defaultBusinessLastOrderTime,
+        ),
+      );
+
   int currentStep = 0;
   String? errorMessage;
 
@@ -16,9 +35,8 @@ class BossStoreCreateProvider extends ChangeNotifier {
   String latitude = '';
   String longitude = '';
   final List<XFile> imageFiles = [];
-  TimeOfDay? startTime;
-  TimeOfDay? endTime;
-  TimeOfDay? lastOrderTime;
+  BusinessHoursRequest templateBusinessHours;
+  List<BusinessHoursRequest> businessHours;
 
   bool get isLastStep => currentStep == 5;
 
@@ -57,6 +75,32 @@ class BossStoreCreateProvider extends ChangeNotifier {
     _syncAfterChange();
   }
 
+  void updateTemplateBusinessHours(BusinessHoursRequest value) {
+    templateBusinessHours = value;
+    _syncAfterChange();
+  }
+
+  void updateBusinessHours(BusinessHoursRequest value) {
+    businessHours =
+        businessHours
+            .map((hours) => hours.dayOfWeek == value.dayOfWeek ? value : hours)
+            .toList()
+          ..sort((a, b) => a.dayOfWeek.compareTo(b.dayOfWeek));
+    _syncAfterChange();
+  }
+
+  void applyTemplateToAll() {
+    _applyTemplate(const [1, 2, 3, 4, 5, 6, 7]);
+  }
+
+  void applyTemplateToWeekdays() {
+    _applyTemplate(const [1, 2, 3, 4, 5]);
+  }
+
+  void applyTemplateToWeekend() {
+    _applyTemplate(const [6, 7]);
+  }
+
   String? replaceImages(List<XFile> files) {
     if (files.length > 5) {
       return '매장 이미지는 최대 5장까지 선택할 수 있습니다.';
@@ -85,24 +129,7 @@ class BossStoreCreateProvider extends ChangeNotifier {
     _syncAfterChange();
   }
 
-  void updateStartTime(TimeOfDay value) {
-    startTime = value;
-    _syncAfterChange();
-  }
-
-  void updateEndTime(TimeOfDay value) {
-    endTime = value;
-    _syncAfterChange();
-  }
-
-  void updateLastOrderTime(TimeOfDay value) {
-    lastOrderTime = value;
-    _syncAfterChange();
-  }
-
   bool nextStep() {
-    // step 이동 전에 현재 단계 입력값만 검증한다.
-    // 최종 서버 전송 검증은 buildRequest/createStore 시점에서 한 번 더 걸린다.
     final error = _validateCurrentStep();
     if (error != null) {
       errorMessage = error;
@@ -132,8 +159,6 @@ class BossStoreCreateProvider extends ChangeNotifier {
     final parsedLongitude = double.tryParse(longitude);
 
     if (parsedLatitude == null || parsedLongitude == null) {
-      // 백엔드 StoreCommonRequest는 BigDecimal 위도/경도를 필수로 받는다.
-      // 지금은 임시 입력값을 받아 double로 보내고, 값이 없으면 예외로 막는다.
       throw const FormatException('위도/경도 정보가 없습니다.');
     }
 
@@ -145,30 +170,8 @@ class BossStoreCreateProvider extends ChangeNotifier {
       addressLine2: addressLine2.trim(),
       latitude: parsedLatitude,
       longitude: parsedLongitude,
-      endTime: formatTime(endTime),
-      lastOrderTime: formatTime(lastOrderTime),
-      orderTime: buildOrderTime(),
+      businessHours: businessHours,
     );
-  }
-
-  String buildOrderTime() {
-    // 백엔드 orderTime은 문자열이므로, 화면에서 고른 시작/종료 시각을
-    // 단순 표시 문자열 형태로 묶어서 보낸다.
-    final start = formatTime(startTime);
-    final end = formatTime(endTime);
-    if (start.isEmpty || end.isEmpty) {
-      return '';
-    }
-    return '$start - $end';
-  }
-
-  String formatTime(TimeOfDay? time) {
-    if (time == null) {
-      return '';
-    }
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute:00';
   }
 
   String? _validateCurrentStep() {
@@ -204,14 +207,17 @@ class BossStoreCreateProvider extends ChangeNotifier {
         }
         return null;
       case 4:
-        if (startTime == null) {
-          return '가게 시작 시간을 선택해주세요.';
-        }
-        if (endTime == null) {
-          return '가게 종료 시간을 선택해주세요.';
-        }
-        if (lastOrderTime == null) {
-          return '라스트 오더 시간을 선택해주세요.';
+        for (final value in businessHours) {
+          final error = validateBusinessHoursValues(
+            isClosed: value.isClosed,
+            startTime: value.startTime,
+            endTime: value.endTime,
+            lastOrderTime: value.lastOrderTime,
+            label: '${weekdayLabel(value.dayOfWeek)}요일',
+          );
+          if (error != null) {
+            return error;
+          }
         }
         return null;
       case 5:
@@ -227,8 +233,28 @@ class BossStoreCreateProvider extends ChangeNotifier {
     }
   }
 
+  void _applyTemplate(List<int> targetDays) {
+    businessHours = businessHours.map((value) {
+      if (!targetDays.contains(value.dayOfWeek)) {
+        return value;
+      }
+      return value.copyWith(
+        isClosed: templateBusinessHours.isClosed,
+        startTime: templateBusinessHours.isClosed
+            ? null
+            : templateBusinessHours.startTime,
+        endTime: templateBusinessHours.isClosed
+            ? null
+            : templateBusinessHours.endTime,
+        lastOrderTime: templateBusinessHours.isClosed
+            ? null
+            : templateBusinessHours.lastOrderTime,
+      );
+    }).toList()..sort((a, b) => a.dayOfWeek.compareTo(b.dayOfWeek));
+    _syncAfterChange();
+  }
+
   void _syncAfterChange() {
-    // 입력이 바뀌는 즉시 화면이 다시 그려져야 로고/시간 선택 결과가 바로 보인다.
     errorMessage = null;
     notifyListeners();
   }

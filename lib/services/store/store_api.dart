@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:todaybread/models/store/favourite_store_response.dart';
+import 'package:todaybread/models/store/favourite_store_toggle_response.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
+import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/models/store/store_image_response.dart';
 import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/models/store/store_status_response.dart';
@@ -18,6 +21,17 @@ abstract class StoreApi {
 
   @GET('/api/boss/store')
   Future<StoreInfoResponse> getStoreInfo();
+
+  @GET('/api/store/{storeId}')
+  Future<StoreDetailResponse> getStoreDetail(@Path('storeId') int storeId);
+
+  @GET('/api/favourite-stores')
+  Future<List<FavouriteStoreResponse>> getFavouriteStores();
+
+  @POST('/api/favourite-stores')
+  Future<FavouriteStoreToggleResponse> toggleFavouriteStore(
+    @Body() Map<String, dynamic> request,
+  );
 
   @MultiPart()
   @POST('/api/boss/store')

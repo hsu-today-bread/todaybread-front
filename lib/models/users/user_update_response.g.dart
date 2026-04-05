@@ -10,12 +10,12 @@ UserUpdateResponse _$UserUpdateResponseFromJson(Map<String, dynamic> json) =>
     UserUpdateResponse(
       nickname: json['nickname'] as String,
       name: json['name'] as String,
-      phone: json['phone'] as String,
+      phone: json['phoneNumber'] as String,
     );
 
 Map<String, dynamic> _$UserUpdateResponseToJson(UserUpdateResponse instance) =>
     <String, dynamic>{
       'nickname': instance.nickname,
       'name': instance.name,
-      'phone': instance.phone,
+      'phoneNumber': instance.phone,
     };

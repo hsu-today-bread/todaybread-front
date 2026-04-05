@@ -16,6 +16,65 @@ class _BreadApi implements BreadApi {
   String? baseUrl;
 
   @override
+  Future<List<NearbyBreadResponse>> getNearbyBreads(
+    double lat,
+    double lng,
+    int radius,
+    String sort,
+  ) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'lat': lat,
+      r'lng': lng,
+      r'radius': radius,
+      r'sort': sort,
+    };
+    final _headers = <String, dynamic>{};
+    final Map<String, dynamic>? _data = null;
+    final _result = await _dio.fetch<List<dynamic>>(
+      _setStreamType<List<NearbyBreadResponse>>(
+        Options(method: 'GET', headers: _headers, extra: _extra)
+            .compose(
+              _dio.options,
+              '/api/bread/nearby',
+              queryParameters: queryParameters,
+              data: _data,
+            )
+            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+      ),
+    );
+    final value = _result.data!
+        .map(
+          (dynamic i) =>
+              NearbyBreadResponse.fromJson(i as Map<String, dynamic>),
+        )
+        .toList();
+    return value;
+  }
+
+  @override
+  Future<BreadDetailResponse> getBreadDetail(int breadId) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final Map<String, dynamic>? _data = null;
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+      _setStreamType<BreadDetailResponse>(
+        Options(method: 'GET', headers: _headers, extra: _extra)
+            .compose(
+              _dio.options,
+              '/api/bread/detail/${breadId}',
+              queryParameters: queryParameters,
+              data: _data,
+            )
+            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+      ),
+    );
+    final value = BreadDetailResponse.fromJson(_result.data!);
+    return value;
+  }
+
+  @override
   Future<List<BreadCommonResponse>> getMyBreads() async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -35,7 +94,8 @@ class _BreadApi implements BreadApi {
     );
     final value = _result.data!
         .map(
-          (dynamic i) => BreadCommonResponse.fromJson(i as Map<String, dynamic>),
+          (dynamic i) =>
+              BreadCommonResponse.fromJson(i as Map<String, dynamic>),
         )
         .toList();
     return value;

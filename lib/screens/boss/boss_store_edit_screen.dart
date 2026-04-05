@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/models/store/business_hours_request.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/utils/business_hours_helper.dart';
+import 'package:todaybread/widgets/business_hours_editor.dart';
 
 /// 매장관리에서 각 항목의 연필 버튼을 눌렀을 때 열리는 공용 수정 화면입니다.
 ///
@@ -35,10 +38,10 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _startTimeController;
-  late final TextEditingController _endTimeController;
-  late final TextEditingController _lastOrderTimeController;
   final List<XFile> _selectedImages = [];
+
+  late List<BusinessHoursRequest> _businessHours;
+  late BusinessHoursRequest _templateBusinessHours;
 
   String? _localError;
   String? _phoneCheckMessage;
@@ -52,10 +55,10 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     _nameController = TextEditingController(text: store.name);
     _phoneController = TextEditingController(text: store.phone);
     _descriptionController = TextEditingController(text: store.description);
-    final startTime = _parseOrderStart(store.orderTime);
-    _startTimeController = TextEditingController(text: startTime);
-    _endTimeController = TextEditingController(text: store.endTime);
-    _lastOrderTimeController = TextEditingController(text: store.lastOrderTime);
+    _businessHours =
+        store.businessHours.map((value) => value.toRequest()).toList()
+          ..sort((a, b) => a.dayOfWeek.compareTo(b.dayOfWeek));
+    _templateBusinessHours = _buildInitialTemplate(_businessHours);
   }
 
   @override
@@ -65,9 +68,6 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _descriptionController.dispose();
-    _startTimeController.dispose();
-    _endTimeController.dispose();
-    _lastOrderTimeController.dispose();
     super.dispose();
   }
 
@@ -387,25 +387,49 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label('영업 시작 시간'),
-        const SizedBox(height: 10),
-        _TimeButton(
-          value: _startTimeController.text,
-          onTap: () => _pickTime(_startTimeController),
+        const Text(
+          '요일별 영업시간을 수정해주세요',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
         ),
-        const SizedBox(height: 14),
-        _label('매장 종료 시간'),
-        const SizedBox(height: 10),
-        _TimeButton(
-          value: _endTimeController.text,
-          onTap: () => _pickTime(_endTimeController),
+        const SizedBox(height: 8),
+        const Text(
+          '각 요일을 개별 수정할 수 있고, 공통 시간으로 전체/평일/주말 일괄 적용도 가능합니다.',
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.45,
+            color: Color(0xFF7C7C7C),
+          ),
         ),
-        const SizedBox(height: 14),
-        _label('라스트 오더'),
-        const SizedBox(height: 10),
-        _TimeButton(
-          value: _lastOrderTimeController.text,
-          onTap: () => _pickTime(_lastOrderTimeController),
+        const SizedBox(height: 22),
+        BusinessHoursEditor(
+          template: _templateBusinessHours,
+          businessHours: _businessHours,
+          onTemplateChanged: (value) {
+            setState(() {
+              _templateBusinessHours = value;
+            });
+          },
+          onApplyTemplateToAll: () =>
+              _applyTemplate(const [1, 2, 3, 4, 5, 6, 7]),
+          onApplyTemplateToWeekdays: () =>
+              _applyTemplate(const [1, 2, 3, 4, 5]),
+          onApplyTemplateToWeekend: () => _applyTemplate(const [6, 7]),
+          onDayChanged: (value) {
+            setState(() {
+              _businessHours =
+                  _businessHours
+                      .map(
+                        (hours) =>
+                            hours.dayOfWeek == value.dayOfWeek ? value : hours,
+                      )
+                      .toList()
+                    ..sort((a, b) => a.dayOfWeek.compareTo(b.dayOfWeek));
+            });
+          },
         ),
       ],
     );
@@ -498,39 +522,6 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     });
   }
 
-  Future<void> _pickTime(TextEditingController controller) async {
-    final initial =
-        _parseTime(controller.text) ?? const TimeOfDay(hour: 9, minute: 0);
-    final time = await showTimePicker(context: context, initialTime: initial);
-    if (time == null) {
-      return;
-    }
-    controller.text =
-        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
-    setState(() {});
-  }
-
-  TimeOfDay? _parseTime(String value) {
-    final parts = value.split(':');
-    if (parts.length < 2) {
-      return null;
-    }
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) {
-      return null;
-    }
-    return TimeOfDay(hour: hour, minute: minute);
-  }
-
-  String _parseOrderStart(String orderTime) {
-    final parts = orderTime.split(' - ');
-    if (parts.length == 2) {
-      return parts[0];
-    }
-    return '09:00:00';
-  }
-
   Future<void> _handleSubmit() async {
     setState(() {
       _localError = null;
@@ -586,28 +577,32 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     final addressLine2 = widget.mode == StoreEditMode.location
         ? _address2Controller.text.trim()
         : store.addressLine2;
-    final endTime = widget.mode == StoreEditMode.operation
-        ? _endTimeController.text.trim()
-        : store.endTime;
-    final lastOrderTime = widget.mode == StoreEditMode.operation
-        ? _lastOrderTimeController.text.trim()
-        : store.lastOrderTime;
-    final orderTime = widget.mode == StoreEditMode.operation
-        ? '${_startTimeController.text.trim()} - ${_endTimeController.text.trim()}'
-        : store.orderTime;
 
     if (name.isEmpty ||
         phone.isEmpty ||
         description.isEmpty ||
         addressLine1.isEmpty ||
-        addressLine2.isEmpty ||
-        endTime.isEmpty ||
-        lastOrderTime.isEmpty ||
-        orderTime.isEmpty) {
+        addressLine2.isEmpty) {
       setState(() {
         _localError = '모든 필수 값을 입력해주세요.';
       });
       return null;
+    }
+
+    for (final value in _businessHours) {
+      final error = validateBusinessHoursValues(
+        isClosed: value.isClosed,
+        startTime: value.startTime,
+        endTime: value.endTime,
+        lastOrderTime: value.lastOrderTime,
+        label: '${weekdayLabel(value.dayOfWeek)}요일',
+      );
+      if (error != null) {
+        setState(() {
+          _localError = error;
+        });
+        return null;
+      }
     }
 
     return StoreCommonRequest(
@@ -618,10 +613,47 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
       addressLine2: addressLine2,
       latitude: store.latitude,
       longitude: store.longitude,
-      endTime: endTime,
-      lastOrderTime: lastOrderTime,
-      orderTime: orderTime,
+      businessHours: _businessHours,
     );
+  }
+
+  BusinessHoursRequest _buildInitialTemplate(
+    List<BusinessHoursRequest> values,
+  ) {
+    for (final value in values) {
+      if (!value.isClosed) {
+        return value.copyWith(dayOfWeek: 1);
+      }
+    }
+    return const BusinessHoursRequest(
+      dayOfWeek: 1,
+      isClosed: false,
+      startTime: defaultBusinessStartTime,
+      endTime: defaultBusinessEndTime,
+      lastOrderTime: defaultBusinessLastOrderTime,
+    );
+  }
+
+  void _applyTemplate(List<int> targetDays) {
+    setState(() {
+      _businessHours = _businessHours.map((value) {
+        if (!targetDays.contains(value.dayOfWeek)) {
+          return value;
+        }
+        return value.copyWith(
+          isClosed: _templateBusinessHours.isClosed,
+          startTime: _templateBusinessHours.isClosed
+              ? null
+              : _templateBusinessHours.startTime,
+          endTime: _templateBusinessHours.isClosed
+              ? null
+              : _templateBusinessHours.endTime,
+          lastOrderTime: _templateBusinessHours.isClosed
+              ? null
+              : _templateBusinessHours.lastOrderTime,
+        );
+      }).toList()..sort((a, b) => a.dayOfWeek.compareTo(b.dayOfWeek));
+    });
   }
 
   String _titleForMode(StoreEditMode mode) {
@@ -646,41 +678,5 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
       return imageUrl;
     }
     return '${DioClient.baseUrl}$imageUrl';
-  }
-}
-
-class _TimeButton extends StatelessWidget {
-  final String value;
-  final VoidCallback onTap;
-
-  const _TimeButton({required this.value, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Ink(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFD9D9D9)),
-          ),
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
