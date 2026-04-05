@@ -7,12 +7,12 @@ part 'user_update_request.g.dart';
 class UserUpdateRequest {
   final String nickname;
   final String name;
-  final String phone;
+  final String phoneNumber;
 
   UserUpdateRequest({
     required this.nickname,
     required this.name,
-    required this.phone,
+    required this.phoneNumber,
   });
 
   factory UserUpdateRequest.fromJson(Map<String, dynamic> json) =>

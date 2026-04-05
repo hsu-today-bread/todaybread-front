@@ -12,7 +12,7 @@ UserRegisterRequest _$UserRegisterRequestFromJson(Map<String, dynamic> json) =>
       nickname: json['nickname'] as String,
       name: json['name'] as String,
       password: json['password'] as String,
-      phone: json['phone'] as String,
+      phoneNumber: json['phoneNumber'] as String,
     );
 
 Map<String, dynamic> _$UserRegisterRequestToJson(
@@ -22,5 +22,5 @@ Map<String, dynamic> _$UserRegisterRequestToJson(
       'nickname': instance.nickname,
       'name': instance.name,
       'password': instance.password,
-      'phone': instance.phone,
+      'phoneNumber': instance.phoneNumber,
     };

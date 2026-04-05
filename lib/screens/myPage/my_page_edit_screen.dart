@@ -100,9 +100,13 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
     final name = widget.type == MyPageEditType.name
         ? value
         : context.read<UserProfileProvider>().name;
-    final phone = widget.type == MyPageEditType.phone
+    final rawPhone = widget.type == MyPageEditType.phone
         ? value
         : context.read<UserProfileProvider>().phone;
+    final phone = rawPhone.replaceFirstMapped(
+      RegExp(r'^(01[016789])(\d{3,4})(\d{4})$'),
+      (m) => '${m[1]}-${m[2]}-${m[3]}',
+    );
 
     if (!mounted) {
       return;

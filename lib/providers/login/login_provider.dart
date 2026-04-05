@@ -45,7 +45,7 @@ class AuthProvider extends ChangeNotifier {
         await UserLocalStore.saveUser(
           nickname: response.nickname,
           name: response.name,
-          phone: response.phone,
+          phone: response.phoneNumber,
         );
         await AuthService.instance.saveLoginTokens(response);
         await refreshRoleFromStoredToken(notify: false);
@@ -115,7 +115,7 @@ class AuthProvider extends ChangeNotifier {
         nickname: nickname,
         name: name,
         password: password,
-        phone: phone,
+        phoneNumber: phone,
       );
 
       await _service.register(request);

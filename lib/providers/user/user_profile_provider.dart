@@ -58,7 +58,7 @@ class UserProfileProvider extends ChangeNotifier {
       notifyListeners();
 
       final response = await _service.updateProfile(
-        UserUpdateRequest(nickname: nickname, name: name, phone: phone),
+        UserUpdateRequest(nickname: nickname, name: name, phoneNumber: phone),
       );
 
       // 서버 응답 기준으로 provider 메모리 상태도 함께 갱신한다.
@@ -66,7 +66,7 @@ class UserProfileProvider extends ChangeNotifier {
       profile = response;
       _nickname = response.nickname;
       _name = response.name;
-      _phone = response.phone;
+      _phone = response.phoneNumber;
       return response;
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);

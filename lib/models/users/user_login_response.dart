@@ -24,8 +24,7 @@ class UserLoginResponse {
   final String name;
 
   /// 전화번호
-  ///
-  final String phone;
+  final String phoneNumber;
 
   /// 로그인 응답 모델을 생성
   UserLoginResponse({
@@ -34,7 +33,7 @@ class UserLoginResponse {
     this.refreshToken,
     required this.nickname,
     required this.name,
-    required this.phone
+    required this.phoneNumber,
   });
 
   /// JSON 맵을 [UserLoginResponse]로 변환합니다.

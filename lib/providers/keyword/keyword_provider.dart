@@ -1,33 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:todaybread/services/local/keyword_local_store.dart';
+import 'package:todaybread/models/keyword/keyword_response.dart';
+import 'package:todaybread/services/keyword/keyword_service.dart';
+import 'package:todaybread/services/network/api_exception.dart';
 
-/// 키워드 관리 상태를 관리하는 Provider
 class KeywordProvider extends ChangeNotifier {
+  List<KeywordResponse> _keywords = [];
+  bool isLoading = false;
+  String? errorMessage;
 
-  /// 등록된 키워드 리스트(wish_screen.dart에서 만드는게 아니라 여기서 생성)
-  List<String> _keywords = [];
+  List<KeywordResponse> get keywords => _keywords;
 
-  List<String> get keywords => _keywords;
-
-  /// 저장된 키워드를 로컬 DB에서 불러올 때 사용
-  void loadKeywords() {
-    _keywords = KeywordLocalStore.getKeywords();
-    debugPrint('저장된 키워드: $_keywords'); // 앱 시작할 때 불러와서 확인 가능
+  /// 서버에서 키워드 목록을 불러온다.
+  Future<void> loadKeywords() async {
+    isLoading = true;
+    errorMessage = null;
     notifyListeners();
+
+    try {
+      _keywords = await KeywordService.instance.getKeywords();
+    } catch (e) {
+      errorMessage = '키워드를 불러오지 못했습니다.';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
-  /// 키워드를 추가하고 로컬 DB에 저장
+  /// 키워드를 서버에 추가한다.
+  ///
+  /// 실패 시 서버에서 내려온 메시지를 [errorMessage]에 담아 반환한다.
   Future<void> addKeyword(String keyword) async {
-    if (_keywords.length >= 5) return;
-    _keywords.add(keyword);
-    await KeywordLocalStore.saveKeywords(_keywords);
-    notifyListeners();
+    try {
+      await KeywordService.instance.addKeyword(keyword);
+      await loadKeywords();
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      notifyListeners();
+      rethrow;
+    }
   }
 
-  /// 키워드를 삭제하고 로컬 DB에 저장
-  Future<void> removeKeyword(String keyword) async {
-    _keywords.remove(keyword);
-    await KeywordLocalStore.saveKeywords(_keywords);
-    notifyListeners();
+  /// 키워드를 서버에서 삭제한다.
+  Future<void> removeKeyword(int userKeywordId) async {
+    try {
+      await KeywordService.instance.deleteKeyword(userKeywordId);
+      _keywords.removeWhere((k) => k.userKeywordId == userKeywordId);
+      notifyListeners();
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      notifyListeners();
+      rethrow;
+    }
   }
 }

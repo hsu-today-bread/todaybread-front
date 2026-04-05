@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'bread_api.dart';
+part of 'keyword_api.dart';
 
 // **************************************************************************
 // RetrofitGenerator
@@ -8,8 +8,8 @@ part of 'bread_api.dart';
 
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers
 
-class _BreadApi implements BreadApi {
-  _BreadApi(
+class _KeywordApi implements KeywordApi {
+  _KeywordApi(
     this._dio, {
     this.baseUrl,
   });
@@ -19,20 +19,20 @@ class _BreadApi implements BreadApi {
   String? baseUrl;
 
   @override
-  Future<List<BreadCommonResponse>> getMyBreads() async {
+  Future<List<KeywordResponse>> getKeywords() async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
     final _result = await _dio
-        .fetch<List<dynamic>>(_setStreamType<List<BreadCommonResponse>>(Options(
+        .fetch<List<dynamic>>(_setStreamType<List<KeywordResponse>>(Options(
       method: 'GET',
       headers: _headers,
       extra: _extra,
     )
             .compose(
               _dio.options,
-              '/api/boss/bread',
+              '/api/keywords',
               queryParameters: queryParameters,
               data: _data,
             )
@@ -42,48 +42,27 @@ class _BreadApi implements BreadApi {
               baseUrl,
             ))));
     var value = _result.data!
-        .map((dynamic i) =>
-            BreadCommonResponse.fromJson(i as Map<String, dynamic>))
+        .map((dynamic i) => KeywordResponse.fromJson(i as Map<String, dynamic>))
         .toList();
     return value;
   }
 
   @override
-  Future<BreadCommonResponse> createBread(
-    File request,
-    File? image,
-  ) async {
+  Future<KeywordCreateResponse> addKeyword(KeywordCreateRequest request) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    final _data = FormData();
-    _data.files.add(MapEntry(
-      'request',
-      MultipartFile.fromFileSync(
-        request.path,
-        filename: request.path.split(Platform.pathSeparator).last,
-        contentType: MediaType.parse('application/json'),
-      ),
-    ));
-    if (image != null) {
-      _data.files.add(MapEntry(
-        'image',
-        MultipartFile.fromFileSync(
-          image.path,
-          filename: image.path.split(Platform.pathSeparator).last,
-        ),
-      ));
-    }
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
     final _result = await _dio.fetch<Map<String, dynamic>>(
-        _setStreamType<BreadCommonResponse>(Options(
+        _setStreamType<KeywordCreateResponse>(Options(
       method: 'POST',
       headers: _headers,
       extra: _extra,
-      contentType: 'multipart/form-data',
     )
             .compose(
               _dio.options,
-              '/api/boss/bread',
+              '/api/keywords',
               queryParameters: queryParameters,
               data: _data,
             )
@@ -92,7 +71,34 @@ class _BreadApi implements BreadApi {
               _dio.options.baseUrl,
               baseUrl,
             ))));
-    final value = BreadCommonResponse.fromJson(_result.data!);
+    final value = KeywordCreateResponse.fromJson(_result.data!);
+    return value;
+  }
+
+  @override
+  Future<KeywordDeleteResponse> deleteKeyword(int userKeywordId) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final Map<String, dynamic>? _data = null;
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+        _setStreamType<KeywordDeleteResponse>(Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+    )
+            .compose(
+              _dio.options,
+              '/api/keywords/${userKeywordId}',
+              queryParameters: queryParameters,
+              data: _data,
+            )
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
+    final value = KeywordDeleteResponse.fromJson(_result.data!);
     return value;
   }
 

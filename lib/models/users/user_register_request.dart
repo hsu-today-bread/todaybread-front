@@ -19,9 +19,8 @@ class UserRegisterRequest {
   /// 비밀번호
   final String password;
 
-  /// 전화번호
-  ///
-  final String phone;
+  /// 전화번호 (형식: 010-0000-0000)
+  final String phoneNumber;
 
   /// 회원가입 요청 모델을 생성합니다.
   UserRegisterRequest({
@@ -29,7 +28,7 @@ class UserRegisterRequest {
     required this.nickname,
     required this.name,
     required this.password,
-    required this.phone,
+    required this.phoneNumber,
   });
 
   /// JSON 맵을 [UserRegisterRequest]로 변환합니다.

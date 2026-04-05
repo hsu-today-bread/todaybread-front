@@ -19,14 +19,14 @@ BreadCommonResponse _$BreadCommonResponseFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$BreadCommonResponseToJson(
-  BreadCommonResponse instance,
-) => <String, dynamic>{
-  'id': instance.id,
-  'storeId': instance.storeId,
-  'name': instance.name,
-  'originalPrice': instance.originalPrice,
-  'salePrice': instance.salePrice,
-  'remainingQuantity': instance.remainingQuantity,
-  'description': instance.description,
-  'imageUrl': instance.imageUrl,
-};
+        BreadCommonResponse instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'storeId': instance.storeId,
+      'name': instance.name,
+      'originalPrice': instance.originalPrice,
+      'salePrice': instance.salePrice,
+      'remainingQuantity': instance.remainingQuantity,
+      'description': instance.description,
+      'imageUrl': instance.imageUrl,
+    };

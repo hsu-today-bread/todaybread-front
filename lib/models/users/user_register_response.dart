@@ -8,14 +8,14 @@ part 'user_register_response.g.dart';
 @JsonSerializable()
 class UserRegisterResponse {
   /// 회원가입 성공 여부
-  final bool status;
+  final bool success;
 
   /// 사용자 안내 메시지
   final String message;
 
   /// 회원가입 응답 모델을 생성합니다.
   UserRegisterResponse({
-    required this.status,
+    required this.success,
     required this.message,
   });
 

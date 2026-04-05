@@ -154,7 +154,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final password = _passwordController.text.trim();
     final nickname = _nicknameController.text.trim();
     final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
+    final rawPhone = _phoneController.text.trim();
+    // 서버가 010-0000-0000 형식을 요구하므로 하이픈 포맷으로 변환
+    final phone = rawPhone.replaceFirstMapped(
+      RegExp(r'^(01[016789])(\d{3,4})(\d{4})$'),
+      (m) => '${m[1]}-${m[2]}-${m[3]}',
+    );
 
     if (id.isEmpty ||
         password.isEmpty ||

@@ -1,21 +1,19 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user_register_response.dart';
+part of 'keyword_create_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-UserRegisterResponse _$UserRegisterResponseFromJson(
+KeywordCreateResponse _$KeywordCreateResponseFromJson(
         Map<String, dynamic> json) =>
-    UserRegisterResponse(
+    KeywordCreateResponse(
       success: json['success'] as bool,
-      message: json['message'] as String,
     );
 
-Map<String, dynamic> _$UserRegisterResponseToJson(
-        UserRegisterResponse instance) =>
+Map<String, dynamic> _$KeywordCreateResponseToJson(
+        KeywordCreateResponse instance) =>
     <String, dynamic>{
       'success': instance.success,
-      'message': instance.message,
     };

@@ -1,20 +1,20 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user_register_response.dart';
+part of 'keyword_delete_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-UserRegisterResponse _$UserRegisterResponseFromJson(
+KeywordDeleteResponse _$KeywordDeleteResponseFromJson(
         Map<String, dynamic> json) =>
-    UserRegisterResponse(
+    KeywordDeleteResponse(
       success: json['success'] as bool,
       message: json['message'] as String,
     );
 
-Map<String, dynamic> _$UserRegisterResponseToJson(
-        UserRegisterResponse instance) =>
+Map<String, dynamic> _$KeywordDeleteResponseToJson(
+        KeywordDeleteResponse instance) =>
     <String, dynamic>{
       'success': instance.success,
       'message': instance.message,
