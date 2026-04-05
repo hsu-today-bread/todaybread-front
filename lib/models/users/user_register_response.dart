@@ -14,11 +14,14 @@ class UserRegisterResponse {
   final String message;
 
   /// 회원가입 응답 모델을 생성합니다.
-  UserRegisterResponse({required this.success, required this.message});
+  UserRegisterResponse({
+    required this.success,
+    required this.message,
+  });
 
   /// JSON 맵을 [UserRegisterResponse]로 변환합니다.
-  factory UserRegisterResponse.fromJson(Map<String, dynamic> json) =>
-      _$UserRegisterResponseFromJson(json);
+  factory UserRegisterResponse.fromJson(Map<String, dynamic> json)
+  => _$UserRegisterResponseFromJson(json);
 
   /// 현재 객체를 JSON 맵으로 변환합니다.
   Map<String, dynamic> toJson() => _$UserRegisterResponseToJson(this);

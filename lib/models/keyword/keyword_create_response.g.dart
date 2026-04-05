@@ -1,19 +1,19 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'bread_success_response.dart';
+part of 'keyword_create_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-BreadSuccessResponse _$BreadSuccessResponseFromJson(
+KeywordCreateResponse _$KeywordCreateResponseFromJson(
         Map<String, dynamic> json) =>
-    BreadSuccessResponse(
+    KeywordCreateResponse(
       success: json['success'] as bool,
     );
 
-Map<String, dynamic> _$BreadSuccessResponseToJson(
-        BreadSuccessResponse instance) =>
+Map<String, dynamic> _$KeywordCreateResponseToJson(
+        KeywordCreateResponse instance) =>
     <String, dynamic>{
       'success': instance.success,
     };

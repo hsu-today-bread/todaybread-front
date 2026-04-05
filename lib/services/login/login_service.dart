@@ -2,6 +2,10 @@ import 'package:todaybread/models/users/user_login_request.dart';
 import 'package:todaybread/models/users/user_login_response.dart';
 import 'package:todaybread/models/users/user_register_request.dart';
 import 'package:todaybread/models/users/user_register_response.dart';
+import 'package:todaybread/models/users/user_find_email_response.dart';
+import 'package:todaybread/models/users/verify_identity_response.dart';
+import 'package:todaybread/models/users/reset_password_request.dart';
+import 'package:todaybread/models/users/reset_password_response.dart';
 import '../network/dio_client.dart';
 import 'login_api.dart';
 
@@ -45,5 +49,25 @@ class LoginService {
 
   Future<UserLoginResponse> login(UserLoginRequest request) async {
     return await _api.login(request);
+  }
+
+  /// 전화번호로 이메일을 찾습니다.
+
+  Future<UserFindEmailResponse> findEmail(String phone) async {
+    return await _api.findEmail(phone);
+  }
+
+  /// 이메일과 전화번호로 본인인증을 합니다.
+
+  Future<VerifyIdentityResponse> verifyIdentity(
+      String phone, String email) async {
+    return await _api.verifyIdentity(phone, email);
+  }
+
+  /// 비밀번호를 재설정합니다.
+
+  Future<ResetPasswordResponse> resetPassword(
+      ResetPasswordRequest request) async {
+    return await _api.resetPassword(request);
   }
 }

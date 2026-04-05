@@ -1,19 +1,21 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'bread_success_response.dart';
+part of 'reset_password_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-BreadSuccessResponse _$BreadSuccessResponseFromJson(
+ResetPasswordResponse _$ResetPasswordResponseFromJson(
         Map<String, dynamic> json) =>
-    BreadSuccessResponse(
+    ResetPasswordResponse(
       success: json['success'] as bool,
+      message: json['message'] as String,
     );
 
-Map<String, dynamic> _$BreadSuccessResponseToJson(
-        BreadSuccessResponse instance) =>
+Map<String, dynamic> _$ResetPasswordResponseToJson(
+        ResetPasswordResponse instance) =>
     <String, dynamic>{
       'success': instance.success,
+      'message': instance.message,
     };

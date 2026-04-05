@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../providers/user/user_profile_provider.dart';
 import '../../utils/app_colors.dart';
-import '../../utils/user_input_helper.dart';
 
 enum MyPageEditType { nickname, name, phone }
 
@@ -75,12 +74,7 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
       return;
     }
     final profileProvider = context.read<UserProfileProvider>();
-    final initialValue = _initialValue(profileProvider);
-    _controller = TextEditingController(
-      text: widget.type == MyPageEditType.phone
-          ? UserInputHelper.normalizePhoneNumber(initialValue)
-          : initialValue,
-    );
+    _controller = TextEditingController(text: _initialValue(profileProvider));
     _didInitController = true;
   }
 
@@ -96,17 +90,6 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
       return;
     }
 
-    if (widget.type == MyPageEditType.nickname &&
-        (value.length < 2 || value.length > 10)) {
-      await _showDuplicateCheckDialog('닉네임은 2자~10자로 입력해주세요.');
-      return;
-    }
-    if (widget.type == MyPageEditType.phone &&
-        !UserInputHelper.isValidPhoneNumber(value)) {
-      await _showDuplicateCheckDialog('전화번호는 010-1234-5678 형식으로 입력해주세요.');
-      return;
-    }
-
     setState(() {
       _isSaving = true;
     });
@@ -117,11 +100,13 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
     final name = widget.type == MyPageEditType.name
         ? value
         : context.read<UserProfileProvider>().name;
-    final phone = widget.type == MyPageEditType.phone
-        ? UserInputHelper.normalizePhoneNumber(value)
-        : UserInputHelper.normalizePhoneNumber(
-            context.read<UserProfileProvider>().phone,
-          );
+    final rawPhone = widget.type == MyPageEditType.phone
+        ? value
+        : context.read<UserProfileProvider>().phone;
+    final phone = rawPhone.replaceFirstMapped(
+      RegExp(r'^(01[016789])(\d{3,4})(\d{4})$'),
+      (m) => '${m[1]}-${m[2]}-${m[3]}',
+    );
 
     if (!mounted) {
       return;
@@ -206,13 +191,8 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
         await _showDuplicateCheckDialog('사용 가능한 이름입니다.');
         return;
       case MyPageEditType.phone:
-        if (!UserInputHelper.isValidPhoneNumber(value)) {
-          await _showDuplicateCheckDialog('전화번호는 010-1234-5678 형식으로 입력해주세요.');
-          return;
-        }
-
         final exists = await context.read<UserProfileProvider>().checkPhone(
-          UserInputHelper.normalizePhoneNumber(value),
+          value,
         );
         if (!mounted) {
           return;
@@ -264,7 +244,10 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
                             ? TextInputType.phone
                             : TextInputType.text,
                         inputFormatters: widget.type == MyPageEditType.phone
-                            ? const [PhoneNumberTextInputFormatter()]
+                            ? [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(11),
+                              ]
                             : [],
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(

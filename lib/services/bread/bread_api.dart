@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/models/bread/bread_detail_response.dart';

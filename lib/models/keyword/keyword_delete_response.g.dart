@@ -1,19 +1,21 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'bread_success_response.dart';
+part of 'keyword_delete_response.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-BreadSuccessResponse _$BreadSuccessResponseFromJson(
+KeywordDeleteResponse _$KeywordDeleteResponseFromJson(
         Map<String, dynamic> json) =>
-    BreadSuccessResponse(
+    KeywordDeleteResponse(
       success: json['success'] as bool,
+      message: json['message'] as String,
     );
 
-Map<String, dynamic> _$BreadSuccessResponseToJson(
-        BreadSuccessResponse instance) =>
+Map<String, dynamic> _$KeywordDeleteResponseToJson(
+        KeywordDeleteResponse instance) =>
     <String, dynamic>{
       'success': instance.success,
+      'message': instance.message,
     };

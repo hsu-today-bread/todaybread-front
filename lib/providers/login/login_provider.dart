@@ -5,7 +5,6 @@ import 'package:todaybread/services/auth/auth_service.dart';
 import 'package:todaybread/services/auth/auth_token_storage.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/services/network/api_exception.dart';
-import 'package:todaybread/utils/user_input_helper.dart';
 
 import 'package:todaybread/services/login/login_service.dart';
 
@@ -46,7 +45,7 @@ class AuthProvider extends ChangeNotifier {
         await UserLocalStore.saveUser(
           nickname: response.nickname,
           name: response.name,
-          phone: response.phone,
+          phone: response.phoneNumber,
         );
         await AuthService.instance.saveLoginTokens(response);
         await refreshRoleFromStoredToken(notify: false);
@@ -90,9 +89,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> checkPhone(String phone) async {
     try {
       errorMessage = null;
-      return await _service.checkPhone(
-        UserInputHelper.normalizePhoneNumber(phone),
-      );
+      return await _service.checkPhone(phone);
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
       notifyListeners();
@@ -113,23 +110,15 @@ class AuthProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      final normalizedPhone = UserInputHelper.normalizePhoneNumber(phone);
-
       final request = UserRegisterRequest(
         email: email,
         nickname: nickname,
         name: name,
         password: password,
-        phone: normalizedPhone,
+        phoneNumber: phone,
       );
 
-      final response = await _service.register(request);
-      if (!response.success) {
-        errorMessage = response.message;
-        isLoading = false;
-        notifyListeners();
-        return false;
-      }
+      await _service.register(request);
 
       isLoading = false;
       notifyListeners();

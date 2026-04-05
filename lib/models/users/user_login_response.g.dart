@@ -13,7 +13,7 @@ UserLoginResponse _$UserLoginResponseFromJson(Map<String, dynamic> json) =>
       refreshToken: json['refreshToken'] as String?,
       nickname: json['nickname'] as String,
       name: json['name'] as String,
-      phone: json['phoneNumber'] as String,
+      phoneNumber: json['phoneNumber'] as String,
     );
 
 Map<String, dynamic> _$UserLoginResponseToJson(UserLoginResponse instance) =>
@@ -23,5 +23,5 @@ Map<String, dynamic> _$UserLoginResponseToJson(UserLoginResponse instance) =>
       'refreshToken': instance.refreshToken,
       'nickname': instance.nickname,
       'name': instance.name,
-      'phoneNumber': instance.phone,
+      'phoneNumber': instance.phoneNumber,
     };

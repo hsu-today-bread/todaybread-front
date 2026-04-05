@@ -24,7 +24,7 @@ class UserService {
     await UserLocalStore.saveUser(
       nickname: response.nickname,
       name: response.name,
-      phone: response.phone,
+      phone: response.phoneNumber,
     );
   }
 }

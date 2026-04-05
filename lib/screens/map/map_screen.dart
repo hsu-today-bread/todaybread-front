@@ -1,48 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import '../../utils/app_colors.dart';
-import 'package:geolocator/geolocator.dart';
+import '../../services/location/location_service.dart';
 
-// 지도 화면
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
-}
-
-/// 기기의 현재 위치를 가져오는 코드
-///
-/// 위치 권환을 허용하지 않으면 Future가 오류를 반환함
-Future<Position> _determinePosition() async {
-  bool serviceEnabled;
-  LocationPermission permission;
-
-  // Test if location services are enabled.
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    // 위치 권환이 허용되지 않으면 더 진행되지 않음
-    return Future.error('Location services are disabled.');
-  }
-
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      // 위치 권환을 허용하지 않았을 때, 나중에 한번 더 물어봄
-      return Future.error('Location permissions are denied');
-    }
-  }
-
-  if (permission == LocationPermission.deniedForever) {
-    // 권환을 영원히 허용하지 않음을 선택시, 그에 맞게 처리
-    return Future.error(
-      'Location permissions are permanently denied, we cannot request permissions.',
-    );
-  }
-
-  // 위치 권환 허용 시, 현재 위치 반환
-  return await Geolocator.getCurrentPosition();
 }
 
 class _MapScreenState extends State<MapScreen> {
@@ -51,14 +16,13 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialPosition(); // ← 별도 함수 호출
+    _loadInitialPosition();
   }
 
   Future<void> _loadInitialPosition() async {
-    final position = await _determinePosition(); // 결과 기다렸다가 받기
+    final position = await determinePosition();
     setState(() {
       _initialPosition = NCameraPosition(
-        // _initialPosition에 저장!
         target: NLatLng(position.latitude, position.longitude),
         zoom: 14,
       );
@@ -78,18 +42,161 @@ class _MapScreenState extends State<MapScreen> {
         elevation: 0,
       ),
       body: _initialPosition == null
-          ? const Center(child: CircularProgressIndicator()) // 위치 가져오는 중
-          : NaverMap(
-              options: NaverMapViewOptions(
-                // 보여줄 요소들( ex) building은 건물 )
-                activeLayerGroups: [NLayerGroup.building],
-                // 초기 위치 잡는 코드, 한성대학교로 해놨음
-                initialCameraPosition: _initialPosition!,
-                // 지도 타입 설정(basic은 기본이고, 다른 모드도 가능)
-                mapType: NMapType.basic,
-                locationButtonEnable: true,
-              ),
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                NaverMap(
+                  options: NaverMapViewOptions(
+                    activeLayerGroups: [NLayerGroup.building],
+                    initialCameraPosition: _initialPosition!,
+                    mapType: NMapType.basic,
+                    locationButtonEnable: true,
+                  ),
+                ),
+                const _BottomSheet(),
+              ],
             ),
+    );
+  }
+}
+
+class _BottomSheet extends StatelessWidget {
+  const _BottomSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.08, // 핸들만 살짝 보이는 기본 상태
+      minChildSize: 0.08,
+      maxChildSize: 0.55, // 절반 조금 넘게 올라옴
+      snap: true,
+      snapSizes: const [0.08, 0.55],
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: 12,
+                offset: Offset(0, -3),
+              ),
+            ],
+          ),
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              // 드래그 핸들
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDDDDDD),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // 가게 목록
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index.isOdd) return const Divider(height: 1);
+                      return const _StoreCard();
+                    },
+                    childCount: 9, // TODO: 실제 데이터 연동 시 (items * 2 - 1)로 교체
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StoreCard extends StatelessWidget {
+  const _StoreCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          // 가게 이미지
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F0F0),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.storefront_outlined,
+              color: Color(0xFFBBBBBB),
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          // 가게 정보
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Text(
+                      '가게 이름', // TODO: 실제 데이터 연동 시 교체
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Icon(Icons.star_rounded, size: 14, color: Color(0xFFFFC107)),
+                    SizedBox(width: 2),
+                    Text(
+                      '4.9',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF555555),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '서울시 성북구 성북동', // TODO: 실제 데이터 연동 시 교체
+                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  '0.7km', // TODO: 실제 데이터 연동 시 교체
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFFAAAAAA),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: Color(0xFFCCCCCC),
+          ),
+        ],
+      ),
     );
   }
 }

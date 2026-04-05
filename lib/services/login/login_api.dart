@@ -7,6 +7,11 @@ import 'package:todaybread/models/users/user_login_response.dart';
 import 'package:todaybread/models/users/user_register_request.dart';
 import 'package:todaybread/models/users/user_register_response.dart';
 
+import 'package:todaybread/models/users/user_find_email_response.dart';
+import 'package:todaybread/models/users/verify_identity_response.dart';
+import 'package:todaybread/models/users/reset_password_request.dart';
+import 'package:todaybread/models/users/reset_password_response.dart';
+
 part 'login_api.g.dart';
 
 /// 로그인/회원가입 관련 REST API 정의입니다.
@@ -50,5 +55,27 @@ abstract class LoginApi {
   @POST('/api/user/login')
   Future<UserLoginResponse> login(
       @Body() UserLoginRequest request,
+      );
+
+  /// 전화번호로 이메일을 찾습니다.
+
+  @GET('/api/user/find-email')
+  Future<UserFindEmailResponse> findEmail(
+      @Query('phone') String phone,
+      );
+
+  /// 이메일과 전화번호로 본인인증을 합니다.
+
+  @GET('/api/user/verify-identity')
+  Future<VerifyIdentityResponse> verifyIdentity(
+      @Query('phone') String phone,
+      @Query('email') String email,
+      );
+
+  /// 비밀번호를 재설정합니다.
+
+  @POST('/api/user/reset-password')
+  Future<ResetPasswordResponse> resetPassword(
+      @Body() ResetPasswordRequest request,
       );
 }
