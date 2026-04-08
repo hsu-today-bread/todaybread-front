@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart';
+import 'package:todaybread/providers/store/favourite_store_provider.dart';
 
 class WishScreen extends StatefulWidget {
   const WishScreen({super.key});
@@ -18,6 +19,7 @@ class _WishScreenState extends State<WishScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<KeywordProvider>().loadKeywords();
+      context.read<FavouriteStoreProvider>().loadStores();
     });
   }
 
@@ -29,12 +31,13 @@ class _WishScreenState extends State<WishScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KeywordProvider>();
+    final keywordProvider = context.watch<KeywordProvider>();
+    final storeProvider = context.watch<FavouriteStoreProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +75,7 @@ class _WishScreenState extends State<WishScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 3),
                     child: ElevatedButton(
-                      onPressed: provider.isLoading
+                      onPressed: keywordProvider.isLoading
                           ? null
                           : () => _addKeyword(context),
                       style: ElevatedButton.styleFrom(
@@ -89,10 +92,10 @@ class _WishScreenState extends State<WishScreen> {
                   ),
                 ],
               ),
-              if (provider.errorMessage != null) ...[
+              if (keywordProvider.errorMessage != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  provider.errorMessage!,
+                  keywordProvider.errorMessage!,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFFD64545),
@@ -100,13 +103,13 @@ class _WishScreenState extends State<WishScreen> {
                 ),
               ],
               const SizedBox(height: 8),
-              if (provider.isLoading)
+              if (keywordProvider.isLoading)
                 const Center(child: CircularProgressIndicator())
               else
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: provider.keywords.map((keyword) {
+                  children: keywordProvider.keywords.map((keyword) {
                     return Chip(
                       label: Text(keyword.displayText),
                       backgroundColor: Colors.white,
@@ -138,10 +141,130 @@ class _WishScreenState extends State<WishScreen> {
                     );
                   }).toList(),
                 ),
+              const SizedBox(height: 32),
+              const Text(
+                '단골 매장 관리',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '하트 클릭 시 단골 매장이 해제됩니다.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+              ),
+              const SizedBox(height: 16),
+              if (storeProvider.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (storeProvider.stores.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      '단골 매장이 없습니다.',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: storeProvider.stores.map((store) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFEEEEEE)),
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Stack(
+                              children: [
+                                ClipOval(
+                                  child: store.imageUrl != null
+                                      ? Image.network(
+                                          store.imageUrl!,
+                                          width: 64,
+                                          height: 64,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              _storePlaceholder(),
+                                        )
+                                      : _storePlaceholder(),
+                                ),
+                                if (!store.isSelling)
+                                  ClipOval(
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      color: Colors.black54,
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        '영업\n종료',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    store.name,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    store.address,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF666666),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                context
+                                    .read<FavouriteStoreProvider>()
+                                    .toggleStore(store.storeId);
+                              },
+                              icon: const Icon(
+                                Icons.favorite,
+                                color: Color(0xFFE53935),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _storePlaceholder() {
+    return Container(
+      width: 64,
+      height: 64,
+      color: const Color(0xFFEEEEEE),
+      child: const Icon(Icons.store, color: Color(0xFFAAAAAA), size: 32),
     );
   }
 

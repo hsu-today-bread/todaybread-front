@@ -11,6 +11,7 @@ import 'package:todaybread/screens/main/main_shell.dart';
 import 'package:todaybread/screens/splash_screen.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart'; // 추가
+import 'package:todaybread/providers/store/favourite_store_provider.dart';
 
 void main() async {
   // async 추가 + 아래 두 줄 추가
@@ -51,6 +52,7 @@ class TodayBreadApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => BossProvider()),
         ChangeNotifierProvider(create: (_) => KeywordProvider()),
+        ChangeNotifierProvider(create: (_) => FavouriteStoreProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
