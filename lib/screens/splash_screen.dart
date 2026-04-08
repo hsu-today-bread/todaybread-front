@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/user/user_profile_provider.dart';
 
 import '../services/auth/auth_service.dart';
 import '../utils/app_assets.dart';
@@ -33,8 +36,16 @@ class _SplashScreenState extends State<SplashScreen> {
   void _moveToNextScreen() {
     _navigationTimer = Timer(const Duration(seconds: 2), () async {
       debugPrint('[SplashScreen] checking stored session');
+      final authProvider = context.read<AuthProvider>();
+      final userProfileProvider = context.read<UserProfileProvider>();
       final hasValidSession = await AuthService.instance
           .restoreSessionIfPossible();
+      if (hasValidSession) {
+        await authProvider.refreshRoleFromStoredToken(notify: false);
+        userProfileProvider.hydrateFromLocal();
+      } else {
+        userProfileProvider.clearProfile();
+      }
       debugPrint('[SplashScreen] hasValidSession=$hasValidSession');
       if (!mounted) return;
 
