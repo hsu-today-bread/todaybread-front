@@ -7,6 +7,7 @@ import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:todaybread/screens/main/main_shell.dart';
 import 'package:todaybread/screens/splash_screen.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart'; // 추가
@@ -55,8 +56,8 @@ class TodayBreadApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '오늘의 빵',
         theme: ThemeData(fontFamily: 'NoonnuBasicGothic'),
-        home: const SplashScreen(),
         //home: const SplashScreen(),
+        home:const MainShell(),
       ),
     );
   }
