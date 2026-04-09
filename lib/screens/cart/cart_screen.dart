@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:todaybread/screens/order/purchase_screen.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
 /// 장바구니 아이템 모델 (로컬 상태용)
@@ -61,7 +62,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   List<CartItem> _buildDummyItems() {
-    const ingredients = '중력분, 설탕, 버터, 땅콩버터, 물엿, 베이킹 파우더\n강력분, 우유, 달걀, 이스트, 소금, 설탕';
+    const ingredients =
+        '중력분, 설탕, 버터, 땅콩버터, 물엿, 베이킹 파우더\n강력분, 우유, 달걀, 이스트, 소금, 설탕';
     return [
       CartItem(name: '소보루 빵', ingredients: ingredients, price: 700),
       CartItem(name: '꽈배기', ingredients: ingredients, price: 800),
@@ -147,18 +149,11 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 80,
-            color: Colors.black87,
-          ),
+          Icon(Icons.inventory_2_outlined, size: 80, color: Colors.black87),
           const SizedBox(height: 16),
           const Text(
             '장바구니에 담긴 메뉴가 없습니다.',
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: 15, color: Colors.black54),
           ),
         ],
       ),
@@ -218,11 +213,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.black54,
-              size: 20,
-            ),
+            const Icon(Icons.chevron_right, color: Colors.black54, size: 20),
           ],
         ),
         const SizedBox(height: 6),
@@ -230,10 +221,7 @@ class _CartScreenState extends State<CartScreen> {
           children: [
             const Text(
               '주문 종료까지 남은 시간: ',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.black54),
             ),
             Text(
               _remainingTimeShort,
@@ -309,10 +297,7 @@ class _CartScreenState extends State<CartScreen> {
                     const SizedBox(height: 4),
                     const Text(
                       '구성',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black45,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.black45),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -418,11 +403,7 @@ class _CartScreenState extends State<CartScreen> {
               item.quantity++;
             });
           },
-          child: const Icon(
-            Icons.add,
-            size: 22,
-            color: Colors.black87,
-          ),
+          child: const Icon(Icons.add, size: 22, color: Colors.black87),
         ),
       ],
     );
@@ -442,10 +423,7 @@ class _CartScreenState extends State<CartScreen> {
             child: Center(
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
                   children: [
                     const TextSpan(text: '가게 주문 마감까지 '),
                     TextSpan(
@@ -467,9 +445,7 @@ class _CartScreenState extends State<CartScreen> {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
-            ),
+            border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
           ),
           child: Row(
             children: [
@@ -479,10 +455,7 @@ class _CartScreenState extends State<CartScreen> {
                 children: [
                   const Text(
                     '결제 금액',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -502,7 +475,7 @@ class _CartScreenState extends State<CartScreen> {
                 child: SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _items.isEmpty ? null : () {},
+                    onPressed: _items.isEmpty ? null : _openPurchaseFlow,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBackground,
                       disabledBackgroundColor: Colors.grey.shade300,
@@ -531,8 +504,22 @@ class _CartScreenState extends State<CartScreen> {
 
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]},',
-        );
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+  }
+
+  Future<void> _openPurchaseFlow() async {
+    final purchaseItems = _items
+        .map(
+          (item) => PurchaseItem(
+            name: item.name,
+            unitPrice: item.price,
+            quantity: item.quantity,
+          ),
+        )
+        .toList();
+
+    await showPurchaseNoticeAndOpenScreen(context, items: purchaseItems);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/bread/bread_detail_provider.dart';
+import 'package:todaybread/screens/order/purchase_screen.dart';
 import 'package:todaybread/screens/store/store_detail_screen.dart';
 import 'package:todaybread/utils/app_assets.dart';
 import 'package:todaybread/utils/app_colors.dart';
@@ -346,6 +347,7 @@ class _BottomActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = provider.canOrder && provider.quantity > 0;
+    final bread = provider.breadDetail;
 
     return SafeArea(
       top: false,
@@ -390,7 +392,21 @@ class _BottomActionBar extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: enabled
-                    ? () => _showTodoSnackBar(context, '바로 구매 기능은 연결 예정입니다.')
+                    ? () async {
+                        if (bread == null) {
+                          return;
+                        }
+                        await showPurchaseNoticeAndOpenScreen(
+                          context,
+                          items: [
+                            PurchaseItem(
+                              name: bread.name,
+                              unitPrice: bread.salePrice,
+                              quantity: provider.quantity,
+                            ),
+                          ],
+                        );
+                      }
                     : null,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
