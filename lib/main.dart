@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/providers/boss/boss_provider.dart';
+import 'package:todaybread/providers/keyword/keyword_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/store/favourite_store_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
-import 'package:flutter_naver_map/flutter_naver_map.dart';
-import 'package:todaybread/screens/main/main_shell.dart';
+import 'package:todaybread/screens/splash_screen.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
-import 'package:todaybread/providers/keyword/keyword_provider.dart'; // 추가
-import 'package:todaybread/providers/store/favourite_store_provider.dart';
 
 void main() async {
-  // async 추가 + 아래 두 줄 추가
   WidgetsFlutterBinding.ensureInitialized();
   await UserLocalStore.init();
   await FlutterNaverMap().init(
@@ -41,12 +40,8 @@ class TodayBreadApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider()..refreshRoleFromStoredToken(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => UserProfileProvider()..hydrateFromLocal(),
-        ),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfileProvider()),
         ChangeNotifierProvider(create: (_) => BreadProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => BossProvider()),
@@ -57,8 +52,7 @@ class TodayBreadApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '오늘의 빵',
         theme: ThemeData(fontFamily: 'PretendardVariable'),
-        //home: const SplashScreen(),
-        home:const MainShell(),
+        home: const SplashScreen(),
       ),
     );
   }
