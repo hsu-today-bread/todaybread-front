@@ -540,6 +540,31 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 대략적 위치로 먼저 목록을 표시한 뒤, 백그라운드에서 정확한 위치로 갱신
+  void _refreshWithAccuratePosition() {
+    Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+      ),
+    ).then((position) {
+      final prevLat = _currentLatitude;
+      final prevLng = _currentLongitude;
+      _currentLatitude = position.latitude;
+      _currentLongitude = position.longitude;
+
+      // 위치가 실질적으로 달라진 경우에만 재요청 (약 500m 이상 차이)
+      final distance = Geolocator.distanceBetween(
+        prevLat ?? position.latitude,
+        prevLng ?? position.longitude,
+        position.latitude,
+        position.longitude,
+      );
+      if (distance > 500 && mounted) {
+        _fetchNearbyItems();
+      }
+    }).catchError((_) {});
+  }
+
   Future<({double lat, double lng})> _ensureCoordinates() async {
     if (_currentLatitude != null && _currentLongitude != null) {
       return (lat: _currentLatitude!, lng: _currentLongitude!);
@@ -562,9 +587,24 @@ class _HomeScreenState extends State<HomeScreen> {
       throw Exception('위치 권한이 영구적으로 거부되었습니다. 설정에서 권한을 허용해주세요.');
     }
 
-    final position = await Geolocator.getCurrentPosition();
+    // 캐시된 마지막 위치가 있으면 즉시 사용 (재방문 유저)
+    final lastKnown = await Geolocator.getLastKnownPosition();
+    if (lastKnown != null) {
+      _currentLatitude = lastKnown.latitude;
+      _currentLongitude = lastKnown.longitude;
+      _refreshWithAccuratePosition();
+      return (lat: lastKnown.latitude, lng: lastKnown.longitude);
+    }
+
+    // 캐시 없음 (신규 유저) → 낮은 정확도로 빠르게 획득 후 백그라운드 갱신
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.low,
+      ),
+    );
     _currentLatitude = position.latitude;
     _currentLongitude = position.longitude;
+    _refreshWithAccuratePosition();
     return (lat: position.latitude, lng: position.longitude);
   }
 

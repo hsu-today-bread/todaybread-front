@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/boss/boss_store_create_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
+import 'package:todaybread/services/geocoding/naver_geocoding_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/widgets/business_hours_editor.dart';
@@ -293,67 +295,10 @@ class _StoreCreateStepBody extends StatelessWidget {
     // 현재는 주소 -> 이름 -> 전화번호 -> 로고 -> 영업시간 -> 소개글 순서다.
     switch (step) {
       case 0:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '매장 위치에 대한 정보를 입력해주세요',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 22),
-            TextFormField(
-              key: const ValueKey('address_line1'),
-              initialValue: provider.addressLine1,
-              onChanged: context
-                  .read<BossStoreCreateProvider>()
-                  .updateAddressLine1,
-              decoration: _inputDecoration('지번,도로명 입력'),
-            ),
-            const SizedBox(height: 18),
-            TextFormField(
-              key: const ValueKey('address_line2'),
-              initialValue: provider.addressLine2,
-              onChanged: context
-                  .read<BossStoreCreateProvider>()
-                  .updateAddressLine2,
-              decoration: _inputDecoration('상세 주소 입력'),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              '임시로 사용할 위도와 경도를 입력해주세요',
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.45,
-                color: Color(0xFF7C7C7C),
-              ),
-            ),
-            const SizedBox(height: 18),
-            TextFormField(
-              key: const ValueKey('latitude'),
-              initialValue: provider.latitude,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onChanged: context.read<BossStoreCreateProvider>().updateLatitude,
-              decoration: _inputDecoration('위도 입력'),
-            ),
-            const SizedBox(height: 18),
-            TextFormField(
-              key: const ValueKey('longitude'),
-              initialValue: provider.longitude,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              onChanged: context
-                  .read<BossStoreCreateProvider>()
-                  .updateLongitude,
-              decoration: _inputDecoration('경도 입력'),
-            ),
-          ],
+        return _AddressStep(
+          initialAddressLine2: provider.addressLine2,
+          selectedAddress: provider.addressLine1,
+          inputDecoration: _inputDecoration,
         );
       case 1:
         return Column(
@@ -692,6 +637,240 @@ class _StoreCreateStepBody extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
       ),
+    );
+  }
+}
+
+class _AddressStep extends StatefulWidget {
+  final String initialAddressLine2;
+  final String selectedAddress;
+  final InputDecoration Function(String) inputDecoration;
+
+  const _AddressStep({
+    required this.initialAddressLine2,
+    required this.selectedAddress,
+    required this.inputDecoration,
+  });
+
+  @override
+  State<_AddressStep> createState() => _AddressStepState();
+}
+
+class _AddressStepState extends State<_AddressStep> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  List<GeocodingResult> _results = [];
+  bool _isSearching = false;
+  String? _searchError;
+
+  @override
+  void initState() {
+    super.initState();
+    // 이미 선택된 주소가 있으면 검색창에 표시
+    if (widget.selectedAddress.isNotEmpty) {
+      _searchController.text = widget.selectedAddress;
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    _debounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _results = [];
+        _searchError = null;
+      });
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 500), () => _search(query));
+  }
+
+  Future<void> _search(String query) async {
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
+    });
+    try {
+      final results = await NaverGeocodingService.search(query);
+      if (!mounted) return;
+      setState(() {
+        _results = results;
+        _isSearching = false;
+        if (results.isEmpty) _searchError = '검색 결과가 없습니다.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSearching = false;
+        _searchError = '주소 검색 중 오류가 발생했습니다.';
+      });
+    }
+  }
+
+  void _selectResult(GeocodingResult result) {
+    context.read<BossStoreCreateProvider>().selectAddress(
+      result.displayAddress,
+      result.latitude,
+      result.longitude,
+    );
+    _searchController.text = result.displayAddress;
+    setState(() {
+      _results = [];
+      _searchError = null;
+    });
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<BossStoreCreateProvider>();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '매장 위치에 대한 정보를 입력해주세요',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 22),
+
+        /// 주소 검색창
+        TextField(
+          controller: _searchController,
+          onChanged: _onSearchChanged,
+          decoration: widget.inputDecoration('지번, 도로명 검색').copyWith(
+            suffixIcon: _isSearching
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : const Icon(Icons.search, color: Colors.black38),
+          ),
+        ),
+
+        /// 선택된 주소 표시
+        if (provider.addressLine1.isNotEmpty && _results.isEmpty) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.primaryBackground.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.primaryBackground.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.location_on,
+                  size: 16,
+                  color: AppColors.primaryBackground,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    provider.addressLine1,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        /// 검색 결과 목록
+        if (_results.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFD9D9D9)),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _results.length,
+              separatorBuilder: (context, i) =>
+                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
+              itemBuilder: (context, index) {
+                final result = _results[index];
+                return InkWell(
+                  onTap: () => _selectResult(result),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (result.roadAddress.isNotEmpty)
+                          Text(
+                            result.roadAddress,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        if (result.jibunAddress.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            result.jibunAddress,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+
+        /// 검색 오류/결과 없음 메시지
+        if (_searchError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _searchError!,
+            style: const TextStyle(fontSize: 13, color: Colors.black45),
+          ),
+        ],
+
+        const SizedBox(height: 18),
+
+        /// 상세 주소
+        TextFormField(
+          key: const ValueKey('address_line2'),
+          initialValue: widget.initialAddressLine2,
+          onChanged: context.read<BossStoreCreateProvider>().updateAddressLine2,
+          decoration: widget.inputDecoration('상세 주소 입력'),
+        ),
+      ],
     );
   }
 }

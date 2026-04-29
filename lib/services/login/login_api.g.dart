@@ -181,7 +181,9 @@ class _LoginApi implements LoginApi {
 
   @override
   Future<VerifyIdentityResponse> verifyIdentity(
-      String phone, String email) async {
+    String phone,
+    String email,
+  ) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'phone': phone,

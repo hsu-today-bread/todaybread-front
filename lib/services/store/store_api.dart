@@ -5,6 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:todaybread/models/store/favourite_store_response.dart';
 import 'package:todaybread/models/store/favourite_store_toggle_response.dart';
+import 'package:todaybread/models/store/nearby_store_response.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
 import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/models/store/store_image_response.dart';
@@ -22,6 +23,13 @@ abstract class StoreApi {
 
   @GET('/api/boss/store')
   Future<StoreInfoResponse> getStoreInfo();
+
+  @GET('/api/store/nearby')
+  Future<List<NearbyStoreResponse>> getNearbyStores(
+    @Query('lat') double lat,
+    @Query('lng') double lng,
+    @Query('radius') int radius,
+  );
 
   @GET('/api/store/{storeId}')
   Future<StoreDetailResponse> getStoreDetail(@Path('storeId') int storeId);

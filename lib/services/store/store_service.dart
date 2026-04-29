@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/store/favourite_store_response.dart';
+import 'package:todaybread/models/store/nearby_store_response.dart';
 import 'package:todaybread/models/store/favourite_store_toggle_response.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
@@ -27,6 +28,14 @@ class StoreService {
 
   Future<StoreInfoResponse> getStoreInfo() async {
     return await _api.getStoreInfo();
+  }
+
+  Future<List<NearbyStoreResponse>> getNearbyStores({
+    required double lat,
+    required double lng,
+    int radius = 3,
+  }) async {
+    return await _api.getNearbyStores(lat, lng, radius);
   }
 
   Future<StoreDetailResponse> getStoreDetail(int storeId) async {
