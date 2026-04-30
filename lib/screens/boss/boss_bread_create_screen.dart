@@ -288,11 +288,8 @@ class _BreadCreateStepBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 22),
-            TextField(
-              controller: TextEditingController(text: provider.name)
-                ..selection = TextSelection.fromPosition(
-                  TextPosition(offset: provider.name.length),
-                ),
+            TextFormField(
+              initialValue: provider.name,
               onChanged: context.read<BossBreadCreateProvider>().updateName,
               decoration: _inputDecoration('반반치킨'),
             ),
@@ -491,11 +488,8 @@ class _BreadCreateStepBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 22),
-            TextField(
-              controller: TextEditingController(text: provider.description)
-                ..selection = TextSelection.fromPosition(
-                  TextPosition(offset: provider.description.length),
-                ),
+            TextFormField(
+              initialValue: provider.description,
               onChanged: context
                   .read<BossBreadCreateProvider>()
                   .updateDescription,
@@ -634,11 +628,8 @@ class _PriceField extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: TextEditingController(text: value)
-                ..selection = TextSelection.fromPosition(
-                  TextPosition(offset: value.length),
-                ),
+            child: TextFormField(
+              initialValue: value,
               keyboardType: TextInputType.number,
               onChanged: onChanged,
               decoration: const InputDecoration(

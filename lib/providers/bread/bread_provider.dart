@@ -61,4 +61,35 @@ class BreadProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> updateBreadStock({
+    required int breadId,
+    required int remainingQuantity,
+  }) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await _service.updateBreadStock(
+        breadId: breadId,
+        remainingQuantity: remainingQuantity,
+      );
+
+      breads = breads
+          .map(
+            (bread) => bread.id == breadId
+                ? bread.copyWith(remainingQuantity: remainingQuantity)
+                : bread,
+          )
+          .toList();
+      return true;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

@@ -29,4 +29,26 @@ class BreadCommonResponse {
       _$BreadCommonResponseFromJson(json);
 
   Map<String, dynamic> toJson() => _$BreadCommonResponseToJson(this);
+
+  BreadCommonResponse copyWith({
+    int? id,
+    int? storeId,
+    String? name,
+    int? originalPrice,
+    int? salePrice,
+    int? remainingQuantity,
+    String? description,
+    String? imageUrl,
+  }) {
+    return BreadCommonResponse(
+      id: id ?? this.id,
+      storeId: storeId ?? this.storeId,
+      name: name ?? this.name,
+      originalPrice: originalPrice ?? this.originalPrice,
+      salePrice: salePrice ?? this.salePrice,
+      remainingQuantity: remainingQuantity ?? this.remainingQuantity,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 }

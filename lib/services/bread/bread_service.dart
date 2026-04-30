@@ -60,4 +60,14 @@ class BreadService {
       }
     }
   }
+
+  Future<void> updateBreadStock({
+    required int breadId,
+    required int remainingQuantity,
+  }) async {
+    await _api.updateBreadStock(
+      breadId,
+      {'remainingQuantity': remainingQuantity},
+    );
+  }
 }

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todaybread/models/boss/boss_order_response.dart';
+import 'package:todaybread/providers/boss/boss_order_provider.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
 class BossOrderHistoryScreen extends StatefulWidget {
-  const BossOrderHistoryScreen({super.key});
+  const BossOrderHistoryScreen({super.key, this.showAppBar = true});
+
+  final bool showAppBar;
 
   @override
   State<BossOrderHistoryScreen> createState() => _BossOrderHistoryScreenState();
@@ -12,57 +17,80 @@ class _BossOrderHistoryScreenState extends State<BossOrderHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BossOrderProvider>().fetchOrders();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
-  List<_BossOrderHistoryItem> get _filteredOrders {
+  List<BossOrderResponse> _filteredOrders(List<BossOrderResponse> source) {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) {
-      return _dummyOrders;
+      return source;
     }
-    return _dummyOrders
+    return source
         .where((order) => order.orderNumber.toLowerCase().contains(query))
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final orders = _filteredOrders;
+    final orderProvider = context.watch<BossOrderProvider>();
+    final orders = _filteredOrders(orderProvider.orders);
+    final isSearching = _searchController.text.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: const Color(0xFFF7F7F7),
-        surfaceTintColor: const Color(0xFFF7F7F7),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
-            size: 20,
-          ),
-        ),
-        centerTitle: true,
-        title: const Text(
-          '주문 내역',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-          ),
-        ),
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              backgroundColor: const Color(0xFFF7F7F7),
+              surfaceTintColor: const Color(0xFFF7F7F7),
+              leading: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+              centerTitle: true,
+              title: const Text(
+                '주문 내역',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
-        top: false,
+        top: !widget.showAppBar,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: EdgeInsets.fromLTRB(20, widget.showAppBar ? 12 : 18, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (!widget.showAppBar) ...[
+                const Text(
+                  '주문내역',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 18),
+              ],
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -84,23 +112,32 @@ class _BossOrderHistoryScreenState extends State<BossOrderHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              if (orders.isEmpty)
+              if (orderProvider.isLoading && !orderProvider.hasFetched)
                 const Padding(
-                  padding: EdgeInsets.only(top: 48),
-                  child: Center(
-                    child: Text(
-                      '검색된 주문이 없습니다.',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF757575),
-                      ),
-                    ),
+                  padding: EdgeInsets.only(top: 64),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (orderProvider.errorMessage != null &&
+                  orderProvider.orders.isEmpty)
+                _OrderMessageState(
+                  message: orderProvider.errorMessage!,
+                  actionLabel: '다시 불러오기',
+                  onAction: () =>
+                      context.read<BossOrderProvider>().fetchOrders(),
+                )
+              else if (orders.isEmpty)
+                _OrderMessageState(
+                  message: isSearching ? '검색된 주문이 없습니다.' : '현재 픽업 대기 주문이 없습니다.',
+                )
+              else ...[
+                for (final order in orders) ...[
+                  _OrderCard(
+                    order: order,
+                    isProcessing: orderProvider.processingOrderId == order.id,
+                    onPickupConfirm: () => _handlePickupConfirm(order),
                   ),
-                ),
-              for (final order in orders) ...[
-                _OrderCard(order: order),
-                const SizedBox(height: 14),
+                  const SizedBox(height: 14),
+                ],
               ],
             ],
           ),
@@ -108,12 +145,43 @@ class _BossOrderHistoryScreenState extends State<BossOrderHistoryScreen> {
       ),
     );
   }
+
+  Future<void> _handlePickupConfirm(BossOrderResponse order) async {
+    if (order.id <= 0) {
+      _showSnackBar('주문 ID를 확인할 수 없어 픽업 확인을 진행할 수 없습니다.');
+      return;
+    }
+
+    final success = await context.read<BossOrderProvider>().confirmPickup(
+      order.id,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    final message = success
+        ? '픽업 완료 처리되었습니다.'
+        : context.read<BossOrderProvider>().errorMessage ?? '처리에 실패했습니다.';
+    _showSnackBar(message);
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 }
 
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.order});
+  const _OrderCard({
+    required this.order,
+    required this.isProcessing,
+    required this.onPickupConfirm,
+  });
 
-  final _BossOrderHistoryItem order;
+  final BossOrderResponse order;
+  final bool isProcessing;
+  final VoidCallback onPickupConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -225,18 +293,22 @@ class _OrderCard extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: () => _showPickupTodo(context),
+              onPressed: isProcessing ? null : onPickupConfirm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBackground,
+                disabledBackgroundColor: const Color(0xFFD8D8D8),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text(
-                '픽업 확인',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+              child: Text(
+                isProcessing ? '처리 중...' : '픽업 확인',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -244,35 +316,54 @@ class _OrderCard extends StatelessWidget {
       ),
     );
   }
-
-  static void _showPickupTodo(BuildContext context) {
-    // TODO: Connect pickup confirmation flow to real order status API.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('픽업 확인 기능은 추후 연결 예정입니다.')));
-  }
 }
 
-class _BossOrderHistoryItem {
-  const _BossOrderHistoryItem({
-    required this.orderNumber,
-    required this.items,
-    required this.paymentAmount,
+class _OrderMessageState extends StatelessWidget {
+  const _OrderMessageState({
+    required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
-  final String orderNumber;
-  final List<_BossOrderMenuItem> items;
-  final int paymentAmount;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
-  int get totalQuantity =>
-      items.fold<int>(0, (sum, item) => sum + item.quantity);
-}
-
-class _BossOrderMenuItem {
-  const _BossOrderMenuItem({required this.name, required this.quantity});
-
-  final String name;
-  final int quantity;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 48),
+      child: Center(
+        child: Column(
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF757575),
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 14),
+              TextButton(
+                onPressed: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryBackground,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 String _formatPrice(int price) {
@@ -281,46 +372,3 @@ String _formatPrice(int price) {
     (match) => '${match[1]},',
   );
 }
-
-// TODO: Replace dummy orders with real order-history DTO/API response.
-const List<_BossOrderHistoryItem> _dummyOrders = [
-  _BossOrderHistoryItem(
-    orderNumber: 'A127',
-    items: [_BossOrderMenuItem(name: '소금빵', quantity: 2)],
-    paymentAmount: 6200,
-  ),
-  _BossOrderHistoryItem(
-    orderNumber: 'A126',
-    items: [
-      _BossOrderMenuItem(name: '단팥빵', quantity: 1),
-      _BossOrderMenuItem(name: '우유식빵', quantity: 1),
-    ],
-    paymentAmount: 9100,
-  ),
-  _BossOrderHistoryItem(
-    orderNumber: 'A125',
-    items: [_BossOrderMenuItem(name: '크루아상', quantity: 3)],
-    paymentAmount: 8100,
-  ),
-  _BossOrderHistoryItem(
-    orderNumber: 'A124',
-    items: [
-      _BossOrderMenuItem(name: '소보루빵', quantity: 2),
-      _BossOrderMenuItem(name: '꽈배기', quantity: 2),
-    ],
-    paymentAmount: 10300,
-  ),
-  _BossOrderHistoryItem(
-    orderNumber: 'A123',
-    items: [_BossOrderMenuItem(name: '치아바타', quantity: 1)],
-    paymentAmount: 3400,
-  ),
-  _BossOrderHistoryItem(
-    orderNumber: 'A122',
-    items: [
-      _BossOrderMenuItem(name: '앙버터', quantity: 2),
-      _BossOrderMenuItem(name: '버터프레첼', quantity: 1),
-    ],
-    paymentAmount: 9800,
-  ),
-];
