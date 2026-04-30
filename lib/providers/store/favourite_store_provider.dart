@@ -25,11 +25,14 @@ class FavouriteStoreProvider extends ChangeNotifier {
   }
 
   Future<void> toggleStore(int storeId) async {
+    final prev = List<FavouriteStoreResponse>.from(stores);
+    stores = stores.where((s) => s.storeId != storeId).toList();
+    notifyListeners();
+
     try {
-      stores = stores.where((s) => s.storeId != storeId).toList();
-      notifyListeners();
       await _service.toggleFavouriteStore(storeId);
     } catch (e) {
+      stores = prev;
       errorMessage = ApiException.messageFrom(e);
       notifyListeners();
     }

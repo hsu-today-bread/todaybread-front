@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/models/order/order_response.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
+import 'package:todaybread/services/network/api_exception.dart';
+import 'package:todaybread/services/order/order_service.dart';
+import 'package:todaybread/utils/display_helper.dart';
 import '../../utils/app_colors.dart';
 import 'boss_account_verification_screen.dart';
 import 'my_profile_screen.dart';
@@ -17,10 +21,36 @@ class MyPageHomeScreen extends StatefulWidget {
 }
 
 class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
-  // TODO: 마이페이지 리뷰 API 연동 후 교체
-  // 리뷰 데이터가 있으면 아래 카드 리스트 형태로 노출하고,
-  // 없으면 "주문 내역이 없습니다" 문구를 보여준다.
-  final List<Map<String, dynamic>> _reviewList = [];
+  List<OrderResponse> _orders = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final result = await OrderService.instance.getOrders();
+      if (!mounted) return;
+      setState(() {
+        _orders = result.orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = ApiException.messageFrom(e);
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,13 +259,37 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          if (_reviewList.isEmpty) _buildEmptyReviewState(),
-          ..._reviewList.map((item) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _buildPurchaseCard(item),
-            );
-          }),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_error != null)
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _error!,
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF8E8E8E)),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _loadOrders,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryBackground,
+                      side: const BorderSide(color: AppColors.primaryBackground),
+                    ),
+                    child: const Text('다시 시도'),
+                  ),
+                ],
+              ),
+            )
+          else if (_orders.isEmpty)
+            _buildEmptyReviewState()
+          else
+            ..._orders.map((order) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildOrderCard(order),
+                )),
         ],
       ),
     );
@@ -269,7 +323,20 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     );
   }
 
-  Widget _buildPurchaseCard(Map<String, dynamic> item) {
+  Widget _buildOrderCard(OrderResponse order) {
+    final firstItem = order.items.isNotEmpty ? order.items.first : null;
+    final extraCount = order.items.length - 1;
+    final menuText = firstItem == null
+        ? '상품 정보 없음'
+        : extraCount > 0
+            ? '${firstItem.breadName} 외 $extraCount개'
+            : firstItem.breadName;
+    final imageUrl = DisplayHelper.resolveImageUrl(firstItem?.imageUrl);
+    final formattedPrice = _formatPrice(order.totalPrice);
+    final formattedDate = order.orderedAt.length >= 10
+        ? order.orderedAt.substring(0, 10)
+        : order.orderedAt;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -277,11 +344,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE4E4E4)),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
+          BoxShadow(color: Color(0x22000000), blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -292,11 +355,8 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['date'],
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF9B9B9B),
-                  ),
+                  formattedDate,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF9B9B9B)),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -311,17 +371,21 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          'assets/images/bread_sample.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.cake_outlined,
-                              color: Colors.brown,
-                              size: 28,
-                            );
-                          },
-                        ),
+                        child: imageUrl != null
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, e, st) => const Icon(
+                                  Icons.cake_outlined,
+                                  color: Colors.brown,
+                                  size: 28,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.cake_outlined,
+                                color: Colors.brown,
+                                size: 28,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -332,7 +396,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item['storeName'],
+                              order.storeName,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -341,7 +405,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              item['menuName'],
+                              menuText,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF6F6F6F),
@@ -359,71 +423,20 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
           const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.attach_money,
-                      size: 18,
-                      color: Color(0xFF53C4B7),
-                    ),
-                    const Text(
-                      '결제금액',
-                      style: TextStyle(fontSize: 13, color: Colors.black87),
-                    ),
-                    const Spacer(),
-                    Text(
-                      item['originalPrice'],
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFFB3B3B3),
-                        decoration: TextDecoration.lineThrough,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      item['price'],
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
+                const Icon(Icons.attach_money, size: 18, color: Color(0xFF53C4B7)),
+                const Text(
+                  '결제금액',
+                  style: TextStyle(fontSize: 13, color: Colors.black87),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: 리뷰 작성/조회 API 및 상세 화면 연결
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: item['isReviewWritten']
-                          ? const Color(0xFFD5CECB)
-                          : AppColors.primaryBackground,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          item['buttonText'],
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const Spacer(),
-                        const Icon(Icons.chevron_right, size: 20),
-                      ],
-                    ),
+                const Spacer(),
+                Text(
+                  '$formattedPrice원',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
                   ),
                 ),
               ],
@@ -431,6 +444,13 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  String _formatPrice(int price) {
+    return price.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
     );
   }
 }

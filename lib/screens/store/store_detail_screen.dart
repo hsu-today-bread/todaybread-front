@@ -34,13 +34,39 @@ class _StoreDetailView extends StatelessWidget {
       body: Builder(
         builder: (context) {
           if (provider.isLoading && !provider.hasFetched) {
-            return const Center(child: CircularProgressIndicator());
+            return Stack(
+              children: [
+                const Center(child: CircularProgressIndicator()),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: _CircleOverlayButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
+              ],
+            );
           }
 
           if (provider.store == null) {
-            return _ErrorState(
-              message: provider.errorMessage ?? '매장 상세를 불러오지 못했습니다.',
-              onRetry: provider.fetch,
+            return Stack(
+              children: [
+                _ErrorState(
+                  message: provider.errorMessage ?? '매장 상세를 불러오지 못했습니다.',
+                  onRetry: provider.fetch,
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: _CircleOverlayButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
+              ],
             );
           }
 
@@ -50,7 +76,9 @@ class _StoreDetailView extends StatelessWidget {
               .whereType<String>()
               .toList();
 
-          return CustomScrollView(
+          return Stack(
+            children: [
+              CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Stack(
@@ -80,28 +108,6 @@ class _StoreDetailView extends StatelessWidget {
                             },
                           );
                         },
-                      ),
-                    ),
-                    SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _CircleOverlayButton(
-                              icon: Icons.arrow_back_ios_new_rounded,
-                              onTap: () => Navigator.of(context).pop(),
-                            ),
-                            _CircleOverlayButton(
-                              icon: Icons.shopping_cart_outlined,
-                              onTap: () => _showTodoSnackBar(
-                                context,
-                                '장바구니 화면 연결 예정입니다.',
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                     if (imageUrls.length > 1)
@@ -297,6 +303,21 @@ class _StoreDetailView extends StatelessWidget {
                           (bread) => _buildBreadCard(context, provider, bread),
                         ),
                     ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+              // 스크롤과 무관하게 항상 상단에 고정되는 뒤로가기 버튼
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: _CircleOverlayButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
                   ),
                 ),
               ),
