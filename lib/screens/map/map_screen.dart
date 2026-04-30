@@ -41,7 +41,7 @@ class _MapScreenState extends State<MapScreen> {
         lat: position.latitude,
         lng: position.longitude,
       );
-      if (!mounted) return;
+if (!mounted) return;
       setState(() {
         _stores = stores;
         _loading = false;
@@ -289,7 +289,7 @@ class _StoreCard extends StatelessWidget {
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: store.isSelling
-                              ? AppColors.primaryBackground.withOpacity(0.12)
+                              ? AppColors.primaryBackground.withValues(alpha: 0.12)
                               : Colors.grey[200],
                           borderRadius: BorderRadius.circular(4),
                         ),

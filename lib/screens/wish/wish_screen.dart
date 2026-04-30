@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
-import 'package:todaybread/providers/keyword/keyword_provider.dart';
-import 'package:todaybread/providers/store/favourite_store_provider.dart';
+import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
 
 class WishScreen extends StatefulWidget {
   const WishScreen({super.key});
@@ -18,8 +17,7 @@ class _WishScreenState extends State<WishScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<KeywordProvider>().loadKeywords();
-      context.read<FavouriteStoreProvider>().loadStores();
+      context.read<WishlistProvider>().load();
     });
   }
 
@@ -31,8 +29,7 @@ class _WishScreenState extends State<WishScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final keywordProvider = context.watch<KeywordProvider>();
-    final storeProvider = context.watch<FavouriteStoreProvider>();
+    final wishlistProvider = context.watch<WishlistProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -75,7 +72,7 @@ class _WishScreenState extends State<WishScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 3),
                     child: ElevatedButton(
-                      onPressed: keywordProvider.isLoading
+                      onPressed: wishlistProvider.isLoading
                           ? null
                           : () => _addKeyword(context),
                       style: ElevatedButton.styleFrom(
@@ -92,10 +89,10 @@ class _WishScreenState extends State<WishScreen> {
                   ),
                 ],
               ),
-              if (keywordProvider.errorMessage != null) ...[
+              if (wishlistProvider.errorMessage != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  keywordProvider.errorMessage!,
+                  wishlistProvider.errorMessage!,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFFD64545),
@@ -103,13 +100,13 @@ class _WishScreenState extends State<WishScreen> {
                 ),
               ],
               const SizedBox(height: 8),
-              if (keywordProvider.isLoading)
+              if (wishlistProvider.isLoading)
                 const Center(child: CircularProgressIndicator())
               else
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: keywordProvider.keywords.map((keyword) {
+                  children: wishlistProvider.keywords.map((keyword) {
                     return Chip(
                       label: Text(keyword.displayText),
                       backgroundColor: Colors.white,
@@ -124,14 +121,14 @@ class _WishScreenState extends State<WishScreen> {
                       onDeleted: () async {
                         try {
                           await context
-                              .read<KeywordProvider>()
+                              .read<WishlistProvider>()
                               .removeKeyword(keyword.userKeywordId);
                         } catch (_) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                context.read<KeywordProvider>().errorMessage ??
+                                context.read<WishlistProvider>().errorMessage ??
                                     '키워드 삭제에 실패했습니다.',
                               ),
                             ),
@@ -152,9 +149,9 @@ class _WishScreenState extends State<WishScreen> {
                 style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
               ),
               const SizedBox(height: 16),
-              if (storeProvider.isLoading)
+              if (wishlistProvider.isLoading)
                 const Center(child: CircularProgressIndicator())
-              else if (storeProvider.stores.isEmpty)
+              else if (wishlistProvider.favouriteStores.isEmpty)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
@@ -166,7 +163,7 @@ class _WishScreenState extends State<WishScreen> {
                 )
               else
                 Column(
-                  children: storeProvider.stores.map((store) {
+                  children: wishlistProvider.favouriteStores.map((store) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Container(
@@ -238,7 +235,7 @@ class _WishScreenState extends State<WishScreen> {
                             IconButton(
                               onPressed: () {
                                 context
-                                    .read<FavouriteStoreProvider>()
+                                    .read<WishlistProvider>()
                                     .toggleStore(store.storeId);
                               },
                               icon: const Icon(
@@ -273,7 +270,7 @@ class _WishScreenState extends State<WishScreen> {
     if (text.isEmpty) return;
 
     try {
-      await context.read<KeywordProvider>().addKeyword(text);
+      await context.read<WishlistProvider>().addKeyword(text);
       _keywordController.clear();
     } catch (_) {
       // errorMessage는 provider에서 이미 세팅되므로 UI가 자동으로 표시함
