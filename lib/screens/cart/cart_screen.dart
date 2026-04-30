@@ -1,58 +1,68 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:todaybread/models/cart/cart_item_response.dart';
 import 'package:todaybread/screens/order/purchase_screen.dart';
+import 'package:todaybread/services/cart/cart_service.dart';
+import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
-/// 장바구니 아이템 모델 (로컬 상태용)
+/// 장바구니 아이템 로컬 모델
 class CartItem {
+  final int cartItemId;
+  final int breadId;
   final String name;
-  final String ingredients;
+  final String description;
   final int price;
   final String? imageUrl;
   int quantity;
 
   CartItem({
+    required this.cartItemId,
+    required this.breadId,
     required this.name,
-    required this.ingredients,
+    required this.description,
     required this.price,
     this.imageUrl,
-    this.quantity = 1,
+    required this.quantity,
   });
+
+  factory CartItem.fromResponse(CartItemResponse r) => CartItem(
+        cartItemId: r.cartItemId,
+        breadId: r.breadId,
+        name: r.breadName,
+        description: r.description,
+        price: r.salePrice,
+        imageUrl: r.imageUrl,
+        quantity: r.quantity,
+      );
 }
 
 /// 장바구니 화면
-///
-/// - 담긴 상품이 있을 때: 가게명 + 주문 마감 타이머 + 상품 목록 + 결제 바
-/// - 담긴 상품이 없을 때: 빈 상태 안내 + 결제 바
 class CartScreen extends StatefulWidget {
-  /// 더미 데이터 여부 (개발 중 미리보기용)
-  final bool useDummyData;
-
-  const CartScreen({super.key, this.useDummyData = true});
+  const CartScreen({super.key});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
 
 class _CartScreenState extends State<CartScreen> {
-  /// 장바구니에 담긴 상품 목록
-  late List<CartItem> _items;
+  final CartService _cartService = CartService.instance;
 
-  /// 가게명
-  final String _storeName = '파리바게트 한성대입구역점';
-
-  /// 주문 마감까지 남은 시간 (초)
-  Duration _remainingTime = const Duration(minutes: 45, seconds: 3);
-
+  List<CartItem> _items = [];
+  String _storeName = '';
+  Duration _remainingTime = Duration.zero;
   Timer? _timer;
+
+  bool _isLoading = true;
+  String? _loadError;
+
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
     super.initState();
-    _items = widget.useDummyData ? _buildDummyItems() : [];
-    _startTimer();
+    _loadCart();
   }
 
   @override
@@ -61,17 +71,56 @@ class _CartScreenState extends State<CartScreen> {
     super.dispose();
   }
 
-  List<CartItem> _buildDummyItems() {
-    const ingredients =
-        '중력분, 설탕, 버터, 땅콩버터, 물엿, 베이킹 파우더\n강력분, 우유, 달걀, 이스트, 소금, 설탕';
-    return [
-      CartItem(name: '소보루 빵', ingredients: ingredients, price: 700),
-      CartItem(name: '꽈배기', ingredients: ingredients, price: 800),
-      CartItem(name: '붕어빵', ingredients: ingredients, price: 1800),
-    ];
+  Future<void> _loadCart() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+    try {
+      final response = await _cartService.getCart();
+      if (!mounted) return;
+
+      final items =
+          response.items.map(CartItem.fromResponse).toList();
+
+      setState(() {
+        _items = items;
+        _storeName = response.storeName ?? '';
+        _remainingTime = _parseLastOrderTime(response.lastOrderTime);
+        _isLoading = false;
+      });
+
+      if (_remainingTime > Duration.zero) {
+        _startTimer();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadError = ApiException.messageFrom(e);
+      });
+    }
+  }
+
+  Duration _parseLastOrderTime(String? lastOrderTime) {
+    if (lastOrderTime == null) return Duration.zero;
+    final parts = lastOrderTime.split(':');
+    if (parts.length < 2) return Duration.zero;
+    final now = DateTime.now();
+    final target = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.tryParse(parts[0]) ?? 0,
+      int.tryParse(parts[1]) ?? 0,
+      parts.length > 2 ? (int.tryParse(parts[2]) ?? 0) : 0,
+    );
+    final diff = target.difference(now);
+    return diff.isNegative ? Duration.zero : diff;
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       if (_remainingTime.inSeconds <= 0) {
@@ -114,10 +163,8 @@ class _CartScreenState extends State<CartScreen> {
       appBar: _buildAppBar(),
       body: Column(
         children: [
-          Expanded(
-            child: _items.isEmpty ? _buildEmptyState() : _buildCartContent(),
-          ),
-          _buildBottomBar(),
+          Expanded(child: _buildBody()),
+          if (!_isLoading && _loadError == null) _buildBottomBar(),
         ],
       ),
     );
@@ -143,7 +190,37 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  /// 빈 장바구니 상태
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_loadError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _loadError!,
+              style: const TextStyle(fontSize: 15, color: Colors.black54),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 14),
+            OutlinedButton(
+              onPressed: _loadCart,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryBackground,
+                side: const BorderSide(color: AppColors.primaryBackground),
+              ),
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_items.isEmpty) return _buildEmptyState();
+    return _buildCartContent();
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -160,13 +237,37 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  /// 장바구니 내용 (가게 헤더 + 아이템 목록)
   Widget _buildCartContent() {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: _buildStoreHeader(),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: _clearCart,
+                icon: const Icon(
+                  Icons.delete_sweep_outlined,
+                  size: 18,
+                  color: Colors.black45,
+                ),
+                label: const Text(
+                  '장바구니 비우기',
+                  style: TextStyle(fontSize: 13, color: Colors.black45),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
         ),
         Expanded(
           child: AnimatedList(
@@ -182,7 +283,6 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  /// 가게명 + 주문 마감 타이머
   Widget _buildStoreHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,45 +316,90 @@ class _CartScreenState extends State<CartScreen> {
             const Icon(Icons.chevron_right, color: Colors.black54, size: 20),
           ],
         ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            const Text(
-              '주문 종료까지 남은 시간: ',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
-            ),
-            Text(
-              _remainingTimeShort,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFE53935),
+        if (_remainingTime > Duration.zero) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Text(
+                '주문 종료까지 남은 시간: ',
+                style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
-            ),
-          ],
-        ),
+              Text(
+                _remainingTimeShort,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE53935),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  void _removeItem(CartItem item) {
+  Future<void> _removeItem(CartItem item) async {
     final index = _items.indexOf(item);
     if (index == -1) return;
 
+    // 낙관적 업데이트: 먼저 UI에서 제거
     final removed = _items[index];
     _items.removeAt(index);
-
     _listKey.currentState?.removeItem(
       index,
       (context, animation) => _buildAnimatedItemCard(removed, animation),
       duration: const Duration(milliseconds: 300),
     );
-
-    // 모두 삭제됐을 때 빈 상태로 전환
     setState(() {});
+
+    try {
+      await _cartService.deleteItem(item.cartItemId);
+    } catch (e) {
+      // 실패 시 재로드
+      if (mounted) _loadCart();
+    }
   }
 
-  /// 애니메이션 래핑 카드 (삭제 시 fade + slide up)
+  void _clearCart() async {
+    final count = _items.length;
+    final removed = List<CartItem>.from(_items);
+    _items.clear();
+
+    for (var i = count - 1; i >= 0; i--) {
+      _listKey.currentState?.removeItem(
+        i,
+        (context, animation) => _buildAnimatedItemCard(removed[i], animation),
+        duration: const Duration(milliseconds: 250),
+      );
+    }
+    setState(() {});
+
+    try {
+      await _cartService.clearCart();
+    } catch (e) {
+      if (mounted) _loadCart();
+    }
+  }
+
+  Future<void> _updateQuantity(CartItem item, int newQuantity) async {
+    final oldQuantity = item.quantity;
+    setState(() {
+      item.quantity = newQuantity;
+    });
+
+    try {
+      await _cartService.updateItem(item.cartItemId, newQuantity);
+    } catch (e) {
+      // 실패 시 되돌리기
+      if (mounted) {
+        setState(() {
+          item.quantity = oldQuantity;
+        });
+      }
+    }
+  }
+
   Widget _buildAnimatedItemCard(CartItem item, Animation<double> animation) {
     return SizeTransition(
       sizeFactor: CurvedAnimation(parent: animation, curve: Curves.easeOut),
@@ -265,7 +410,6 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  /// 개별 상품 카드
   Widget _buildItemCard(CartItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -281,7 +425,6 @@ class _CartScreenState extends State<CartScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 상품 정보
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +444,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      item.ingredients,
+                      item.description,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black45,
@@ -311,10 +454,7 @@ class _CartScreenState extends State<CartScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(width: 12),
-
-              /// 상품 이미지
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: item.imageUrl != null
@@ -323,16 +463,13 @@ class _CartScreenState extends State<CartScreen> {
                         width: 72,
                         height: 72,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _breadImagePlaceholder(),
+                        errorBuilder: (context, e, st) => _breadImagePlaceholder(),
                       )
                     : _breadImagePlaceholder(),
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
-          /// 가격 + 수량 조절
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -368,11 +505,9 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  /// 수량 조절 (삭제 아이콘 + 숫자 + + 버튼)
   Widget _buildQuantityControl(CartItem item) {
     return Row(
       children: [
-        /// 삭제 버튼
         GestureDetector(
           onTap: () => _removeItem(item),
           child: const Icon(
@@ -381,10 +516,18 @@ class _CartScreenState extends State<CartScreen> {
             color: Colors.black54,
           ),
         ),
-
         const SizedBox(width: 10),
-
-        /// 수량
+        GestureDetector(
+          onTap: item.quantity > 1
+              ? () => _updateQuantity(item, item.quantity - 1)
+              : null,
+          child: Icon(
+            Icons.remove,
+            size: 22,
+            color: item.quantity > 1 ? Colors.black87 : Colors.black26,
+          ),
+        ),
+        const SizedBox(width: 10),
         Text(
           '${item.quantity}',
           style: const TextStyle(
@@ -393,29 +536,20 @@ class _CartScreenState extends State<CartScreen> {
             color: Colors.black87,
           ),
         ),
-
         const SizedBox(width: 10),
-
-        /// + 버튼
         GestureDetector(
-          onTap: () {
-            setState(() {
-              item.quantity++;
-            });
-          },
+          onTap: () => _updateQuantity(item, item.quantity + 1),
           child: const Icon(Icons.add, size: 22, color: Colors.black87),
         ),
       ],
     );
   }
 
-  /// 하단 바 (타이머 배너 + 결제 금액 + 구매 버튼)
   Widget _buildBottomBar() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        /// 마감 시간 배너 (아이템이 있을 때만)
-        if (_items.isNotEmpty)
+        if (_items.isNotEmpty && _remainingTime > Duration.zero)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -439,13 +573,12 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
           ),
-
-        /// 결제 금액 + 구매하기 버튼
         Container(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
+            border:
+                Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
           ),
           child: Row(
             children: [
@@ -468,9 +601,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(width: 16),
-
               Expanded(
                 child: SizedBox(
                   height: 50,

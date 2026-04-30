@@ -75,6 +75,14 @@ class BossStoreCreateProvider extends ChangeNotifier {
     _syncAfterChange();
   }
 
+  /// 주소 검색 결과에서 선택 시 호출 — 주소·위도·경도를 한번에 채움
+  void selectAddress(String address, double lat, double lng) {
+    addressLine1 = address;
+    latitude = lat.toString();
+    longitude = lng.toString();
+    _syncAfterChange();
+  }
+
   void updateTemplateBusinessHours(BusinessHoursRequest value) {
     templateBusinessHours = value;
     _syncAfterChange();
