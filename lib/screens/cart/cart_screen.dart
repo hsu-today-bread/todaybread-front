@@ -391,12 +391,14 @@ class _CartScreenState extends State<CartScreen> {
     try {
       await _cartService.updateItem(item.cartItemId, newQuantity);
     } catch (e) {
-      // 실패 시 되돌리기
-      if (mounted) {
-        setState(() {
-          item.quantity = oldQuantity;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        item.quantity = oldQuantity;
+      });
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.messageFrom(e))),
+      );
     }
   }
 

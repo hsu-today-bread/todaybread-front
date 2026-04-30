@@ -367,8 +367,26 @@ class _BottomActionBar extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: enabled
-                    ? () => _showTodoSnackBar(context, '장바구니 기능은 연결 예정입니다.')
+                onPressed: enabled && !provider.isAddingToCart
+                    ? () async {
+                        final success = await provider.addToCart();
+                        if (!context.mounted) return;
+                        if (success) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('장바구니에 담았습니다.')),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                provider.errorMessage ?? '장바구니 담기에 실패했습니다.',
+                              ),
+                            ),
+                          );
+                        }
+                      }
                     : null,
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
@@ -382,10 +400,22 @@ class _BottomActionBar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  '장바구니에 담기',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                ),
+                child: provider.isAddingToCart
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primaryBackground,
+                        ),
+                      )
+                    : const Text(
+                        '장바구니에 담기',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(width: 10),
@@ -550,7 +580,3 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-void _showTodoSnackBar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-}

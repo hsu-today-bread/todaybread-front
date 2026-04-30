@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
+import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
 import 'package:todaybread/screens/boss/boss_dashboard_screen.dart';
 import 'package:todaybread/screens/wish/wish_screen.dart';
 
@@ -62,11 +63,16 @@ class _MainShellState extends State<MainShell>
     super.dispose();
   }
 
+  static const int _wishTabIndex = 2;
+
   void _onTap(int index) {
     if (_selectedIndex == index) return;
     setState(() {
       _selectedIndex = index;
     });
+    if (index == _wishTabIndex) {
+      context.read<WishlistProvider>().load();
+    }
     // IndexedStack은 유지해서 각 탭의 상태를 보존하고,
     // 보이는 화면만 짧게 fade + slide 시켜 가볍게 전환감을 줍니다.
     _transitionController

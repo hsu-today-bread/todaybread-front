@@ -44,12 +44,24 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 거리 슬라이더 눈금 라벨 목록
   final List<String> _distanceLabels = ['3km', '5km', '10km'];
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   List<NearbyBreadResponse> _items = [];
   bool _isLoadingItems = false;
   bool _hasLoadedItems = false;
   String? _loadError;
   double? _currentLatitude;
   double? _currentLongitude;
+
+  List<NearbyBreadResponse> get _filteredItems {
+    if (_searchQuery.isEmpty) return _items;
+    final query = _searchQuery.toLowerCase();
+    return _items.where((item) {
+      return item.name.toLowerCase().contains(query) ||
+          item.storeName.toLowerCase().contains(query);
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -61,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _clockTimer?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -156,9 +169,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  hintText: '',
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  hintText: '빵 이름 또는 가게 이름 검색',
                   prefixIcon: Icon(Icons.search, color: Colors.grey, size: 22),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 14),
@@ -229,11 +248,26 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    final displayed = _filteredItems;
+
+    if (_hasLoadedItems && displayed.isEmpty) {
+      return _buildMessageState(
+        message: "'$_searchQuery'에 대한 검색 결과가 없습니다.",
+        actionLabel: '검색어 지우기',
+        onPressed: () {
+          _searchController.clear();
+          setState(() {
+            _searchQuery = '';
+          });
+        },
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _items.length,
+      itemCount: displayed.length,
       itemBuilder: (context, index) {
-        return _buildItemCard(_items[index]);
+        return _buildItemCard(displayed[index]);
       },
     );
   }

@@ -7,6 +7,7 @@ import 'package:todaybread/models/store/store_common_response.dart';
 import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/models/store/store_image_response.dart';
 import 'package:todaybread/services/bread/bread_service.dart';
+import 'package:todaybread/services/cart/cart_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/store/store_service.dart';
 
@@ -19,10 +20,12 @@ class BreadDetailProvider extends ChangeNotifier {
   final int storeId;
   final BreadService _breadService = BreadService.instance;
   final StoreService _storeService = StoreService.instance;
+  final CartService _cartService = CartService.instance;
   Timer? _clockTimer;
 
   bool isLoading = false;
   bool hasFetched = false;
+  bool isAddingToCart = false;
   String? errorMessage;
   BreadDetailResponse? breadDetail;
   StoreDetailResponse? storeDetail;
@@ -72,13 +75,13 @@ class BreadDetailProvider extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      final responses = await Future.wait([
+      final results = await (
         _breadService.getBreadDetail(breadId),
         _storeService.getStoreDetail(storeId),
-      ]);
+      ).wait;
 
-      breadDetail = responses[0] as BreadDetailResponse;
-      storeDetail = responses[1] as StoreDetailResponse;
+      breadDetail = results.$1;
+      storeDetail = results.$2;
       quantity = maxQuantity > 0 ? 1 : 0;
       hasFetched = true;
     } catch (e) {
@@ -101,6 +104,28 @@ class BreadDetailProvider extends ChangeNotifier {
       }
       notifyListeners();
     });
+  }
+
+  /// 장바구니에 현재 수량만큼 빵을 추가합니다.
+  /// 성공 시 true, 실패 시 errorMessage를 세팅하고 false 반환.
+  Future<bool> addToCart() async {
+    final bread = breadDetail;
+    if (bread == null || isAddingToCart) return false;
+
+    isAddingToCart = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _cartService.addItem(bread.id, quantity);
+      return true;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return false;
+    } finally {
+      isAddingToCart = false;
+      notifyListeners();
+    }
   }
 
   void decreaseQuantity() {
