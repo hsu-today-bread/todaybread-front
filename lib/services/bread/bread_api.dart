@@ -36,4 +36,10 @@ abstract class BreadApi {
     @Part(name: 'request', contentType: 'application/json') File request,
     @Part(name: 'image') File? image,
   );
+
+  @PATCH('/api/boss/bread/{breadId}/stock')
+  Future<void> updateBreadStock(
+    @Path('breadId') int breadId,
+    @Body() Map<String, dynamic> request,
+  );
 }

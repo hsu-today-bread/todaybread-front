@@ -3,6 +3,8 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
+import 'package:todaybread/screens/boss/boss_review_management_screen.dart';
+import 'package:todaybread/screens/boss/boss_store_management_screen.dart';
 import '../../utils/app_colors.dart';
 import 'boss_account_verification_screen.dart';
 import 'my_profile_screen.dart';
@@ -24,6 +26,8 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isBoss = context.watch<AuthProvider>().isBoss;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       body: SafeArea(
@@ -37,7 +41,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                     const SizedBox(height: 18),
                     _buildAccountCard(),
                     const SizedBox(height: 20),
-                    _buildReviewSection(),
+                    isBoss ? _buildBossManagementSection() : _buildReviewSection(),
                   ],
                 ),
               ),
@@ -238,6 +242,121 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
           }),
         ],
       ),
+    );
+  }
+
+  Widget _buildBossManagementSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '사장님 관리',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildBossMenuCard(
+            title: '매장관리',
+            subtitle: '매장 정보와 운영 상태를 관리합니다.',
+            icon: Icons.store_mall_directory_outlined,
+            onTap: () => _push(const BossStoreManagementScreen()),
+          ),
+          const SizedBox(height: 12),
+          _buildBossMenuCard(
+            title: '리뷰관리',
+            subtitle: '고객 리뷰를 확인하고 관리합니다.',
+            icon: Icons.rate_review_outlined,
+            onTap: () => _push(const BossReviewManagementScreen()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBossMenuCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE8E8E8)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 14,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBackground,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: Color(0xFF818181),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 28,
+                color: Color(0xFF9A9A9A),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _push(Widget screen) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
     );
   }
 

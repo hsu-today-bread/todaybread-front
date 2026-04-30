@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
+import 'package:todaybread/providers/boss/boss_order_provider.dart';
 import 'package:todaybread/providers/boss/boss_provider.dart';
+import 'package:todaybread/providers/boss/boss_sales_provider.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/store/favourite_store_provider.dart';
@@ -45,6 +47,8 @@ class TodayBreadApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BreadProvider()),
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => BossProvider()),
+        ChangeNotifierProvider(create: (_) => BossOrderProvider()),
+        ChangeNotifierProvider(create: (_) => BossSalesProvider()),
         ChangeNotifierProvider(create: (_) => KeywordProvider()),
         ChangeNotifierProvider(create: (_) => FavouriteStoreProvider()),
       ],

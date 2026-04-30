@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
-import 'package:todaybread/screens/boss/boss_dashboard_screen.dart';
+import 'package:todaybread/screens/boss/boss_bread_management_screen.dart';
+import 'package:todaybread/screens/boss/boss_order_history_screen.dart';
+import 'package:todaybread/screens/boss/boss_sales_screen.dart';
 import 'package:todaybread/screens/wish/wish_screen.dart';
 
 import '../../widgets/main_bottom_nav_bar.dart';
@@ -102,10 +104,9 @@ class _MainShellState extends State<MainShell>
   List<Widget> _pagesForRole(UserRole role) {
     if (role == UserRole.boss) {
       return const [
-        HomeScreen(),
-        MapScreen(),
-        WishScreen(),
-        BossDashboardScreen(),
+        BossOrderHistoryScreen(showAppBar: false),
+        BossBreadManagementScreen(showAppBar: false),
+        BossSalesScreen(showAppBar: false),
         MyPageHomeScreen(),
       ];
     }

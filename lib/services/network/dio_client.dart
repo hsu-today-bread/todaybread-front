@@ -11,7 +11,7 @@ class DioClient {
   /// 외부 생성 방지를 위한 private 생성자입니다.
   DioClient._();
 
-  static const String _baseUrl = 'http://10.0.2.2:8080';
+  static const String _baseUrl = 'http://10.30.4.136:8080';
   static String get baseUrl => _baseUrl;
 
   /// 앱 내에서 하나만 사용하는 Dio 싱글턴 인스턴스입니다.

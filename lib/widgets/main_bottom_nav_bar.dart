@@ -24,6 +24,51 @@ class MainBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBoss = role == UserRole.boss;
+    final items = isBoss
+        ? const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: '주문내역',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant_menu_outlined),
+              activeIcon: Icon(Icons.restaurant_menu),
+              label: '메뉴관리',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart),
+              label: '매출관리',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'MY',
+            ),
+          ]
+        : const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: '홈',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map_outlined),
+              activeIcon: Icon(Icons.map),
+              label: '지도로 보기',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite_border),
+              activeIcon: Icon(Icons.favorite),
+              label: '빵',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'MY',
+            ),
+          ];
 
     return BottomNavigationBar(
       currentIndex: currentIndex,
@@ -33,34 +78,7 @@ class MainBottomNavBar extends StatelessWidget {
       unselectedItemColor: Colors.grey,
       selectedFontSize: 11,
       unselectedFontSize: 11,
-      items: [
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.home_outlined),
-          activeIcon: const Icon(Icons.home),
-          label: '홈',
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.map_outlined),
-          activeIcon: const Icon(Icons.map),
-          label: '지도로 보기',
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.favorite_border),
-          activeIcon: const Icon(Icons.favorite),
-          label: '빵',
-        ),
-        if (isBoss)
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined),
-            activeIcon: Icon(Icons.storefront),
-            label: '사장님',
-          ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'MY',
-        ),
-      ],
+      items: items,
     );
   }
 }
