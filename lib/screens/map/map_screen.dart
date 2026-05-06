@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:todaybread/models/store/nearby_store_response.dart';
 import 'package:todaybread/screens/store/store_detail_screen.dart';
 import 'package:todaybread/services/store/store_service.dart';
+import 'package:todaybread/utils/display_helper.dart';
 import '../../utils/app_colors.dart';
 import '../../services/location/location_service.dart';
 
@@ -41,7 +42,7 @@ class _MapScreenState extends State<MapScreen> {
         lat: position.latitude,
         lng: position.longitude,
       );
-if (!mounted) return;
+      if (!mounted) return;
       setState(() {
         _stores = stores;
         _loading = false;
@@ -112,11 +113,7 @@ if (!mounted) return;
                   ),
                   onMapReady: _onMapReady,
                 ),
-                _BottomSheet(
-                  stores: _stores,
-                  loading: _loading,
-                  error: _error,
-                ),
+                _BottomSheet(stores: _stores, loading: _loading, error: _error),
               ],
             ),
     );
@@ -124,11 +121,7 @@ if (!mounted) return;
 }
 
 class _BottomSheet extends StatelessWidget {
-  const _BottomSheet({
-    required this.stores,
-    required this.loading,
-    this.error,
-  });
+  const _BottomSheet({required this.stores, required this.loading, this.error});
 
   final List<NearbyStoreResponse> stores;
   final bool loading;
@@ -199,14 +192,11 @@ class _BottomSheet extends StatelessWidget {
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index.isOdd) return const Divider(height: 1);
-                        final store = stores[index ~/ 2];
-                        return _StoreCard(store: store);
-                      },
-                      childCount: stores.length * 2 - 1,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      if (index.isOdd) return const Divider(height: 1);
+                      final store = stores[index ~/ 2];
+                      return _StoreCard(store: store);
+                    }, childCount: stores.length * 2 - 1),
                   ),
                 ),
             ],
@@ -222,13 +212,15 @@ class _StoreCard extends StatelessWidget {
 
   final NearbyStoreResponse store;
 
-  String _formatDistance(double meters) {
-    if (meters < 1000) return '${meters.toStringAsFixed(0)}m';
-    return '${(meters / 1000).toStringAsFixed(1)}km';
+  String _formatDistance(double kilometers) {
+    if (kilometers < 1) return '${(kilometers * 1000).toStringAsFixed(0)}m';
+    return '${kilometers.toStringAsFixed(1)}km';
   }
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = DisplayHelper.resolveImageUrl(store.primaryImageUrl);
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -250,9 +242,9 @@ class _StoreCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               clipBehavior: Clip.antiAlias,
-              child: store.primaryImageUrl != null
+              child: imageUrl != null
                   ? Image.network(
-                      store.primaryImageUrl!,
+                      imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, e, st) => const Icon(
                         Icons.storefront_outlined,
@@ -286,10 +278,14 @@ class _StoreCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: store.isSelling
-                              ? AppColors.primaryBackground.withValues(alpha: 0.12)
+                              ? AppColors.primaryBackground.withValues(
+                                  alpha: 0.12,
+                                )
                               : Colors.grey[200],
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -310,7 +306,9 @@ class _StoreCard extends StatelessWidget {
                   Text(
                     store.storeAddressLine1,
                     style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF888888)),
+                      fontSize: 13,
+                      color: Color(0xFF888888),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
@@ -324,10 +322,7 @@ class _StoreCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFFCCCCCC),
-            ),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFFCCCCCC)),
           ],
         ),
       ),

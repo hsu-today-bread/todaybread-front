@@ -18,7 +18,7 @@ class FavouriteStoreResponse {
       storeId: (json['storeId'] as num).toInt(),
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: (json['imageUrl'] ?? json['primaryImageUrl']) as String?,
       isSelling: json['isSelling'] as bool? ?? false,
     );
   }

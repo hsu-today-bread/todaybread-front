@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/store/business_hours_request.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/utils/business_hours_helper.dart';
+import 'package:todaybread/utils/user_input_helper.dart';
 
 class BossStoreCreateProvider extends ChangeNotifier {
   BossStoreCreateProvider()
@@ -56,7 +57,7 @@ class BossStoreCreateProvider extends ChangeNotifier {
   }
 
   void updatePhone(String value) {
-    phone = value;
+    phone = UserInputHelper.normalizeStorePhoneNumber(value);
     _syncAfterChange();
   }
 
@@ -207,6 +208,9 @@ class BossStoreCreateProvider extends ChangeNotifier {
       case 2:
         if (phone.trim().isEmpty) {
           return '매장 전화번호를 입력해주세요.';
+        }
+        if (!UserInputHelper.isValidStorePhoneNumber(phone)) {
+          return '매장 전화번호는 02-0000-0000 형식으로 입력해주세요.';
         }
         return null;
       case 3:

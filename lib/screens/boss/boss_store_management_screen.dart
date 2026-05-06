@@ -116,13 +116,17 @@ class _BossStoreManagementScreenState extends State<BossStoreManagementScreen> {
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
+                            onPressed: () async {
+                              await Navigator.push<bool>(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const BossStoreCreateScreen(),
                                 ),
                               );
+                              if (!context.mounted) {
+                                return;
+                              }
+                              context.read<StoreProvider>().fetchStatus();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBackground,

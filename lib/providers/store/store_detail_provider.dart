@@ -62,6 +62,7 @@ class StoreDetailProvider extends ChangeNotifier {
     return DisplayHelper.buildLastOrderRemainingTimeText(
       isSelling: storeDetail?.isSelling ?? false,
       lastOrderTime: todayLastOrderTime,
+      includeSeconds: true,
     );
   }
 
@@ -162,7 +163,7 @@ class StoreDetailProvider extends ChangeNotifier {
 
   void _startClockTimer() {
     _clockTimer?.cancel();
-    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (storeDetail == null) {
         return;
       }

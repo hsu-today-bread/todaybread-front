@@ -1,12 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/bread/bread_common_request.dart';
+import 'package:todaybread/models/bread/bread_common_response.dart';
 
 /// 메뉴 등록 화면에서만 쓰는 step 전용 provider입니다.
 ///
 /// 사용자가 입력 중인 draft 데이터를 보관하고,
 /// 각 단계 이동 전 검증까지 담당합니다.
 class BossBreadCreateProvider extends ChangeNotifier {
+  BossBreadCreateProvider({
+    BreadCommonResponse? initialBread,
+    int initialStep = 0,
+  }) {
+    currentStep = initialStep.clamp(0, 3);
+    if (initialBread == null) {
+      return;
+    }
+
+    name = initialBread.name;
+    originalPrice = initialBread.originalPrice.toString();
+    salePrice = initialBread.salePrice.toString();
+    quantity = initialBread.remainingQuantity;
+    description = initialBread.description;
+    initialImageUrl = initialBread.imageUrl;
+  }
+
   int currentStep = 0;
   String? errorMessage;
 
@@ -15,9 +33,22 @@ class BossBreadCreateProvider extends ChangeNotifier {
   String salePrice = '';
   int quantity = 1;
   XFile? imageFile;
+  String? initialImageUrl;
   String description = '';
 
   bool get isLastStep => currentStep == 3;
+
+  bool validateCurrentStep() {
+    final error = _validateCurrentStep();
+    if (error != null) {
+      errorMessage = error;
+      notifyListeners();
+      return false;
+    }
+    errorMessage = null;
+    notifyListeners();
+    return true;
+  }
 
   void updateName(String value) {
     name = value;
@@ -63,15 +94,11 @@ class BossBreadCreateProvider extends ChangeNotifier {
   }
 
   bool nextStep() {
-    final error = _validateCurrentStep();
-    if (error != null) {
-      errorMessage = error;
-      notifyListeners();
+    if (!validateCurrentStep()) {
       return false;
     }
     if (!isLastStep) {
       currentStep += 1;
-      errorMessage = null;
       notifyListeners();
     }
     return true;
@@ -126,7 +153,8 @@ class BossBreadCreateProvider extends ChangeNotifier {
         }
         return null;
       case 2:
-        if (imageFile == null) {
+        if (imageFile == null &&
+            (initialImageUrl == null || initialImageUrl!.isEmpty)) {
           return '상품 사진을 등록해주세요.';
         }
         return null;

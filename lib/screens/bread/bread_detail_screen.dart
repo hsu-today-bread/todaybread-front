@@ -61,11 +61,7 @@ class _BreadDetailView extends StatelessWidget {
                 ? null
                 : provider.storeImages.first.imageUrl,
           );
-          final remainingTimeText =
-              DisplayHelper.buildLastOrderRemainingTimeText(
-                isSelling: bread.isSelling,
-                lastOrderTime: provider.todayLastOrderTime,
-              );
+          final remainingTimeText = provider.remainingTimeText;
 
           return CustomScrollView(
             slivers: [
@@ -579,4 +575,3 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-

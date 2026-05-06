@@ -10,6 +10,7 @@ import 'package:todaybread/services/bread/bread_service.dart';
 import 'package:todaybread/services/cart/cart_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/store/store_service.dart';
+import 'package:todaybread/utils/display_helper.dart';
 
 class BreadDetailProvider extends ChangeNotifier {
   BreadDetailProvider({required this.breadId, required this.storeId}) {
@@ -69,6 +70,14 @@ class BreadDetailProvider extends ChangeNotifier {
     return null;
   }
 
+  String get remainingTimeText {
+    return DisplayHelper.buildLastOrderRemainingTimeText(
+      isSelling: breadDetail?.isSelling ?? false,
+      lastOrderTime: todayLastOrderTime,
+      includeSeconds: true,
+    );
+  }
+
   Future<void> fetch() async {
     try {
       isLoading = true;
@@ -98,7 +107,7 @@ class BreadDetailProvider extends ChangeNotifier {
 
   void _startClockTimer() {
     _clockTimer?.cancel();
-    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (breadDetail == null || storeDetail == null) {
         return;
       }

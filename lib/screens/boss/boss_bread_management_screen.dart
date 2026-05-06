@@ -39,12 +39,7 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
       backgroundColor: const Color(0xFFF7F7F7),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            widget.showAppBar ? 10 : 18,
-            20,
-            24,
-          ),
+          padding: EdgeInsets.fromLTRB(20, widget.showAppBar ? 10 : 18, 20, 24),
           child: Column(
             children: [
               _buildAppBar(context),
@@ -213,10 +208,12 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
   Future<void> _openBreadDetail(BreadCommonResponse bread) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => BossBreadDetailScreen(bread: bread),
-      ),
+      MaterialPageRoute(builder: (_) => BossBreadDetailScreen(bread: bread)),
     );
+    if (!mounted) {
+      return;
+    }
+    context.read<BreadProvider>().fetchMyBreads();
   }
 
   Future<void> _handleSoldOutToggle(BreadCommonResponse bread) async {
@@ -264,16 +261,13 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
     }
 
     final success = await context.read<BreadProvider>().updateBreadStock(
-          breadId: bread.id,
-          remainingQuantity: 0,
-        );
+      breadId: bread.id,
+      remainingQuantity: 0,
+    );
     if (!mounted) {
       return;
     }
-    _showActionResultSnackBar(
-      success: success,
-      successMessage: '품절 처리되었습니다.',
-    );
+    _showActionResultSnackBar(success: success, successMessage: '품절 처리되었습니다.');
   }
 
   Future<void> _showReleaseSoldOutDialog(BreadCommonResponse bread) async {
@@ -287,16 +281,13 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
     }
 
     final success = await context.read<BreadProvider>().updateBreadStock(
-          breadId: bread.id,
-          remainingQuantity: shouldProceed,
-        );
+      breadId: bread.id,
+      remainingQuantity: shouldProceed,
+    );
     if (!mounted) {
       return;
     }
-    _showActionResultSnackBar(
-      success: success,
-      successMessage: '품절이 해제되었습니다.',
-    );
+    _showActionResultSnackBar(success: success, successMessage: '품절이 해제되었습니다.');
   }
 
   void _showActionResultSnackBar({

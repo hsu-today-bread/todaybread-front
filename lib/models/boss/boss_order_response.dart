@@ -71,6 +71,7 @@ class BossOrderResponse {
     required this.orderNumber,
     required this.status,
     required this.paymentAmount,
+    required this.createdAt,
     required this.items,
   });
 
@@ -78,6 +79,7 @@ class BossOrderResponse {
   final String orderNumber;
   final String status;
   final int paymentAmount;
+  final DateTime? createdAt;
   final List<BossOrderLineItemResponse> items;
 
   int get totalQuantity =>
@@ -121,6 +123,9 @@ class BossOrderResponse {
         fallback: 'CONFIRMED',
       ),
       paymentAmount: paymentAmount,
+      createdAt: bossReadDateTime(
+        bossFirstValue(json, ['createdAt', 'orderDate', 'orderedAt']),
+      ),
       items: items,
     );
   }
@@ -154,7 +159,11 @@ class BossOrderLineItemResponse {
               'amount',
               'lineAmount',
               'totalAmount',
+              'totalPrice',
               'salesAmount',
+              'price',
+              'unitPrice',
+              'salePrice',
             ]) ??
             bread?['salePrice'],
         fallback: 0,

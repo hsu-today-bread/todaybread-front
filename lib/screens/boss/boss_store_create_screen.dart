@@ -7,13 +7,22 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/boss/boss_store_create_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
+import 'package:todaybread/screens/boss/boss_switching_screen.dart';
 import 'package:todaybread/services/geocoding/naver_geocoding_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/utils/user_input_helper.dart';
 import 'package:todaybread/widgets/business_hours_editor.dart';
 
+enum StoreCreateCompletionMode { returnToPrevious, switchToBoss }
+
 class BossStoreCreateScreen extends StatelessWidget {
-  const BossStoreCreateScreen({super.key});
+  const BossStoreCreateScreen({
+    super.key,
+    this.completionMode = StoreCreateCompletionMode.returnToPrevious,
+  });
+
+  final StoreCreateCompletionMode completionMode;
 
   @override
   Widget build(BuildContext context) {
@@ -21,13 +30,15 @@ class BossStoreCreateScreen extends StatelessWidget {
       // 매장 등록 step 입력값은 이 화면 생명주기 동안만 유지하면 되므로
       // 전역이 아니라 화면 진입 시 생성하는 local provider로 둔다.
       create: (_) => BossStoreCreateProvider(),
-      child: const _BossStoreCreateView(),
+      child: _BossStoreCreateView(completionMode: completionMode),
     );
   }
 }
 
 class _BossStoreCreateView extends StatelessWidget {
-  const _BossStoreCreateView();
+  const _BossStoreCreateView({required this.completionMode});
+
+  final StoreCreateCompletionMode completionMode;
 
   static const int _totalSteps = 6;
 
@@ -36,107 +47,110 @@ class _BossStoreCreateView extends StatelessWidget {
     final provider = context.watch<BossStoreCreateProvider>();
     final storeProvider = context.watch<StoreProvider>();
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFFF7F7F7),
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF7F7F7),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildAppBar(context),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: (provider.currentStep + 1) / _totalSteps,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE3E3E3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primaryBackground,
+    return PopScope(
+      canPop: completionMode == StoreCreateCompletionMode.returnToPrevious,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Color(0xFFF7F7F7),
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF7F7F7),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildAppBar(context),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: (provider.currentStep + 1) / _totalSteps,
+                      minHeight: 8,
+                      backgroundColor: const Color(0xFFE3E3E3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppColors.primaryBackground,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 26),
-                Expanded(
-                  child: SingleChildScrollView(
-                    // 멀티페이지로 나누지 않고, currentStep 값에 따라
-                    // 한 화면 안에서 다른 입력 뷰를 보여준다.
-                    child: _StoreCreateStepBody(step: provider.currentStep),
-                  ),
-                ),
-                if (provider.errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    provider.errorMessage!,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFD64545),
+                  const SizedBox(height: 26),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      // 멀티페이지로 나누지 않고, currentStep 값에 따라
+                      // 한 화면 안에서 다른 입력 뷰를 보여준다.
+                      child: _StoreCreateStepBody(step: provider.currentStep),
                     ),
                   ),
-                ],
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    if (provider.currentStep > 0) ...[
+                  if (provider.errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      provider.errorMessage!,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFD64545),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      if (provider.currentStep > 0) ...[
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: provider.previousStep,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(54),
+                              side: const BorderSide(color: Color(0xFFD8D8D8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              '이전',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: provider.previousStep,
-                          style: OutlinedButton.styleFrom(
+                        child: ElevatedButton(
+                          onPressed: storeProvider.isLoading
+                              ? null
+                              : () => _handlePrimaryAction(context),
+                          style: ElevatedButton.styleFrom(
                             minimumSize: const Size.fromHeight(54),
-                            side: const BorderSide(color: Color(0xFFD8D8D8)),
+                            backgroundColor: AppColors.primaryBackground,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
-                            '이전',
-                            style: TextStyle(
+                          child: Text(
+                            storeProvider.isLoading
+                                ? '처리 중...'
+                                : provider.isLastStep
+                                ? '완료하기'
+                                : '다음',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: Colors.black,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
                     ],
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: storeProvider.isLoading
-                            ? null
-                            : () => _handlePrimaryAction(context),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(54),
-                          backgroundColor: AppColors.primaryBackground,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          storeProvider.isLoading
-                              ? '처리 중...'
-                              : provider.isLastStep
-                              ? '완료하기'
-                              : '다음',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -152,14 +166,16 @@ class _BossStoreCreateView extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Color(0xFF4A3A3A),
-                size: 26,
-              ),
-            ),
+            child: completionMode == StoreCreateCompletionMode.returnToPrevious
+                ? IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Color(0xFF4A3A3A),
+                      size: 26,
+                    ),
+                  )
+                : const SizedBox(width: 48),
           ),
           const Center(
             child: Text(
@@ -183,6 +199,7 @@ class _BossStoreCreateView extends StatelessWidget {
     // 다음/완료 버튼은 항상 현재 step 유효성 검사를 먼저 통과해야 한다.
     final isValid = provider.nextStep();
     if (!isValid) {
+      _showSnackBar(context, provider.errorMessage ?? '입력값을 확인해주세요.');
       return;
     }
 
@@ -226,6 +243,14 @@ class _BossStoreCreateView extends StatelessWidget {
         return;
       }
 
+      if (completionMode == StoreCreateCompletionMode.switchToBoss) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const BossSwitchingScreen()),
+          (route) => false,
+        );
+        return;
+      }
+
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
@@ -249,7 +274,7 @@ class _BossStoreCreateView extends StatelessWidget {
       if (!context.mounted) {
         return;
       }
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (e) {
       if (!context.mounted) {
         return;
@@ -279,6 +304,12 @@ class _BossStoreCreateView extends StatelessWidget {
         },
       );
     }
+  }
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -338,8 +369,9 @@ class _StoreCreateStepBody extends StatelessWidget {
               key: const ValueKey('store_phone'),
               initialValue: provider.phone,
               keyboardType: TextInputType.phone,
+              inputFormatters: const [StorePhoneNumberTextInputFormatter()],
               onChanged: context.read<BossStoreCreateProvider>().updatePhone,
-              decoration: _inputDecoration('매장 전화번호를 입력해주세요'),
+              decoration: _inputDecoration('02-0000-0000'),
             ),
           ],
         );
@@ -748,18 +780,20 @@ class _AddressStepState extends State<_AddressStep> {
         TextField(
           controller: _searchController,
           onChanged: _onSearchChanged,
-          decoration: widget.inputDecoration('지번, 도로명 검색').copyWith(
-            suffixIcon: _isSearching
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : const Icon(Icons.search, color: Colors.black38),
-          ),
+          decoration: widget
+              .inputDecoration('지번, 도로명 검색')
+              .copyWith(
+                suffixIcon: _isSearching
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : const Icon(Icons.search, color: Colors.black38),
+              ),
         ),
 
         /// 선택된 주소 표시
@@ -785,10 +819,7 @@ class _AddressStepState extends State<_AddressStep> {
                 Expanded(
                   child: Text(
                     provider.addressLine1,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black87,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
                   ),
                 ),
               ],

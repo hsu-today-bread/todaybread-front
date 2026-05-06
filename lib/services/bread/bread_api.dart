@@ -34,7 +34,22 @@ abstract class BreadApi {
   @POST('/api/boss/bread')
   Future<BreadCommonResponse> createBread(
     @Part(name: 'request', contentType: 'application/json') File request,
-    @Part(name: 'image') File? image,
+    @Part(name: 'image') File image,
+  );
+
+  @MultiPart()
+  @PUT('/api/boss/bread/{breadId}')
+  Future<BreadCommonResponse> updateBread(
+    @Path('breadId') int breadId,
+    @Part(name: 'request', contentType: 'application/json') File request,
+    @Part(name: 'image') File image,
+  );
+
+  @MultiPart()
+  @PUT('/api/boss/bread/{breadId}')
+  Future<BreadCommonResponse> updateBreadWithoutImage(
+    @Path('breadId') int breadId,
+    @Part(name: 'request', contentType: 'application/json') File request,
   );
 
   @PATCH('/api/boss/bread/{breadId}/stock')
@@ -42,4 +57,7 @@ abstract class BreadApi {
     @Path('breadId') int breadId,
     @Body() Map<String, dynamic> request,
   );
+
+  @DELETE('/api/boss/bread/{breadId}')
+  Future<void> deleteBread(@Path('breadId') int breadId);
 }

@@ -72,7 +72,36 @@ DateTime? bossReadDate(dynamic value) {
   final map = bossAsMap(value);
   if (map != null) {
     return bossReadDate(
-      bossFirstValue(map, ['date', 'salesDate', 'day', 'targetDate']),
+      bossFirstValue(
+        map,
+        ['date', 'dateString', 'salesDate', 'day', 'targetDate'],
+      ),
+    );
+  }
+  return null;
+}
+
+DateTime? bossReadDateTime(dynamic value) {
+  if (value is DateTime) {
+    return value;
+  }
+  if (value is String) {
+    return DateTime.tryParse(value.trim());
+  }
+  if (value is int) {
+    final milliseconds = value > 9999999999 ? value : value * 1000;
+    return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+  }
+  if (value is num) {
+    return bossReadDateTime(value.toInt());
+  }
+  final map = bossAsMap(value);
+  if (map != null) {
+    return bossReadDateTime(
+      bossFirstValue(
+        map,
+        ['createdAt', 'updatedAt', 'orderDate', 'orderedAt', 'dateTime'],
+      ),
     );
   }
   return null;

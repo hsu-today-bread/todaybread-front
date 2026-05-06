@@ -10,6 +10,7 @@ import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/business_hours_helper.dart';
+import 'package:todaybread/utils/user_input_helper.dart';
 import 'package:todaybread/widgets/business_hours_editor.dart';
 
 /// 매장관리에서 각 항목의 연필 버튼을 눌렀을 때 열리는 공용 수정 화면입니다.
@@ -323,6 +324,7 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
               child: TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                inputFormatters: const [StorePhoneNumberTextInputFormatter()],
                 decoration: _inputDecoration('매장 전화번호를 입력해주세요'),
                 onChanged: (_) {
                   setState(() {
@@ -514,6 +516,8 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     setState(() {
       if (phone.isEmpty) {
         _phoneCheckMessage = '매장 전화번호를 입력해주세요.';
+      } else if (!UserInputHelper.isValidStorePhoneNumber(phone)) {
+        _phoneCheckMessage = '매장 전화번호는 02-0000-0000 형식으로 입력해주세요.';
       } else if (phone == widget.storeInfo.store.phone) {
         _phoneCheckMessage = '현재 사용 중인 전화번호입니다.';
       } else {
@@ -585,6 +589,13 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
         addressLine2.isEmpty) {
       setState(() {
         _localError = '모든 필수 값을 입력해주세요.';
+      });
+      return null;
+    }
+
+    if (!UserInputHelper.isValidStorePhoneNumber(phone)) {
+      setState(() {
+        _localError = '매장 전화번호는 02-0000-0000 형식으로 입력해주세요.';
       });
       return null;
     }

@@ -25,7 +25,10 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
     _selectedDate = today;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BossSalesProvider>().fetchMonthlySales(_visibleMonth);
+      context.read<BossSalesProvider>().fetchMonthlySales(
+        _visibleMonth,
+        forceRefresh: true,
+      );
     });
   }
 
@@ -267,21 +270,25 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
                 return const SizedBox.shrink();
               }
               final normalized = _normalizeDate(date);
-              final amount = salesProvider.amountForDate(normalized);
-              final hasSales = salesProvider.hasSalesOn(normalized);
+              final amount = monthlyResponse?.amountFor(normalized) ?? 0;
+              final hasSales = monthlyResponse?.hasSalesOn(normalized) ?? false;
               final isSelected =
                   _selectedDate != null &&
                   _normalizeDate(_selectedDate!) == normalized;
-              final isToday = normalized == _normalizeDate(DateTime.now());
+              final today = _normalizeDate(DateTime.now());
+              final isToday = normalized == today;
+              final isFuture = normalized.isAfter(today);
 
               return InkWell(
-                onTap: () => _handleDateTap(normalized),
+                onTap: isFuture ? null : () => _handleDateTap(normalized),
                 borderRadius: BorderRadius.circular(16),
                 child: Ink(
                   padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFFFFF4D8)
+                        : isFuture
+                        ? Colors.white
                         : hasSales
                         ? const Color(0xFFF7FCF8)
                         : const Color(0xFFFFF7F7),
@@ -291,6 +298,8 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
                           ? AppColors.primaryBackground
                           : isSelected
                           ? const Color(0xFFE8D69C)
+                          : isFuture
+                          ? const Color(0xFFE8E8E8)
                           : hasSales
                           ? const Color(0xFFDCEFE2)
                           : const Color(0xFFF0DDDD),
@@ -307,6 +316,8 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
                           fontWeight: FontWeight.w800,
                           color: isSelected
                               ? const Color(0xFF604800)
+                              : isFuture
+                              ? const Color(0xFFB8B8B8)
                               : Colors.black,
                         ),
                       ),
@@ -318,11 +329,17 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              amount > 0 ? _formatCompactPrice(amount) : '0원',
+                              isFuture
+                                  ? ''
+                                  : amount > 0
+                                  ? _formatCompactPrice(amount)
+                                  : '0원',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: hasSales
+                                color: isFuture
+                                    ? Colors.transparent
+                                    : hasSales
                                     ? const Color(0xFF2F2F2F)
                                     : const Color(0xFF9A9A9A),
                               ),
@@ -330,19 +347,20 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
                           ),
                         ),
                       ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: hasSales
-                                ? const Color(0xFF39B86C)
-                                : const Color(0xFFE06262),
-                            shape: BoxShape.circle,
+                      if (!isFuture)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: hasSales
+                                  ? const Color(0xFF39B86C)
+                                  : const Color(0xFFE06262),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -458,7 +476,10 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
       _visibleMonth = nextMonth;
       _selectedDate = null;
     });
-    context.read<BossSalesProvider>().fetchMonthlySales(_visibleMonth);
+    context.read<BossSalesProvider>().fetchMonthlySales(
+      _visibleMonth,
+      forceRefresh: true,
+    );
   }
 
   Future<void> _showYearPicker() async {
@@ -529,7 +550,10 @@ class _BossSalesScreenState extends State<BossSalesScreen> {
       _visibleMonth = DateTime(selectedYear, clampedMonth);
       _selectedDate = null;
     });
-    context.read<BossSalesProvider>().fetchMonthlySales(_visibleMonth);
+    context.read<BossSalesProvider>().fetchMonthlySales(
+      _visibleMonth,
+      forceRefresh: true,
+    );
   }
 
   List<DateTime?> _buildCalendarDays(DateTime visibleMonth) {

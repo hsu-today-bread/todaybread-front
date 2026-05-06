@@ -47,10 +47,41 @@ class BreadService {
     final requestFile = File('${directory.path}/request.json');
     await requestFile.writeAsString(jsonEncode(request.toJson()));
 
-    final imageFile = image == null ? null : File(image.path);
+    if (image == null) {
+      throw ArgumentError('상품 사진을 등록해주세요.');
+    }
+    final imageFile = File(image.path);
 
     try {
       return await _api.createBread(requestFile, imageFile);
+    } finally {
+      if (await requestFile.exists()) {
+        await requestFile.delete();
+      }
+      if (await directory.exists()) {
+        await directory.delete();
+      }
+    }
+  }
+
+  Future<BreadCommonResponse> updateBread({
+    required int breadId,
+    required BreadCommonRequest request,
+    XFile? image,
+  }) async {
+    final directory = await Directory.systemTemp.createTemp(
+      'todaybread_bread_',
+    );
+    final requestFile = File('${directory.path}/request.json');
+    await requestFile.writeAsString(jsonEncode(request.toJson()));
+
+    final imageFile = image == null ? null : File(image.path);
+
+    try {
+      if (imageFile == null) {
+        return await _api.updateBreadWithoutImage(breadId, requestFile);
+      }
+      return await _api.updateBread(breadId, requestFile, imageFile);
     } finally {
       if (await requestFile.exists()) {
         await requestFile.delete();
@@ -65,9 +96,12 @@ class BreadService {
     required int breadId,
     required int remainingQuantity,
   }) async {
-    await _api.updateBreadStock(
-      breadId,
-      {'remainingQuantity': remainingQuantity},
-    );
+    await _api.updateBreadStock(breadId, {
+      'remainingQuantity': remainingQuantity,
+    });
+  }
+
+  Future<void> deleteBread(int breadId) async {
+    await _api.deleteBread(breadId);
   }
 }

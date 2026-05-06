@@ -10,7 +10,8 @@ class DisplayHelper {
     if (value.startsWith('http://') || value.startsWith('https://')) {
       return value;
     }
-    return '${DioClient.baseUrl}$value';
+    final normalizedPath = value.startsWith('/') ? value : '/$value';
+    return '${DioClient.baseUrl}$normalizedPath';
   }
 
   static String formatDistanceKm(double? distanceKm) {
@@ -23,6 +24,7 @@ class DisplayHelper {
   static String buildLastOrderRemainingTimeText({
     required bool isSelling,
     required String? lastOrderTime,
+    bool includeSeconds = false,
   }) {
     if (!isSelling) {
       return '영업 종료';
@@ -46,12 +48,25 @@ class DisplayHelper {
     final now = DateTime.now();
     final target = DateTime(now.year, now.month, now.day, hour, minute);
     final difference = target.difference(now);
-    if (difference.isNegative || difference.inMinutes <= 0) {
+    if (difference.isNegative ||
+        (includeSeconds
+            ? difference.inSeconds <= 0
+            : difference.inMinutes <= 0)) {
       return '곧 마감';
     }
 
     final hours = difference.inHours;
     final minutes = difference.inMinutes.remainder(60);
+    final seconds = difference.inSeconds.remainder(60);
+    if (includeSeconds) {
+      final minuteText = minutes.toString().padLeft(2, '0');
+      final secondText = seconds.toString().padLeft(2, '0');
+      if (hours > 0) {
+        return '$hours시간 $minuteText분 $secondText초';
+      }
+      return '$minuteText분 $secondText초';
+    }
+
     if (hours > 0 && minutes > 0) {
       return '$hours시간 $minutes분';
     }

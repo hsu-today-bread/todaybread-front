@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
+import 'package:todaybread/utils/display_helper.dart';
 
 class WishScreen extends StatefulWidget {
   const WishScreen({super.key});
@@ -17,6 +19,9 @@ class _WishScreenState extends State<WishScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || context.read<AuthProvider>().role != UserRole.user) {
+        return;
+      }
       context.read<WishlistProvider>().load();
     });
   }
@@ -53,8 +58,7 @@ class _WishScreenState extends State<WishScreen> {
                       maxLength: 10,
                       decoration: InputDecoration(
                         hintText: '등록할 키워드를 입력해주세요',
-                        hintStyle:
-                            const TextStyle(color: Color(0xFFBBBBBB)),
+                        hintStyle: const TextStyle(color: Color(0xFFBBBBBB)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -78,8 +82,7 @@ class _WishScreenState extends State<WishScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
                         foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -112,17 +115,16 @@ class _WishScreenState extends State<WishScreen> {
                       backgroundColor: Colors.white,
                       side: const BorderSide(color: Color(0xFFDDDDDD)),
                       deleteIcon: const Icon(Icons.cancel, size: 18),
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 4,
                         vertical: 0,
                       ),
                       onDeleted: () async {
                         try {
-                          await context
-                              .read<WishlistProvider>()
-                              .removeKeyword(keyword.userKeywordId);
+                          await context.read<WishlistProvider>().removeKeyword(
+                            keyword.userKeywordId,
+                          );
                         } catch (_) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -164,6 +166,9 @@ class _WishScreenState extends State<WishScreen> {
               else
                 Column(
                   children: wishlistProvider.favouriteStores.map((store) {
+                    final imageUrl = DisplayHelper.resolveImageUrl(
+                      store.imageUrl,
+                    );
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Container(
@@ -178,14 +183,15 @@ class _WishScreenState extends State<WishScreen> {
                             Stack(
                               children: [
                                 ClipOval(
-                                  child: store.imageUrl != null
+                                  child: imageUrl != null
                                       ? Image.network(
-                                          store.imageUrl!,
+                                          imageUrl,
                                           width: 64,
                                           height: 64,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              _storePlaceholder(),
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  _storePlaceholder(),
                                         )
                                       : _storePlaceholder(),
                                 ),
@@ -233,10 +239,21 @@ class _WishScreenState extends State<WishScreen> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                context
+                              onPressed: () async {
+                                final storeName = store.name;
+                                final success = await context
                                     .read<WishlistProvider>()
                                     .toggleStore(store.storeId);
+                                if (!context.mounted || !success) {
+                                  return;
+                                }
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      content: Text('$storeName 단골 매장 해제'),
+                                    ),
+                                  );
                               },
                               icon: const Icon(
                                 Icons.favorite,

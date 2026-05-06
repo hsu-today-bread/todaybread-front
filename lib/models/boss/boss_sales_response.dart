@@ -6,18 +6,18 @@ class BossMonthlySalesResponse {
     required this.month,
     required this.menuSummaries,
     required this.dailyTotals,
+    required this.salesByDate,
     required this.declaredTotalQuantity,
     required this.declaredTotalAmount,
-    required this.hasDailyBreakdown,
   });
 
   final int year;
   final int month;
   final List<BossSalesMenuSummary> menuSummaries;
   final List<BossSalesDailyTotal> dailyTotals;
+  final Map<String, int> salesByDate;
   final int? declaredTotalQuantity;
   final int? declaredTotalAmount;
-  final bool hasDailyBreakdown;
 
   int get totalQuantity =>
       declaredTotalQuantity ??
@@ -28,13 +28,7 @@ class BossMonthlySalesResponse {
       menuSummaries.fold<int>(0, (sum, item) => sum + item.amount);
 
   int amountFor(DateTime date) {
-    final key = bossDateKey(date);
-    for (final item in dailyTotals) {
-      if (bossDateKey(item.date) == key) {
-        return item.totalAmount;
-      }
-    }
-    return 0;
+    return salesByDate[bossDateKey(date)] ?? 0;
   }
 
   bool hasSalesOn(DateTime date) => amountFor(date) > 0;
@@ -50,27 +44,16 @@ class BossMonthlySalesResponse {
     final rawMenuSummaries = data is List
         ? data
         : bossFirstList(body ?? const <String, dynamic>{}, [
+            'items',
             'menuSummaries',
             'menuSales',
             'sales',
             'rows',
             'summary',
-            'items',
             'content',
             'data',
           ]);
-
-    final rawDailySection = body == null
-        ? null
-        : bossFirstValue(body, [
-            'dailyTotals',
-            'dailySales',
-            'dateSummaries',
-            'days',
-            'calendar',
-            'salesByDate',
-            'dailyAmounts',
-          ]);
+    final dailyTotals = _parseDailyTotals(body?['dailySales']);
 
     return BossMonthlySalesResponse(
       year: bossReadInt(body?['year'], fallback: requestedMonth.year),
@@ -78,11 +61,12 @@ class BossMonthlySalesResponse {
       menuSummaries: aggregateBossSalesSummaries(
         _parseMenuSummaries(rawMenuSummaries),
       ),
-      dailyTotals: _parseDailyTotals(rawDailySection),
+      dailyTotals: dailyTotals,
+      salesByDate: _buildSalesByDate(dailyTotals),
       declaredTotalQuantity: _readNullableInt(
-        rawJson == null
+        body == null
             ? null
-            : bossFirstValue(body!, [
+            : bossFirstValue(body, [
                 'totalQuantity',
                 'sumQuantity',
                 'quantity',
@@ -92,13 +76,13 @@ class BossMonthlySalesResponse {
         body == null
             ? null
             : bossFirstValue(body, [
+                'totalSales',
                 'totalAmount',
                 'sumAmount',
                 'amount',
                 'salesAmount',
               ]),
       ),
-      hasDailyBreakdown: rawDailySection != null,
     );
   }
 }
@@ -149,6 +133,7 @@ class BossDailySalesResponse {
                 ? null
                 : bossFirstValue(body, [
                     'date',
+                    'dateString',
                     'salesDate',
                     'day',
                     'targetDate',
@@ -171,6 +156,7 @@ class BossDailySalesResponse {
         body == null
             ? null
             : bossFirstValue(body, [
+                'totalSales',
                 'totalAmount',
                 'sumAmount',
                 'amount',
@@ -194,69 +180,72 @@ class BossSalesMenuSummary {
 
   factory BossSalesMenuSummary.fromJson(Map<String, dynamic> json) {
     final bread = bossAsMap(bossFirstValue(json, ['bread', 'menu', 'item']));
+    final quantity = bossReadInt(
+      bossFirstValue(json, [
+        'totalQuantity',
+        'quantity',
+        'count',
+        'salesCount',
+        'qty',
+      ]),
+      fallback: 0,
+    );
+    final unitPrice = bossReadInt(
+      bossFirstValue(json, ['unitPrice', 'salePrice', 'price', 'amount']) ??
+          bread?['salePrice'],
+      fallback: 0,
+    );
+    final totalSales = bossReadInt(
+      bossFirstValue(json, [
+        'totalSales',
+        'totalAmount',
+        'totalPrice',
+        'salesAmount',
+        'revenue',
+        'amount',
+      ]),
+      fallback: unitPrice > 0 && quantity > 0 ? unitPrice * quantity : 0,
+    );
+
     return BossSalesMenuSummary(
       menuName: bossReadString(
-        bossFirstValue(json, ['menuName', 'name', 'breadName', 'itemName']) ??
+        bossFirstValue(json, [
+              'menuName',
+              'name',
+              'breadName',
+              'itemName',
+              'bread_title',
+            ]) ??
             bread?['name'],
       ),
-      quantity: bossReadInt(
-        bossFirstValue(json, [
-          'quantity',
-          'count',
-          'salesCount',
-          'totalQuantity',
-        ]),
-        fallback: 0,
-      ),
-      amount: bossReadInt(
-        bossFirstValue(json, [
-          'amount',
-          'salesAmount',
-          'revenue',
-          'totalAmount',
-        ]),
-        fallback: 0,
-      ),
+      quantity: quantity,
+      amount: totalSales,
     );
   }
 }
 
 class BossSalesDailyTotal {
-  const BossSalesDailyTotal({required this.date, required this.totalAmount});
+  const BossSalesDailyTotal({
+    required this.date,
+    required this.dateKey,
+    required this.totalAmount,
+  });
 
   final DateTime date;
+  final String dateKey;
   final int totalAmount;
 
-  factory BossSalesDailyTotal.fromJson(Map<String, dynamic> json) {
-    final nestedSummaries = _parseMenuSummaries(
-      bossFirstValue(json, [
-        'menuSummaries',
-        'menuSales',
-        'sales',
-        'rows',
-        'summary',
-        'items',
-      ]),
-    );
+  static BossSalesDailyTotal? fromMonthlyJson(Map<String, dynamic> json) {
+    final rawDate = bossReadString(json['date']).trim();
+    final parsedDate = bossReadDate(rawDate);
+    if (rawDate.isEmpty || parsedDate == null) {
+      return null;
+    }
 
     return BossSalesDailyTotal(
-      date:
-          bossReadDate(
-            bossFirstValue(json, ['date', 'salesDate', 'day', 'targetDate']),
-          ) ??
-          DateTime.now(),
-      totalAmount: bossReadInt(
-        bossFirstValue(json, [
-          'totalAmount',
-          'amount',
-          'salesAmount',
-          'revenue',
-        ]),
-        fallback: nestedSummaries.fold<int>(
-          0,
-          (sum, item) => sum + item.amount,
-        ),
-      ),
+      date: parsedDate,
+      dateKey: rawDate,
+      totalAmount: bossReadInt(json['totalSales']),
     );
   }
 }
@@ -304,57 +293,28 @@ List<BossSalesMenuSummary> _parseMenuSummaries(dynamic value) {
 }
 
 List<BossSalesDailyTotal> _parseDailyTotals(dynamic value) {
-  if (value == null) {
+  if (value is! List) {
     return const [];
   }
 
-  if (value is List) {
-    final rows = value
-        .map((item) => bossAsMap(item))
-        .whereType<Map<String, dynamic>>()
-        .map(BossSalesDailyTotal.fromJson)
-        .toList();
-    rows.sort((a, b) => a.date.compareTo(b.date));
-    return rows;
-  }
-
-  final map = bossAsMap(value);
-  if (map == null) {
-    return const [];
-  }
-
-  final rows = <BossSalesDailyTotal>[];
-  for (final entry in map.entries) {
-    final parsedDate = bossReadDate(entry.key);
-    if (parsedDate != null) {
-      final nestedMap = bossAsMap(entry.value);
-      if (nestedMap != null) {
-        rows.add(
-          BossSalesDailyTotal.fromJson({
-            'date': parsedDate.toIso8601String(),
-            ...nestedMap,
-          }),
-        );
-        continue;
-      }
-      rows.add(
-        BossSalesDailyTotal(
-          date: parsedDate,
-          totalAmount: bossReadInt(entry.value, fallback: 0),
-        ),
-      );
-      continue;
-    }
-
-    final nestedMap = bossAsMap(entry.value);
-    if (nestedMap != null) {
-      final row = BossSalesDailyTotal.fromJson(nestedMap);
-      rows.add(row);
-    }
-  }
-
+  final rows = value
+      .map((item) => bossAsMap(item))
+      .whereType<Map<String, dynamic>>()
+      .map(BossSalesDailyTotal.fromMonthlyJson)
+      .whereType<BossSalesDailyTotal>()
+      .toList();
   rows.sort((a, b) => a.date.compareTo(b.date));
   return rows;
+}
+
+Map<String, int> _buildSalesByDate(List<BossSalesDailyTotal> rows) {
+  final result = <String, int>{};
+
+  for (final row in rows) {
+    result[row.dateKey] = row.totalAmount;
+  }
+
+  return result;
 }
 
 int? _readNullableInt(dynamic value) {

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/boss/boss_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
-import 'package:todaybread/screens/main/main_shell.dart';
+import 'package:todaybread/screens/boss/boss_store_create_screen.dart';
 
 import '../../utils/app_colors.dart';
 
@@ -76,14 +76,21 @@ class _BossAccountVerificationScreenState
       return;
     }
 
-    await _showMessageDialog(response.message);
+    await _showMessageDialog(
+      response.message.isEmpty
+          ? '사업자 인증이 완료되었습니다. 매장 등록을 먼저 진행해주세요.'
+          : '${response.message}\n매장 등록을 먼저 진행해주세요.',
+    );
     if (!mounted) {
       return;
     }
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainShell()),
-      (route) => false,
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const BossStoreCreateScreen(
+          completionMode: StoreCreateCompletionMode.switchToBoss,
+        ),
+      ),
     );
   }
 
