@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:todaybread/models/boss/boss_parsing.dart';
 import 'package:todaybread/models/boss/boss_sales_response.dart';
 import 'package:todaybread/services/boss/boss_sales_api.dart';
@@ -16,7 +17,15 @@ class BossSalesService {
       year: normalized.year,
       month: normalized.month,
     );
-    return BossMonthlySalesResponse.fromDynamic(data, normalized);
+    final parsed = BossMonthlySalesResponse.fromDynamic(data, normalized);
+    if (kDebugMode) {
+      debugPrint('[BossSalesService] monthly raw response: $data');
+      debugPrint(
+        '[BossSalesService] monthly dailyTotals=${parsed.dailyTotals.length}, '
+        'salesByDate=${parsed.salesByDate}',
+      );
+    }
+    return parsed;
   }
 
   Future<BossDailySalesResponse> getDailySales(DateTime date) async {

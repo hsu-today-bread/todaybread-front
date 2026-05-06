@@ -8,6 +8,7 @@ import 'package:todaybread/providers/boss/boss_provider.dart';
 import 'package:todaybread/providers/boss/boss_sales_provider.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/store/favourite_store_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';

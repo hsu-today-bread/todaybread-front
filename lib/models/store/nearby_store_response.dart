@@ -25,13 +25,13 @@ class NearbyStoreResponse {
 
   factory NearbyStoreResponse.fromJson(Map<String, dynamic> json) {
     return NearbyStoreResponse(
-      storeId: json['storeId'] as int,
+      storeId: (json['storeId'] as num).toInt(),
       name: json['name'] as String,
       storeAddressLine1: json['storeAddressLine1'] as String? ?? '',
       storeAddressLine2: json['storeAddressLine2'] as String? ?? '',
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
-      primaryImageUrl: json['primaryImageUrl'] as String?,
+      primaryImageUrl: (json['primaryImageUrl'] ?? json['imageUrl']) as String?,
       isSelling: json['isSelling'] as bool? ?? false,
       distance: (json['distance'] as num).toDouble(),
       lastOrderTime: json['lastOrderTime'] as String?,

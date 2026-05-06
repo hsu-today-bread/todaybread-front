@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _startClockTimer() {
     _clockTimer?.cancel();
-    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) {
         return;
       }
@@ -577,26 +577,28 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 대략적 위치로 먼저 목록을 표시한 뒤, 백그라운드에서 정확한 위치로 갱신
   void _refreshWithAccuratePosition() {
     Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.best,
-      ),
-    ).then((position) {
-      final prevLat = _currentLatitude;
-      final prevLng = _currentLongitude;
-      _currentLatitude = position.latitude;
-      _currentLongitude = position.longitude;
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.best,
+          ),
+        )
+        .then((position) {
+          final prevLat = _currentLatitude;
+          final prevLng = _currentLongitude;
+          _currentLatitude = position.latitude;
+          _currentLongitude = position.longitude;
 
-      // 위치가 실질적으로 달라진 경우에만 재요청 (약 500m 이상 차이)
-      final distance = Geolocator.distanceBetween(
-        prevLat ?? position.latitude,
-        prevLng ?? position.longitude,
-        position.latitude,
-        position.longitude,
-      );
-      if (distance > 500 && mounted) {
-        _fetchNearbyItems();
-      }
-    }).catchError((_) {});
+          // 위치가 실질적으로 달라진 경우에만 재요청 (약 500m 이상 차이)
+          final distance = Geolocator.distanceBetween(
+            prevLat ?? position.latitude,
+            prevLng ?? position.longitude,
+            position.latitude,
+            position.longitude,
+          );
+          if (distance > 500 && mounted) {
+            _fetchNearbyItems();
+          }
+        })
+        .catchError((_) {});
   }
 
   Future<({double lat, double lng})> _ensureCoordinates() async {
@@ -632,9 +634,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 캐시 없음 (신규 유저) → 낮은 정확도로 빠르게 획득 후 백그라운드 갱신
     final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.low,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
     );
     _currentLatitude = position.latitude;
     _currentLongitude = position.longitude;
@@ -669,6 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return DisplayHelper.buildLastOrderRemainingTimeText(
       isSelling: item.isSelling,
       lastOrderTime: item.lastOrderTime,
+      includeSeconds: true,
     );
   }
 

@@ -92,4 +92,51 @@ class BreadProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<BreadCommonResponse?> updateBread({
+    required int breadId,
+    required BreadCommonRequest request,
+    XFile? image,
+  }) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final response = await _service.updateBread(
+        breadId: breadId,
+        request: request,
+        image: image,
+      );
+      breads = breads
+          .map((bread) => bread.id == breadId ? response : bread)
+          .toList();
+      return response;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteBread(int breadId) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      await _service.deleteBread(breadId);
+      breads = breads.where((bread) => bread.id != breadId).toList();
+      hasFetched = true;
+      return true;
+    } catch (e) {
+      errorMessage = ApiException.messageFrom(e);
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

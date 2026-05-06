@@ -27,23 +27,19 @@ class BossSalesProvider extends ChangeNotifier {
   int amountForDate(DateTime date) {
     final normalized = bossNormalizeDate(date);
     final monthly = monthlySalesFor(normalized);
-    if (monthly != null && monthly.hasDailyBreakdown) {
-      return monthly.amountFor(normalized);
+    if (monthly == null) {
+      return 0;
     }
-    return dailySalesFor(normalized)?.totalAmount ?? 0;
+    return monthly.amountFor(normalized);
   }
 
   bool hasSalesOn(DateTime date) {
     final normalized = bossNormalizeDate(date);
     final monthly = monthlySalesFor(normalized);
-    if (monthly != null && monthly.hasDailyBreakdown) {
-      return monthly.hasSalesOn(normalized);
+    if (monthly == null) {
+      return false;
     }
-    final daily = dailySalesFor(normalized);
-    if (daily != null) {
-      return daily.totalAmount > 0;
-    }
-    return false;
+    return monthly.hasSalesOn(normalized);
   }
 
   Future<BossMonthlySalesResponse?> fetchMonthlySales(

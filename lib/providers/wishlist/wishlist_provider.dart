@@ -59,17 +59,19 @@ class WishlistProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleStore(int storeId) async {
+  Future<bool> toggleStore(int storeId) async {
     final prev = List<FavouriteStoreResponse>.from(favouriteStores);
     favouriteStores.removeWhere((s) => s.storeId == storeId);
     notifyListeners();
 
     try {
       await _storeService.toggleFavouriteStore(storeId);
+      return true;
     } catch (e) {
       favouriteStores = prev;
       errorMessage = ApiException.messageFrom(e);
       notifyListeners();
+      return false;
     }
   }
 }

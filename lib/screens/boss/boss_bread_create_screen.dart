@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/providers/boss/boss_bread_create_provider.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/services/network/api_exception.dart';
+import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
 /// 사장님 메뉴 등록 화면입니다.
@@ -14,21 +16,37 @@ import 'package:todaybread/utils/app_colors.dart';
 /// step 단위 입력값은 로컬 provider에 보관하고,
 /// 마지막 완료 시점에만 BreadProvider를 통해 API를 호출합니다.
 class BossBreadCreateScreen extends StatelessWidget {
-  const BossBreadCreateScreen({super.key});
+  const BossBreadCreateScreen({
+    super.key,
+    this.initialBread,
+    this.initialStep = 0,
+  });
+
+  final BreadCommonResponse? initialBread;
+  final int initialStep;
+
+  bool get isEditMode => initialBread != null;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => BossBreadCreateProvider(),
-      child: const _BossBreadCreateView(),
+      create: (_) => BossBreadCreateProvider(
+        initialBread: initialBread,
+        initialStep: initialStep,
+      ),
+      child: _BossBreadCreateView(initialBread: initialBread),
     );
   }
 }
 
 class _BossBreadCreateView extends StatelessWidget {
-  const _BossBreadCreateView();
+  const _BossBreadCreateView({required this.initialBread});
+
+  final BreadCommonResponse? initialBread;
 
   static const int _totalSteps = 4;
+
+  bool get isEditMode => initialBread != null;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +67,7 @@ class _BossBreadCreateView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAppBar(context, provider),
+                _buildAppBar(context),
                 Row(
                   children: [
                     const Text(
@@ -103,7 +121,7 @@ class _BossBreadCreateView extends StatelessWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    if (provider.currentStep > 0) ...[
+                    if (!isEditMode && provider.currentStep > 0) ...[
                       Expanded(
                         child: OutlinedButton(
                           onPressed: provider.previousStep,
@@ -143,6 +161,8 @@ class _BossBreadCreateView extends StatelessWidget {
                         child: Text(
                           breadProvider.isLoading
                               ? '처리 중...'
+                              : isEditMode
+                              ? '완료'
                               : provider.isLastStep
                               ? '새메뉴 추가하기'
                               : '다음',
@@ -163,7 +183,7 @@ class _BossBreadCreateView extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, BossBreadCreateProvider provider) {
+  Widget _buildAppBar(BuildContext context) {
     return SizedBox(
       height: 56,
       child: Stack(
@@ -173,8 +193,10 @@ class _BossBreadCreateView extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
+              icon: Icon(
+                isEditMode
+                    ? Icons.close_rounded
+                    : Icons.arrow_back_ios_new_rounded,
                 color: Color(0xFF4A3A3A),
                 size: 26,
               ),
@@ -182,7 +204,7 @@ class _BossBreadCreateView extends StatelessWidget {
           ),
           Center(
             child: Text(
-              '새 메뉴 추가',
+              isEditMode ? '메뉴 수정' : '새 메뉴 추가',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -198,41 +220,58 @@ class _BossBreadCreateView extends StatelessWidget {
   Future<void> _handlePrimaryAction(BuildContext context) async {
     final provider = context.read<BossBreadCreateProvider>();
     final wasLastStep = provider.isLastStep;
-    final isValid = provider.nextStep();
-    if (!isValid || !wasLastStep) {
+    final isValid = isEditMode
+        ? provider.validateCurrentStep()
+        : provider.nextStep();
+    if (!isValid) {
+      return;
+    }
+    if (!isEditMode && !wasLastStep) {
       return;
     }
 
     final breadProvider = context.read<BreadProvider>();
     try {
-      final response = await breadProvider.createBread(
-        provider.buildRequest(),
-        provider.imageFile,
-      );
+      final response = isEditMode
+          ? await breadProvider.updateBread(
+              breadId: initialBread!.id,
+              request: provider.buildRequest(),
+              image: provider.imageFile,
+            )
+          : await breadProvider.createBread(
+              provider.buildRequest(),
+              provider.imageFile,
+            );
       if (!context.mounted) {
         return;
       }
       if (response == null) {
         await _showDialog(
           context,
-          title: '등록 실패',
-          message: breadProvider.errorMessage ?? '메뉴 등록에 실패했습니다.',
+          title: isEditMode ? '수정 실패' : '등록 실패',
+          message:
+              breadProvider.errorMessage ??
+              (isEditMode ? '메뉴 수정에 실패했습니다.' : '메뉴 등록에 실패했습니다.'),
         );
         return;
       }
 
-      await _showDialog(context, title: '등록 완료', message: '메뉴 등록이 완료되었습니다.');
+      await _showDialog(
+        context,
+        title: isEditMode ? '수정 완료' : '등록 완료',
+        message: isEditMode ? '메뉴 수정이 완료되었습니다.' : '메뉴 등록이 완료되었습니다.',
+      );
       if (!context.mounted) {
         return;
       }
-      Navigator.pop(context);
+      Navigator.pop(context, response);
     } catch (e) {
       if (!context.mounted) {
         return;
       }
       await _showDialog(
         context,
-        title: '등록 불가',
+        title: isEditMode ? '수정 불가' : '등록 불가',
         message: ApiException.messageFrom(e),
       );
     }
@@ -375,6 +414,7 @@ class _BreadCreateStepBody extends StatelessWidget {
           ],
         );
       case 2:
+        final initialImageUrl = _resolveBreadImageUrl(provider.initialImageUrl);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -407,7 +447,7 @@ class _BreadCreateStepBody extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: const Color(0xFFD9D9D9)),
                 ),
-                child: provider.imageFile == null
+                child: provider.imageFile == null && initialImageUrl == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
@@ -432,33 +472,51 @@ class _BreadCreateStepBody extends StatelessWidget {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.file(
-                              File(provider.imageFile!.path),
-                              fit: BoxFit.cover,
-                            ),
-                            Positioned(
-                              top: 12,
-                              right: 12,
-                              child: InkWell(
-                                onTap: context
-                                    .read<BossBreadCreateProvider>()
-                                    .clearImage,
-                                borderRadius: BorderRadius.circular(999),
-                                child: Container(
-                                  width: 34,
-                                  height: 34,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.45),
-                                    shape: BoxShape.circle,
-                                  ),
+                            if (provider.imageFile != null)
+                              Image.file(
+                                File(provider.imageFile!.path),
+                                fit: BoxFit.cover,
+                              )
+                            else
+                              Image.network(
+                                initialImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Container(
+                                  color: const Color(0xFFF1F1F1),
+                                  alignment: Alignment.center,
                                   child: const Icon(
-                                    Icons.close_rounded,
-                                    color: Colors.white,
-                                    size: 20,
+                                    Icons.broken_image_outlined,
+                                    color: Color(0xFF8D8D8D),
+                                    size: 42,
                                   ),
                                 ),
                               ),
-                            ),
+                            if (provider.imageFile != null)
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: InkWell(
+                                  onTap: context
+                                      .read<BossBreadCreateProvider>()
+                                      .clearImage,
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.45,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -575,6 +633,16 @@ class _BreadCreateStepBody extends StatelessWidget {
         );
       },
     );
+  }
+
+  String? _resolveBreadImageUrl(String? value) {
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+    return '${DioClient.baseUrl}$value';
   }
 
   InputDecoration _inputDecoration(String hintText) {
