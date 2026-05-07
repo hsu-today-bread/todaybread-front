@@ -1,5 +1,29 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:todaybread/screens/order/payment_webview_screen.dart';
+import 'package:todaybread/services/network/api_exception.dart';
+import 'package:todaybread/services/order/order_service.dart';
+import 'package:todaybread/services/payment/payment_service.dart';
 import 'package:todaybread/utils/app_colors.dart';
+
+// ── 공통 유틸 ────────────────────────────────────────────────────────────────
+
+String _formatPrice(int price) {
+  return price.toString().replaceAllMapped(
+    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+    (m) => '${m[1]},',
+  );
+}
+
+String _generateIdempotencyKey() {
+  final rand = Random.secure();
+  final bytes = List<int>.generate(8, (_) => rand.nextInt(256));
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return 'order_${DateTime.now().millisecondsSinceEpoch}_$hex';
+}
+
+// ── PurchaseItem 모델 ─────────────────────────────────────────────────────────
 
 class PurchaseItem {
   const PurchaseItem({
@@ -15,15 +39,53 @@ class PurchaseItem {
   int get totalPrice => unitPrice * quantity;
 }
 
+// ── 주의사항 다이얼로그 + PurchaseScreen 진입 ─────────────────────────────────
+
+/// 장바구니 주문용
 Future<void> showPurchaseNoticeAndOpenScreen(
   BuildContext context, {
   required List<PurchaseItem> items,
+  String? storeName,
 }) async {
-  if (items.isEmpty) {
-    return;
-  }
+  if (items.isEmpty) return;
 
-  final shouldProceed = await showDialog<bool>(
+  final shouldProceed = await _showNoticeDialog(context);
+  if (shouldProceed != true || !context.mounted) return;
+
+  await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => PurchaseScreen(items: items, storeName: storeName),
+    ),
+  );
+}
+
+/// 바로 구매용
+Future<void> showDirectPurchaseNoticeAndOpenScreen(
+  BuildContext context, {
+  required List<PurchaseItem> items,
+  required int breadId,
+  required int quantity,
+  String? storeName,
+}) async {
+  if (items.isEmpty) return;
+
+  final shouldProceed = await _showNoticeDialog(context);
+  if (shouldProceed != true || !context.mounted) return;
+
+  await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => PurchaseScreen(
+        items: items,
+        storeName: storeName,
+        breadId: breadId,
+        directQuantity: quantity,
+      ),
+    ),
+  );
+}
+
+Future<bool?> _showNoticeDialog(BuildContext context) {
+  return showDialog<bool>(
     context: context,
     barrierDismissible: true,
     builder: (dialogContext) {
@@ -92,22 +154,37 @@ Future<void> showPurchaseNoticeAndOpenScreen(
       );
     },
   );
-
-  if (shouldProceed != true || !context.mounted) {
-    return;
-  }
-
-  await Navigator.of(
-    context,
-  ).push(MaterialPageRoute(builder: (_) => PurchaseScreen(items: items)));
 }
 
-class PurchaseScreen extends StatelessWidget {
-  const PurchaseScreen({super.key, required this.items});
+// ── PurchaseScreen ────────────────────────────────────────────────────────────
+
+class PurchaseScreen extends StatefulWidget {
+  const PurchaseScreen({
+    super.key,
+    required this.items,
+    this.storeName,
+    this.breadId,
+    this.directQuantity,
+  });
 
   final List<PurchaseItem> items;
+  final String? storeName;
 
-  int get totalPrice => items.fold(0, (sum, item) => sum + item.totalPrice);
+  /// 바로 구매 시 필요한 필드 (null이면 장바구니 주문)
+  final int? breadId;
+  final int? directQuantity;
+
+  bool get isDirectOrder => breadId != null;
+
+  @override
+  State<PurchaseScreen> createState() => _PurchaseScreenState();
+}
+
+class _PurchaseScreenState extends State<PurchaseScreen> {
+  bool _isLoading = false;
+
+  int get _totalPrice =>
+      widget.items.fold(0, (sum, item) => sum + item.totalPrice);
 
   @override
   Widget build(BuildContext context) {
@@ -120,10 +197,10 @@ class PurchaseScreen extends StatelessWidget {
         surfaceTintColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: _isLoading ? Colors.grey : Colors.black,
             size: 20,
           ),
         ),
@@ -163,9 +240,9 @@ class PurchaseScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        for (int index = 0; index < items.length; index++) ...[
-                          _PurchaseItemRow(item: items[index]),
-                          if (index != items.length - 1)
+                        for (int i = 0; i < widget.items.length; i++) ...[
+                          _PurchaseItemRow(item: widget.items[i]),
+                          if (i != widget.items.length - 1)
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
                               child: Divider(
@@ -191,7 +268,7 @@ class PurchaseScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${_formatPrice(totalPrice)}원',
+                              '${_formatPrice(_totalPrice)}원',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -228,49 +305,33 @@ class PurchaseScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: () =>
-                          _showPaymentSnackBar(context, '토스페이 결제는 연결 예정입니다.'),
+                      onPressed: _isLoading ? null : _startTossPayment,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3182F6),
+                        disabledBackgroundColor:
+                            const Color(0xFF3182F6).withValues(alpha: 0.6),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        '토스페이로 결제하기',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: OutlinedButton(
-                      onPressed: () =>
-                          _showPaymentSnackBar(context, '일반 결제는 연결 예정입니다.'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF232323),
-                        side: const BorderSide(
-                          color: AppColors.primaryBackground,
-                          width: 1.4,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        '그냥 결제하기',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              '토스페이로 결제하기',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -282,19 +343,56 @@ class PurchaseScreen extends StatelessWidget {
     );
   }
 
-  static void _showPaymentSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
+  /// 주문 생성 + Client Key 조회 후 결제 WebView로 이동합니다.
+  Future<void> _startTossPayment() async {
+    setState(() => _isLoading = true);
 
-  static String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (match) => '${match[1]},',
-    );
+    try {
+      final idempotencyKey = _generateIdempotencyKey();
+
+      // 주문 생성 (장바구니 or 바로구매) + Client Key 동시 조회
+      final orderFuture = widget.isDirectOrder
+          ? OrderService.instance.createDirectOrder(
+              breadId: widget.breadId!,
+              quantity: widget.directQuantity!,
+              idempotencyKey: idempotencyKey,
+            )
+          : OrderService.instance.createOrderFromCart(idempotencyKey);
+
+      final results = await Future.wait([
+        orderFuture,
+        PaymentService.instance.getClientKey(),
+      ]);
+
+      final order = results[0] as dynamic;
+      final clientKey = results[1] as String;
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PaymentWebViewScreen(
+            orderId: order.orderId as int,
+            amount: order.totalAmount as int,
+            storeName: order.storeName as String,
+            clientKey: clientKey,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(ApiException.messageFrom(e))),
+        );
+    }
   }
 }
+
+// ── 주문 항목 행 ──────────────────────────────────────────────────────────────
 
 class _PurchaseItemRow extends StatelessWidget {
   const _PurchaseItemRow({required this.item});
@@ -303,44 +401,39 @@ class _PurchaseItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Expanded(
+          child: Text(
+            item.name,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(
-              child: Text(
-                item.name,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
+            Text(
+              '${item.quantity}개',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF5B5B5B),
               ),
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${item.quantity}개',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF5B5B5B),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${PurchaseScreen._formatPrice(item.totalPrice)}원',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2F2F2F),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            Text(
+              '${_formatPrice(item.totalPrice)}원',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2F2F2F),
+              ),
             ),
           ],
         ),

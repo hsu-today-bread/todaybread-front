@@ -340,6 +340,7 @@ class _StoreDetailView extends StatelessWidget {
       salePrice: bread.salePrice,
       originalPrice: bread.originalPrice,
       remainingTimeText: provider.remainingTimeText,
+      isSoldOut: bread.remainingQuantity <= 0,
       onTap: () {
         Navigator.push(
           context,

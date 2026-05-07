@@ -94,9 +94,10 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint('[LoginScreen] name=${response.name}');
       debugPrint('[LoginScreen] phone=${response.phoneNumber}');
       _showMessage('로그인에 성공했습니다.');
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainShell()),
+        (_) => false,
       );
       return;
     }

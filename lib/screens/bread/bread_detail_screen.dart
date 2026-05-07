@@ -220,14 +220,15 @@ class _BreadDetailView extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 18),
-                      Text(
-                        '주문 종료까지 남은 시간 : $remainingTimeText',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFE0462E),
+                      if (bread.remainingQuantity > 0)
+                        Text(
+                          '주문 종료까지 남은 시간 : $remainingTimeText',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFE0462E),
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 26),
                       _SectionTitle(title: '메뉴명'),
                       const SizedBox(height: 10),
@@ -422,7 +423,7 @@ class _BottomActionBar extends StatelessWidget {
                         if (bread == null) {
                           return;
                         }
-                        await showPurchaseNoticeAndOpenScreen(
+                        await showDirectPurchaseNoticeAndOpenScreen(
                           context,
                           items: [
                             PurchaseItem(
@@ -431,6 +432,8 @@ class _BottomActionBar extends StatelessWidget {
                               quantity: provider.quantity,
                             ),
                           ],
+                          breadId: bread.id,
+                          quantity: provider.quantity,
                         );
                       }
                     : null,

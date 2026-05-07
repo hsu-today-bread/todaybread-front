@@ -338,6 +338,10 @@ class _HomeScreenState extends State<HomeScreen> {
       salePrice: item.salePrice,
       originalPrice: item.originalPrice,
       remainingTimeText: _buildRemainingTime(item),
+      storeName: item.storeName,
+      discountPercent: item.originalPrice > 0
+          ? ((item.originalPrice - item.salePrice) * 100 ~/ item.originalPrice)
+          : null,
       onTap: () {
         Navigator.push(
           context,

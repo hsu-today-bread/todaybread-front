@@ -1,25 +1,22 @@
 class OrderItemResponse {
-  final int breadId;
   final String breadName;
-  final String? imageUrl;
+  final int breadPrice;
   final int quantity;
-  final int unitPrice;
+  final String? breadImageUrl;
 
   const OrderItemResponse({
-    required this.breadId,
     required this.breadName,
-    this.imageUrl,
+    required this.breadPrice,
     required this.quantity,
-    required this.unitPrice,
+    this.breadImageUrl,
   });
 
   factory OrderItemResponse.fromJson(Map<String, dynamic> json) {
     return OrderItemResponse(
-      breadId: (json['breadId'] as num).toInt(),
       breadName: json['breadName'] as String,
-      imageUrl: json['imageUrl'] as String?,
+      breadPrice: (json['breadPrice'] as num).toInt(),
       quantity: (json['quantity'] as num).toInt(),
-      unitPrice: (json['unitPrice'] as num).toInt(),
+      breadImageUrl: json['breadImageUrl'] as String?,
     );
   }
 }

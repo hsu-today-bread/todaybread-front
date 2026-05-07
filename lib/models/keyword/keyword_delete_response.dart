@@ -5,9 +5,8 @@ part 'keyword_delete_response.g.dart';
 @JsonSerializable()
 class KeywordDeleteResponse {
   final bool success;
-  final String message;
 
-  KeywordDeleteResponse({required this.success, required this.message});
+  KeywordDeleteResponse({required this.success});
 
   factory KeywordDeleteResponse.fromJson(Map<String, dynamic> json) =>
       _$KeywordDeleteResponseFromJson(json);

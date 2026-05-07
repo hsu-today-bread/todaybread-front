@@ -653,6 +653,10 @@ class _CartScreenState extends State<CartScreen> {
         )
         .toList();
 
-    await showPurchaseNoticeAndOpenScreen(context, items: purchaseItems);
+    await showPurchaseNoticeAndOpenScreen(
+      context,
+      items: purchaseItems,
+      storeName: _storeName,
+    );
   }
 }

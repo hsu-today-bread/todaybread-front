@@ -10,12 +10,10 @@ KeywordDeleteResponse _$KeywordDeleteResponseFromJson(
         Map<String, dynamic> json) =>
     KeywordDeleteResponse(
       success: json['success'] as bool,
-      message: json['message'] as String,
     );
 
 Map<String, dynamic> _$KeywordDeleteResponseToJson(
         KeywordDeleteResponse instance) =>
     <String, dynamic>{
       'success': instance.success,
-      'message': instance.message,
     };

@@ -21,6 +21,7 @@ class _MapScreenState extends State<MapScreen> {
   List<NearbyStoreResponse> _stores = [];
   bool _loading = true;
   String? _error;
+  bool _showSearchHere = false;
 
   @override
   void initState() {
@@ -68,12 +69,58 @@ class _MapScreenState extends State<MapScreen> {
     _addMarkers();
   }
 
+  void _onCameraIdle() {
+    if (!_showSearchHere && mounted) {
+      setState(() => _showSearchHere = true);
+    }
+  }
+
+  Future<void> _searchAtCurrentPosition() async {
+    if (_mapController == null) return;
+    setState(() {
+      _showSearchHere = false;
+      _loading = true;
+    });
+
+    final cameraPosition = await _mapController!.getCameraPosition();
+    final target = cameraPosition.target;
+
+    try {
+      final stores = await StoreService.instance.getNearbyStores(
+        lat: target.latitude,
+        lng: target.longitude,
+      );
+      if (!mounted) return;
+      setState(() {
+        _stores = stores;
+        _loading = false;
+      });
+      await _mapController!.clearOverlays();
+      _addMarkers();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
   void _addMarkers() {
     if (_mapController == null) return;
     final markers = _stores.map((store) {
       final marker = NMarker(
         id: 'store_${store.storeId}',
         position: NLatLng(store.latitude, store.longitude),
+        caption: store.isSelling
+            ? const NOverlayCaption(
+                text: '● 판매중',
+                textSize: 12,
+                color: Color(0xFFE53935),
+                haloColor: Colors.white,
+              )
+            : null,
+        captionAligns: const [NAlign.top],
       );
       marker.setOnTapListener((_) {
         Navigator.push(
@@ -112,7 +159,55 @@ class _MapScreenState extends State<MapScreen> {
                     locationButtonEnable: true,
                   ),
                   onMapReady: _onMapReady,
+                  onCameraIdle: _onCameraIdle,
                 ),
+                if (_showSearchHere)
+                  Positioned(
+                    top: 16,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: _searchAtCurrentPosition,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x33000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.refresh,
+                                size: 16,
+                                color: AppColors.primaryBackground,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '이 위치에서 검색',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primaryBackground,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 _BottomSheet(stores: _stores, loading: _loading, error: _error),
               ],
             ),
