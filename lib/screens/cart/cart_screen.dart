@@ -5,6 +5,7 @@ import 'package:todaybread/models/cart/cart_item_response.dart';
 import 'package:todaybread/screens/order/purchase_screen.dart';
 import 'package:todaybread/services/cart/cart_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
+import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
 /// 장바구니 아이템 로컬 모델
@@ -461,7 +462,7 @@ class _CartScreenState extends State<CartScreen> {
                 borderRadius: BorderRadius.circular(8),
                 child: item.imageUrl != null
                     ? Image.network(
-                        item.imageUrl!,
+                        _resolveImageUrl(item.imageUrl!),
                         width: 72,
                         height: 72,
                         fit: BoxFit.cover,
@@ -633,6 +634,13 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ],
     );
+  }
+
+  String _resolveImageUrl(String imageUrl) {
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    return '${DioClient.baseUrl}$imageUrl';
   }
 
   String _formatPrice(int price) {
