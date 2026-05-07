@@ -12,6 +12,9 @@ class BreadListCard extends StatelessWidget {
     required this.originalPrice,
     required this.remainingTimeText,
     required this.onTap,
+    this.storeName,
+    this.discountPercent,
+    this.isSoldOut = false,
     this.ratingText = '4.8',
   });
 
@@ -21,6 +24,9 @@ class BreadListCard extends StatelessWidget {
   final int salePrice;
   final int originalPrice;
   final String remainingTimeText;
+  final String? storeName;
+  final int? discountPercent;
+  final bool isSoldOut;
   final String ratingText;
   final VoidCallback onTap;
 
@@ -47,37 +53,62 @@ class BreadListCard extends StatelessWidget {
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    width: 106,
-                    height: 106,
-                    color: const Color(0xFFF4EEE7),
-                    child: resolvedImageUrl == null
-                        ? const Center(
-                            child: Icon(
-                              Icons.bakery_dining,
-                              size: 38,
-                              color: Color(0xFFB28B67),
+          child: Opacity(
+            opacity: isSoldOut ? 0.5 : 1.0,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: 106,
+                          height: 106,
+                          color: const Color(0xFFF4EEE7),
+                          child: resolvedImageUrl == null
+                              ? const Center(
+                                  child: Icon(
+                                    Icons.bakery_dining,
+                                    size: 38,
+                                    color: Color(0xFFB28B67),
+                                  ),
+                                )
+                              : Image.network(
+                                  resolvedImageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Image.asset(
+                                      AppAssets.breadImage,
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                      if (isSoldOut)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          )
-                        : Image.network(
-                            resolvedImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Image.asset(
-                                AppAssets.breadImage,
-                                fit: BoxFit.cover,
-                              );
-                            },
+                            child: const Center(
+                              child: Text(
+                                '품절',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                           ),
+                        ),
+                    ],
                   ),
-                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -114,6 +145,19 @@ class BreadListCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
+                      if (storeName != null) ...[
+                        Text(
+                          storeName!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF7E746A),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
                       Row(
                         children: [
                           const Text('📍', style: TextStyle(fontSize: 12)),
@@ -127,6 +171,27 @@ class BreadListCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 10),
+                          if (discountPercent != null && discountPercent! > 0) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE65A44),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '$discountPercent%',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
                           Text(
                             '${_formatPrice(salePrice)}원',
                             style: const TextStyle(
@@ -136,16 +201,19 @@ class BreadListCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              '${_formatPrice(originalPrice)}원',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF9D948A),
-                                decoration: TextDecoration.lineThrough,
-                                decorationColor: Color(0xFF9D948A),
+                          Flexible(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                '${_formatPrice(originalPrice)}원',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF9D948A),
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Color(0xFF9D948A),
+                                ),
                               ),
                             ),
                           ),
@@ -175,6 +243,7 @@ class BreadListCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),
