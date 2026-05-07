@@ -422,7 +422,7 @@ class _BottomActionBar extends StatelessWidget {
                         if (bread == null) {
                           return;
                         }
-                        await showPurchaseNoticeAndOpenScreen(
+                        await showDirectPurchaseNoticeAndOpenScreen(
                           context,
                           items: [
                             PurchaseItem(
@@ -431,6 +431,8 @@ class _BottomActionBar extends StatelessWidget {
                               quantity: provider.quantity,
                             ),
                           ],
+                          breadId: bread.id,
+                          quantity: provider.quantity,
                         );
                       }
                     : null,

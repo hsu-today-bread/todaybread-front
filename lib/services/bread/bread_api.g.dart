@@ -9,7 +9,10 @@ part of 'bread_api.dart';
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers
 
 class _BreadApi implements BreadApi {
-  _BreadApi(this._dio, {this.baseUrl});
+  _BreadApi(
+    this._dio, {
+    this.baseUrl,
+  });
 
   final Dio _dio;
 
@@ -31,23 +34,26 @@ class _BreadApi implements BreadApi {
     };
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
-    final _result = await _dio.fetch<List<dynamic>>(
-      _setStreamType<List<NearbyBreadResponse>>(
-        Options(method: 'GET', headers: _headers, extra: _extra)
+    final _result = await _dio
+        .fetch<List<dynamic>>(_setStreamType<List<NearbyBreadResponse>>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
             .compose(
               _dio.options,
               '/api/bread/nearby',
               queryParameters: queryParameters,
               data: _data,
             )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
     var value = _result.data!
-        .map(
-          (dynamic i) =>
-              NearbyBreadResponse.fromJson(i as Map<String, dynamic>),
-        )
+        .map((dynamic i) =>
+            NearbyBreadResponse.fromJson(i as Map<String, dynamic>))
         .toList();
     return value;
   }
@@ -59,17 +65,22 @@ class _BreadApi implements BreadApi {
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
     final _result = await _dio.fetch<Map<String, dynamic>>(
-      _setStreamType<BreadDetailResponse>(
-        Options(method: 'GET', headers: _headers, extra: _extra)
+        _setStreamType<BreadDetailResponse>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
             .compose(
               _dio.options,
               '/api/bread/detail/${breadId}',
               queryParameters: queryParameters,
               data: _data,
             )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
     final value = BreadDetailResponse.fromJson(_result.data!);
     return value;
   }
@@ -80,69 +91,72 @@ class _BreadApi implements BreadApi {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
-    final _result = await _dio.fetch<List<dynamic>>(
-      _setStreamType<List<BreadCommonResponse>>(
-        Options(method: 'GET', headers: _headers, extra: _extra)
+    final _result = await _dio
+        .fetch<List<dynamic>>(_setStreamType<List<BreadCommonResponse>>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
             .compose(
               _dio.options,
               '/api/boss/bread',
               queryParameters: queryParameters,
               data: _data,
             )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
     var value = _result.data!
-        .map(
-          (dynamic i) =>
-              BreadCommonResponse.fromJson(i as Map<String, dynamic>),
-        )
+        .map((dynamic i) =>
+            BreadCommonResponse.fromJson(i as Map<String, dynamic>))
         .toList();
     return value;
   }
 
   @override
-  Future<BreadCommonResponse> createBread(File request, File image) async {
+  Future<BreadCommonResponse> createBread(
+    File request,
+    File image,
+  ) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = FormData();
-    _data.files.add(
-      MapEntry(
-        'request',
-        MultipartFile.fromFileSync(
-          request.path,
-          filename: request.path.split(Platform.pathSeparator).last,
-          contentType: MediaType.parse('application/json'),
-        ),
+    _data.files.add(MapEntry(
+      'request',
+      MultipartFile.fromFileSync(
+        request.path,
+        filename: request.path.split(Platform.pathSeparator).last,
+        contentType: MediaType.parse('application/json'),
       ),
-    );
-    _data.files.add(
-      MapEntry(
-        'image',
-        MultipartFile.fromFileSync(
-          image.path,
-          filename: image.path.split(Platform.pathSeparator).last,
-        ),
+    ));
+    _data.files.add(MapEntry(
+      'image',
+      MultipartFile.fromFileSync(
+        image.path,
+        filename: image.path.split(Platform.pathSeparator).last,
       ),
-    );
+    ));
     final _result = await _dio.fetch<Map<String, dynamic>>(
-      _setStreamType<BreadCommonResponse>(
-        Options(
-              method: 'POST',
-              headers: _headers,
-              extra: _extra,
-              contentType: 'multipart/form-data',
-            )
+        _setStreamType<BreadCommonResponse>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'multipart/form-data',
+    )
             .compose(
               _dio.options,
               '/api/boss/bread',
               queryParameters: queryParameters,
               data: _data,
             )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
     final value = BreadCommonResponse.fromJson(_result.data!);
     return value;
   }
@@ -157,42 +171,39 @@ class _BreadApi implements BreadApi {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = FormData();
-    _data.files.add(
-      MapEntry(
-        'request',
-        MultipartFile.fromFileSync(
-          request.path,
-          filename: request.path.split(Platform.pathSeparator).last,
-          contentType: MediaType.parse('application/json'),
-        ),
+    _data.files.add(MapEntry(
+      'request',
+      MultipartFile.fromFileSync(
+        request.path,
+        filename: request.path.split(Platform.pathSeparator).last,
+        contentType: MediaType.parse('application/json'),
       ),
-    );
-    _data.files.add(
-      MapEntry(
-        'image',
-        MultipartFile.fromFileSync(
-          image.path,
-          filename: image.path.split(Platform.pathSeparator).last,
-        ),
+    ));
+    _data.files.add(MapEntry(
+      'image',
+      MultipartFile.fromFileSync(
+        image.path,
+        filename: image.path.split(Platform.pathSeparator).last,
       ),
-    );
+    ));
     final _result = await _dio.fetch<Map<String, dynamic>>(
-      _setStreamType<BreadCommonResponse>(
-        Options(
-              method: 'PUT',
-              headers: _headers,
-              extra: _extra,
-              contentType: 'multipart/form-data',
-            )
+        _setStreamType<BreadCommonResponse>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'multipart/form-data',
+    )
             .compose(
               _dio.options,
               '/api/boss/bread/${breadId}',
               queryParameters: queryParameters,
               data: _data,
             )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
     final value = BreadCommonResponse.fromJson(_result.data!);
     return value;
   }
@@ -206,33 +217,32 @@ class _BreadApi implements BreadApi {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = FormData();
-    _data.files.add(
-      MapEntry(
-        'request',
-        MultipartFile.fromFileSync(
-          request.path,
-          filename: request.path.split(Platform.pathSeparator).last,
-          contentType: MediaType.parse('application/json'),
-        ),
+    _data.files.add(MapEntry(
+      'request',
+      MultipartFile.fromFileSync(
+        request.path,
+        filename: request.path.split(Platform.pathSeparator).last,
+        contentType: MediaType.parse('application/json'),
       ),
-    );
+    ));
     final _result = await _dio.fetch<Map<String, dynamic>>(
-      _setStreamType<BreadCommonResponse>(
-        Options(
-              method: 'PUT',
-              headers: _headers,
-              extra: _extra,
-              contentType: 'multipart/form-data',
-            )
+        _setStreamType<BreadCommonResponse>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'multipart/form-data',
+    )
             .compose(
               _dio.options,
               '/api/boss/bread/${breadId}',
               queryParameters: queryParameters,
               data: _data,
             )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+            .copyWith(
+                baseUrl: _combineBaseUrls(
+              _dio.options.baseUrl,
+              baseUrl,
+            ))));
     final value = BreadCommonResponse.fromJson(_result.data!);
     return value;
   }
@@ -247,18 +257,22 @@ class _BreadApi implements BreadApi {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(request);
-    await _dio.fetch<void>(
-      _setStreamType<void>(
-        Options(method: 'PATCH', headers: _headers, extra: _extra)
-            .compose(
-              _dio.options,
-              '/api/boss/bread/${breadId}/stock',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+    await _dio.fetch<void>(_setStreamType<void>(Options(
+      method: 'PATCH',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/boss/bread/${breadId}/stock',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        ))));
   }
 
   @override
@@ -267,18 +281,22 @@ class _BreadApi implements BreadApi {
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
-    await _dio.fetch<void>(
-      _setStreamType<void>(
-        Options(method: 'DELETE', headers: _headers, extra: _extra)
-            .compose(
-              _dio.options,
-              '/api/boss/bread/${breadId}',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
-      ),
-    );
+    await _dio.fetch<void>(_setStreamType<void>(Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/api/boss/bread/${breadId}',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        ))));
   }
 
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
@@ -294,7 +312,10 @@ class _BreadApi implements BreadApi {
     return requestOptions;
   }
 
-  String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
+  String _combineBaseUrls(
+    String dioBaseUrl,
+    String? baseUrl,
+  ) {
     if (baseUrl == null || baseUrl.trim().isEmpty) {
       return dioBaseUrl;
     }

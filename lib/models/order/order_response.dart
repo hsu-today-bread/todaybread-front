@@ -1,32 +1,29 @@
-import 'order_item_response.dart';
-
+/// 주문 목록 항목 DTO (GET /api/orders 의 content[] 내 각 항목)
 class OrderResponse {
   final int orderId;
   final String storeName;
   final String status;
-  final int totalPrice;
-  final String orderedAt;
-  final List<OrderItemResponse> items;
+  final int totalAmount;
+  final String orderNumber;
+  final String createdAt;
 
   const OrderResponse({
     required this.orderId,
     required this.storeName,
     required this.status,
-    required this.totalPrice,
-    required this.orderedAt,
-    required this.items,
+    required this.totalAmount,
+    required this.orderNumber,
+    required this.createdAt,
   });
 
   factory OrderResponse.fromJson(Map<String, dynamic> json) {
     return OrderResponse(
       orderId: (json['orderId'] as num).toInt(),
-      storeName: json['storeName'] as String,
-      status: json['status'] as String,
-      totalPrice: (json['totalPrice'] as num).toInt(),
-      orderedAt: json['orderedAt'] as String,
-      items: (json['items'] as List<dynamic>? ?? [])
-          .map((e) => OrderItemResponse.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      storeName: json['storeName'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      totalAmount: (json['totalAmount'] as num).toInt(),
+      orderNumber: json['orderNumber'] as String? ?? '',
+      createdAt: json['createdAt'] as String? ?? '',
     );
   }
 }

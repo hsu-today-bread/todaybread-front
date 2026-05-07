@@ -8,7 +8,6 @@ import 'package:todaybread/screens/boss/boss_review_management_screen.dart';
 import 'package:todaybread/screens/boss/boss_store_management_screen.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/order/order_service.dart';
-import 'package:todaybread/utils/display_helper.dart';
 import '../../utils/app_colors.dart';
 import 'boss_account_verification_screen.dart';
 import 'my_profile_screen.dart';
@@ -42,7 +41,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
       final result = await OrderService.instance.getOrders();
       if (!mounted) return;
       setState(() {
-        _orders = result.orders;
+        _orders = result.content;
         _isLoading = false;
       });
     } catch (e) {
@@ -442,19 +441,85 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     );
   }
 
+  Future<void> _cancelOrder(OrderResponse order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          '주문을 취소하시겠어요?',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          '결제가 취소되고 환불이 진행됩니다.',
+          style: TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('닫기', style: TextStyle(color: Colors.black54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text(
+              '취소하기',
+              style: TextStyle(color: Color(0xFFE53935)),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await OrderService.instance.cancelOrder(order.orderId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('주문이 취소되었습니다.')),
+      );
+      _loadOrders();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ApiException.messageFrom(e))),
+      );
+    }
+  }
+
+  Widget _buildOrderStatusBadge(String status) {
+    final (label, color) = switch (status) {
+      'CONFIRMED' => ('결제완료', const Color(0xFF3182F6)),
+      'PENDING' => ('결제대기', const Color(0xFFFFA000)),
+      'CANCEL_PENDING' => ('취소중', const Color(0xFFFFA000)),
+      'CANCELLED' => ('취소됨', const Color(0xFF9E9E9E)),
+      'PICKED_UP' => ('픽업완료', const Color(0xFF4CAF50)),
+      _ => (status, const Color(0xFF9E9E9E)),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+
   Widget _buildOrderCard(OrderResponse order) {
-    final firstItem = order.items.isNotEmpty ? order.items.first : null;
-    final extraCount = order.items.length - 1;
-    final menuText = firstItem == null
-        ? '상품 정보 없음'
-        : extraCount > 0
-            ? '${firstItem.breadName} 외 $extraCount개'
-            : firstItem.breadName;
-    final imageUrl = DisplayHelper.resolveImageUrl(firstItem?.imageUrl);
-    final formattedPrice = _formatPrice(order.totalPrice);
-    final formattedDate = order.orderedAt.length >= 10
-        ? order.orderedAt.substring(0, 10)
-        : order.orderedAt;
+    final menuText = '주문번호 ${order.orderNumber}';
+    final formattedPrice = _formatPrice(order.totalAmount);
+    final formattedDate = order.createdAt.length >= 10
+        ? order.createdAt.substring(0, 10)
+        : order.createdAt;
+    final canCancel = order.status == 'CONFIRMED';
 
     return Container(
       width: double.infinity,
@@ -473,9 +538,15 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  formattedDate,
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF9B9B9B)),
+                Row(
+                  children: [
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF9B9B9B)),
+                    ),
+                    const Spacer(),
+                    _buildOrderStatusBadge(order.status),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -490,21 +561,11 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: imageUrl != null
-                            ? Image.network(
-                                imageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, e, st) => const Icon(
-                                  Icons.cake_outlined,
-                                  color: Colors.brown,
-                                  size: 28,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.cake_outlined,
-                                color: Colors.brown,
-                                size: 28,
-                              ),
+                        child: const Icon(
+                          Icons.cake_outlined,
+                          color: Colors.brown,
+                          size: 28,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -558,6 +619,27 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                     color: Colors.black,
                   ),
                 ),
+                if (canCancel) ...[
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () => _cancelOrder(order),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFE53935)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFE53935),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

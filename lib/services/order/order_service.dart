@@ -22,4 +22,23 @@ class OrderService {
     );
     return OrderDetailResponse.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// 바로 구매 주문을 생성합니다.
+  Future<OrderDetailResponse> createDirectOrder({
+    required int breadId,
+    required int quantity,
+    required String idempotencyKey,
+  }) async {
+    final response = await DioClient.instance.post(
+      '/api/orders/direct',
+      data: {'breadId': breadId, 'quantity': quantity},
+      options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+    );
+    return OrderDetailResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// 주문을 취소합니다. CONFIRMED 상태인 경우 결제 취소도 함께 처리됩니다.
+  Future<void> cancelOrder(int orderId) async {
+    await DioClient.instance.post('/api/orders/$orderId/cancel');
+  }
 }

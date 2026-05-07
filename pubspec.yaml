@@ -44,6 +44,8 @@ dependencies:
   image_picker: ^1.1.2
   http_parser: ^4.1.2
   webview_flutter: ^4.10.0
+  url_launcher: ^6.2.5
+  tosspayments_widget_sdk_flutter: ^2.2.0
 
 
 

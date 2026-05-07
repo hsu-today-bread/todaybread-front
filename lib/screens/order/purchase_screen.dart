@@ -41,6 +41,7 @@ class PurchaseItem {
 
 // ── 주의사항 다이얼로그 + PurchaseScreen 진입 ─────────────────────────────────
 
+/// 장바구니 주문용
 Future<void> showPurchaseNoticeAndOpenScreen(
   BuildContext context, {
   required List<PurchaseItem> items,
@@ -48,14 +49,49 @@ Future<void> showPurchaseNoticeAndOpenScreen(
 }) async {
   if (items.isEmpty) return;
 
-  final shouldProceed = await showDialog<bool>(
+  final shouldProceed = await _showNoticeDialog(context);
+  if (shouldProceed != true || !context.mounted) return;
+
+  await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => PurchaseScreen(items: items, storeName: storeName),
+    ),
+  );
+}
+
+/// 바로 구매용
+Future<void> showDirectPurchaseNoticeAndOpenScreen(
+  BuildContext context, {
+  required List<PurchaseItem> items,
+  required int breadId,
+  required int quantity,
+  String? storeName,
+}) async {
+  if (items.isEmpty) return;
+
+  final shouldProceed = await _showNoticeDialog(context);
+  if (shouldProceed != true || !context.mounted) return;
+
+  await Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => PurchaseScreen(
+        items: items,
+        storeName: storeName,
+        breadId: breadId,
+        directQuantity: quantity,
+      ),
+    ),
+  );
+}
+
+Future<bool?> _showNoticeDialog(BuildContext context) {
+  return showDialog<bool>(
     context: context,
     barrierDismissible: true,
     builder: (dialogContext) {
       return Dialog(
         backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           child: Column(
@@ -108,8 +144,7 @@ Future<void> showPurchaseNoticeAndOpenScreen(
                   ),
                   child: const Text(
                     '확인',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -119,23 +154,27 @@ Future<void> showPurchaseNoticeAndOpenScreen(
       );
     },
   );
-
-  if (shouldProceed != true || !context.mounted) return;
-
-  await Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => PurchaseScreen(items: items, storeName: storeName),
-    ),
-  );
 }
 
 // ── PurchaseScreen ────────────────────────────────────────────────────────────
 
 class PurchaseScreen extends StatefulWidget {
-  const PurchaseScreen({super.key, required this.items, this.storeName});
+  const PurchaseScreen({
+    super.key,
+    required this.items,
+    this.storeName,
+    this.breadId,
+    this.directQuantity,
+  });
 
   final List<PurchaseItem> items;
   final String? storeName;
+
+  /// 바로 구매 시 필요한 필드 (null이면 장바구니 주문)
+  final int? breadId;
+  final int? directQuantity;
+
+  bool get isDirectOrder => breadId != null;
 
   @override
   State<PurchaseScreen> createState() => _PurchaseScreenState();
@@ -158,8 +197,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
         surfaceTintColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
-          onPressed:
-              _isLoading ? null : () => Navigator.of(context).pop(),
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: _isLoading ? Colors.grey : Colors.black,
@@ -202,14 +240,11 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                     ),
                     child: Column(
                       children: [
-                        for (int i = 0;
-                            i < widget.items.length;
-                            i++) ...[
+                        for (int i = 0; i < widget.items.length; i++) ...[
                           _PurchaseItemRow(item: widget.items[i]),
                           if (i != widget.items.length - 1)
                             const Padding(
-                              padding:
-                                  EdgeInsets.symmetric(vertical: 16),
+                              padding: EdgeInsets.symmetric(vertical: 16),
                               child: Divider(
                                 height: 1,
                                 color: Color(0xFFE4E4E4),
@@ -218,8 +253,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                         ],
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 18),
-                          child:
-                              Divider(height: 1, color: Color(0xFFD9D9D9)),
+                          child: Divider(height: 1, color: Color(0xFFD9D9D9)),
                         ),
                         Row(
                           children: [
@@ -271,8 +305,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed:
-                          _isLoading ? null : _startTossPayment,
+                      onPressed: _isLoading ? null : _startTossPayment,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3182F6),
                         disabledBackgroundColor:
@@ -317,9 +350,17 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     try {
       final idempotencyKey = _generateIdempotencyKey();
 
-      // 주문 생성 + Client Key 동시 조회
+      // 주문 생성 (장바구니 or 바로구매) + Client Key 동시 조회
+      final orderFuture = widget.isDirectOrder
+          ? OrderService.instance.createDirectOrder(
+              breadId: widget.breadId!,
+              quantity: widget.directQuantity!,
+              idempotencyKey: idempotencyKey,
+            )
+          : OrderService.instance.createOrderFromCart(idempotencyKey);
+
       final results = await Future.wait([
-        OrderService.instance.createOrderFromCart(idempotencyKey),
+        orderFuture,
         PaymentService.instance.getClientKey(),
       ]);
 
