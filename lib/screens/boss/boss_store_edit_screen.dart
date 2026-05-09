@@ -7,10 +7,10 @@ import 'package:todaybread/models/store/business_hours_request.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
 import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
-import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/business_hours_helper.dart';
 import 'package:todaybread/utils/user_input_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 import 'package:todaybread/widgets/business_hours_editor.dart';
 
 /// 매장관리에서 각 항목의 연필 버튼을 눌렀을 때 열리는 공용 수정 화면입니다.
@@ -235,23 +235,12 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
                             .map(
                               (image) => ClipRRect(
                                 borderRadius: BorderRadius.circular(14),
-                                child: Image.network(
-                                  _resolveImageUrl(image.imageUrl),
+                                child: AppNetworkImage(
+                                  imageUrl: image.imageUrl,
                                   width: 96,
                                   height: 96,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 96,
-                                      height: 96,
-                                      color: const Color(0xFFF1F1F1),
-                                      alignment: Alignment.center,
-                                      child: const Icon(
-                                        Icons.broken_image_outlined,
-                                        color: Color(0xFF8D8D8D),
-                                      ),
-                                    );
-                                  },
+                                  placeholder: _imageFallback(),
                                 ),
                               ),
                             )
@@ -684,10 +673,13 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     }
   }
 
-  String _resolveImageUrl(String imageUrl) {
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    return '${DioClient.baseUrl}$imageUrl';
+  Widget _imageFallback() {
+    return Container(
+      width: 96,
+      height: 96,
+      color: const Color(0xFFF1F1F1),
+      alignment: Alignment.center,
+      child: const Icon(Icons.broken_image_outlined, color: Color(0xFF8D8D8D)),
+    );
   }
 }

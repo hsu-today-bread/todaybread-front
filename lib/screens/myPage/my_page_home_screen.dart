@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/models/order/order_detail_response.dart';
+import 'package:todaybread/models/order/order_item_response.dart';
 import 'package:todaybread/models/order/order_response.dart';
+import 'package:todaybread/models/review/my_review_response.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
 import 'package:todaybread/screens/boss/boss_review_management_screen.dart';
 import 'package:todaybread/screens/boss/boss_store_management_screen.dart';
+import 'package:todaybread/screens/review/review_create_screen.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/order/order_service.dart';
+import 'package:todaybread/services/review/review_service.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 import '../../utils/app_colors.dart';
 import 'boss_account_verification_screen.dart';
 import 'my_profile_screen.dart';
@@ -23,6 +29,9 @@ class MyPageHomeScreen extends StatefulWidget {
 
 class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
   List<OrderResponse> _orders = [];
+  Map<int, OrderDetailResponse> _orderDetails = {};
+  List<MyReviewResponse> _myReviews = [];
+  final Set<int> _reviewedOrderItemIds = {};
   bool _isLoading = true;
   String? _error;
 
@@ -36,18 +45,40 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     setState(() {
       _isLoading = true;
       _error = null;
+      _orderDetails = {};
     });
     try {
       final result = await OrderService.instance.getOrders();
+      final details = <int, OrderDetailResponse>{};
+      var myReviews = _myReviews;
+      await Future.wait([
+        Future.wait(
+          result.content.map((order) async {
+            try {
+              details[order.orderId] = await OrderService.instance
+                  .getOrderDetail(order.orderId);
+            } catch (_) {
+              // 목록 표시 자체는 가능해야 하므로 상세 조회 실패는 카드 fallback으로 처리한다.
+            }
+          }),
+        ),
+        ReviewService.instance
+            .getMyReviews()
+            .then((value) => myReviews = value.content)
+            .catchError((_) => myReviews = _myReviews),
+      ]);
       if (!mounted) return;
       setState(() {
         _orders = result.content;
+        _orderDetails = details;
+        _myReviews = myReviews;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = ApiException.messageFrom(e);
+        _orderDetails = {};
         _isLoading = false;
       });
     }
@@ -70,7 +101,9 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                     const SizedBox(height: 18),
                     _buildAccountCard(),
                     const SizedBox(height: 20),
-                    isBoss ? _buildBossManagementSection() : _buildReviewSection(),
+                    isBoss
+                        ? _buildBossManagementSection()
+                        : _buildReviewSection(),
                   ],
                 ),
               ),
@@ -271,7 +304,10 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                 children: [
                   Text(
                     _error!,
-                    style: const TextStyle(fontSize: 14, color: Color(0xFF8E8E8E)),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF8E8E8E),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
@@ -279,7 +315,9 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                     onPressed: _loadOrders,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryBackground,
-                      side: const BorderSide(color: AppColors.primaryBackground),
+                      side: const BorderSide(
+                        color: AppColors.primaryBackground,
+                      ),
                     ),
                     child: const Text('다시 시도'),
                   ),
@@ -289,10 +327,12 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
           else if (_orders.isEmpty)
             _buildEmptyReviewState()
           else
-            ..._orders.map((order) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildOrderCard(order),
-                )),
+            ..._orders.map(
+              (order) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildOrderCard(order),
+              ),
+            ),
         ],
       ),
     );
@@ -407,10 +447,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
   }
 
   void _push(Widget screen) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => screen),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
   Widget _buildEmptyReviewState() {
@@ -441,85 +478,16 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     );
   }
 
-  Future<void> _cancelOrder(OrderResponse order) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          '주문을 취소하시겠어요?',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          '결제가 취소되고 환불이 진행됩니다.',
-          style: TextStyle(fontSize: 14, color: Colors.black54),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('닫기', style: TextStyle(color: Colors.black54)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              '취소하기',
-              style: TextStyle(color: Color(0xFFE53935)),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
-    try {
-      await OrderService.instance.cancelOrder(order.orderId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('주문이 취소되었습니다.')),
-      );
-      _loadOrders();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.messageFrom(e))),
-      );
-    }
-  }
-
-  Widget _buildOrderStatusBadge(String status) {
-    final (label, color) = switch (status) {
-      'CONFIRMED' => ('결제완료', const Color(0xFF3182F6)),
-      'PENDING' => ('결제대기', const Color(0xFFFFA000)),
-      'CANCEL_PENDING' => ('취소중', const Color(0xFFFFA000)),
-      'CANCELLED' => ('취소됨', const Color(0xFF9E9E9E)),
-      'PICKED_UP' => ('픽업완료', const Color(0xFF4CAF50)),
-      _ => (status, const Color(0xFF9E9E9E)),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-
   Widget _buildOrderCard(OrderResponse order) {
-    final menuText = '주문번호 ${order.orderNumber}';
+    final detail = _orderDetails[order.orderId];
+    final items = detail?.items ?? const <OrderItemResponse>[];
+    final firstItem = items.isNotEmpty ? items.first : null;
+    final reviewItem = _findReviewableItem(items);
+    final menuText = _buildOrderMenuText(items, order);
     final formattedPrice = _formatPrice(order.totalAmount);
-    final formattedDate = order.createdAt.length >= 10
-        ? order.createdAt.substring(0, 10)
-        : order.createdAt;
-    final canCancel = order.status == 'CONFIRMED';
+    final dateText = _formatOrderDate(order.createdAt);
+    final canReview = order.status == 'PICKED_UP';
+    final hasWrittenReview = _hasWrittenReview(items);
 
     return Container(
       width: double.infinity,
@@ -528,66 +496,72 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE4E4E4)),
         boxShadow: const [
-          BoxShadow(color: Color(0x22000000), blurRadius: 8, offset: Offset(0, 3)),
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      formattedDate,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF9B9B9B)),
-                    ),
-                    const Spacer(),
-                    _buildOrderStatusBadge(order.status),
-                  ],
+                Text(
+                  dateText,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF9B9B9B),
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 72,
+                        height: 72,
                         color: const Color(0xFFFFE8E1),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: const Icon(
-                          Icons.cake_outlined,
-                          color: Colors.brown,
-                          size: 28,
+                        child: AppNetworkImage(
+                          imageUrl: firstItem?.breadImageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: const Icon(
+                            Icons.bakery_dining_outlined,
+                            color: Colors.brown,
+                            size: 32,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 1),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               order.storeName,
                               style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
                                 color: Colors.black,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             Text(
                               menuText,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
+                                height: 1.4,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFF6F6F6F),
                               ),
                             ),
@@ -602,50 +576,290 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
             child: Row(
               children: [
-                const Icon(Icons.attach_money, size: 18, color: Color(0xFF53C4B7)),
+                const Text('💳', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 6),
                 const Text(
-                  '결제금액',
-                  style: TextStyle(fontSize: 13, color: Colors.black87),
+                  '결제 금액',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
                 ),
                 const Spacer(),
                 Text(
                   '$formattedPrice원',
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                     color: Colors.black,
                   ),
                 ),
-                if (canCancel) ...[
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => _cancelOrder(order),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFE53935)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        '취소',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFE53935),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: canReview
+                    ? () => hasWrittenReview
+                          ? _openWrittenReview(order, items)
+                          : _openReviewScreen(order, detail, reviewItem)
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBackground,
+                  disabledBackgroundColor: AppColors.primaryBackground,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  canReview
+                      ? hasWrittenReview
+                            ? '내가 쓴 리뷰 보기'
+                            : '리뷰 작성 >'
+                      : '주문 번호 : ${order.orderNumber}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openReviewScreen(
+    OrderResponse order,
+    OrderDetailResponse? detail,
+    OrderItemResponse? item,
+  ) async {
+    OrderDetailResponse currentDetail;
+    try {
+      currentDetail = await OrderService.instance.getOrderDetail(order.orderId);
+    } catch (e) {
+      if (detail == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(ApiException.messageFrom(e))));
+        return;
+      }
+      currentDetail = detail;
+    }
+
+    if (mounted) {
+      setState(() {
+        _orderDetails[order.orderId] = currentDetail;
+      });
+    }
+
+    final reviewItem = _findReviewableItem(currentDetail.items) ?? item;
+    if (reviewItem == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('리뷰를 작성할 주문 항목 ID가 없습니다.')));
+      return;
+    }
+
+    if (!mounted) return;
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            ReviewCreateScreen(order: currentDetail, item: reviewItem),
+      ),
+    );
+
+    if (created == true && mounted) {
+      final orderItemId = reviewItem.orderItemId;
+      if (orderItemId != null) {
+        _reviewedOrderItemIds.add(orderItemId);
+      }
+      await _refreshMyReviews();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('리뷰가 등록되었습니다.')));
+      setState(() {});
+    }
+  }
+
+  Future<void> _refreshMyReviews() async {
+    try {
+      final response = await ReviewService.instance.getMyReviews();
+      if (!mounted) return;
+      setState(() {
+        _myReviews = response.content;
+      });
+    } catch (_) {
+      // 리뷰 작성 자체는 성공했으므로 목록 조회 실패는 버튼 클릭 시 토스트로 처리한다.
+    }
+  }
+
+  Future<void> _openWrittenReview(
+    OrderResponse order,
+    List<OrderItemResponse> items,
+  ) async {
+    var reviews = _matchingReviews(order, items);
+    if (reviews.isEmpty) {
+      await _refreshMyReviews();
+      reviews = _matchingReviews(order, items);
+    }
+
+    if (!mounted) return;
+    if (reviews.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('작성한 리뷰를 불러올 수 없습니다.')));
+      return;
+    }
+
+    _showMyReviewSheet(reviews.first);
+  }
+
+  void _showMyReviewSheet(MyReviewResponse review) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0E0E0),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  review.storeName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  review.breadName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6F6F6F),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 20,
+                      color: Color(0xFFFFC107),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${review.rating.toInt()}점',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  review.content.isEmpty ? '작성된 리뷰 내용이 없습니다.' : review.content,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.55,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF202020),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _buildOrderMenuText(
+    List<OrderItemResponse> items,
+    OrderResponse order,
+  ) {
+    if (items.isEmpty) {
+      return '주문번호 ${order.orderNumber}';
+    }
+    return items
+        .map((item) => '${item.breadName} ${item.quantity}개')
+        .join(', ');
+  }
+
+  OrderItemResponse? _findReviewableItem(List<OrderItemResponse> items) {
+    for (final item in items) {
+      if (item.orderItemId != null) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  bool _hasWrittenReview(List<OrderItemResponse> items) {
+    return items.any(
+      (item) =>
+          item.orderItemId != null &&
+          _reviewedOrderItemIds.contains(item.orderItemId),
+    );
+  }
+
+  List<MyReviewResponse> _matchingReviews(
+    OrderResponse order,
+    List<OrderItemResponse> items,
+  ) {
+    final breadNames = items.map((item) => item.breadName).toSet();
+    return _myReviews
+        .where(
+          (review) =>
+              review.storeName == order.storeName &&
+              breadNames.contains(review.breadName),
+        )
+        .toList();
+  }
+
+  String _formatOrderDate(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      return value.isEmpty ? '구매일 확인 중' : '구매 $value';
+    }
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    return '구매 ${parsed.month}월 ${parsed.day}일 (${weekdays[parsed.weekday - 1]})';
   }
 
   String _formatPrice(int price) {

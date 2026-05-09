@@ -7,10 +7,10 @@ import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/screens/boss/boss_bread_create_screen.dart';
-import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/business_hours_helper.dart';
 import 'package:todaybread/utils/display_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 class BossBreadDetailScreen extends StatefulWidget {
   const BossBreadDetailScreen({super.key, required this.bread});
@@ -483,20 +483,14 @@ class _BreadDetailImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedUrl = _resolveBreadImageUrl(imageUrl);
-
-    if (resolvedUrl == null) {
-      return _buildFallback();
-    }
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
-      child: Image.network(
-        resolvedUrl,
+      child: AppNetworkImage(
+        imageUrl: imageUrl,
         width: 180,
         height: 180,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _buildFallback(),
+        placeholder: _buildFallback(),
       ),
     );
   }
@@ -516,16 +510,6 @@ class _BreadDetailImage extends StatelessWidget {
       ),
     );
   }
-}
-
-String? _resolveBreadImageUrl(String? value) {
-  if (value == null || value.isEmpty) {
-    return null;
-  }
-  if (value.startsWith('http://') || value.startsWith('https://')) {
-    return value;
-  }
-  return '${DioClient.baseUrl}$value';
 }
 
 class _DetailRow extends StatelessWidget {

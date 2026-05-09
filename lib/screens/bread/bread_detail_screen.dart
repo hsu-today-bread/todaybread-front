@@ -6,6 +6,7 @@ import 'package:todaybread/screens/store/store_detail_screen.dart';
 import 'package:todaybread/utils/app_assets.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/display_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 class BreadDetailScreen extends StatelessWidget {
   const BreadDetailScreen({
@@ -55,12 +56,9 @@ class _BreadDetailView extends StatelessWidget {
 
           final bread = provider.breadDetail!;
           final store = provider.store!;
-          final breadImageUrl = DisplayHelper.resolveImageUrl(bread.imageUrl);
-          final storeLogoUrl = DisplayHelper.resolveImageUrl(
-            provider.storeImages.isEmpty
-                ? null
-                : provider.storeImages.first.imageUrl,
-          );
+          final storeLogoUrl = provider.storeImages.isEmpty
+              ? null
+              : provider.storeImages.first.imageUrl;
           final remainingTimeText = provider.remainingTimeText;
 
           return CustomScrollView(
@@ -71,18 +69,14 @@ class _BreadDetailView extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       height: 332,
-                      child: breadImageUrl == null
-                          ? Image.asset(AppAssets.breadImage, fit: BoxFit.cover)
-                          : Image.network(
-                              breadImageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Image.asset(
-                                  AppAssets.breadImage,
-                                  fit: BoxFit.cover,
-                                );
-                              },
-                            ),
+                      child: AppNetworkImage(
+                        imageUrl: bread.imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: Image.asset(
+                          AppAssets.breadImage,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                     SafeArea(
                       bottom: false,
@@ -161,22 +155,14 @@ class _BreadDetailView extends StatelessWidget {
                               width: 58,
                               height: 58,
                               color: const Color(0xFFF3EFE9),
-                              child: storeLogoUrl == null
-                                  ? Image.asset(
-                                      AppAssets.splashLogo,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.network(
-                                      storeLogoUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return Image.asset(
-                                              AppAssets.splashLogo,
-                                              fit: BoxFit.cover,
-                                            );
-                                          },
-                                    ),
+                              child: AppNetworkImage(
+                                imageUrl: storeLogoUrl,
+                                fit: BoxFit.cover,
+                                placeholder: Image.asset(
+                                  AppAssets.splashLogo,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -205,8 +191,8 @@ class _BreadDetailView extends StatelessWidget {
                                     color: const Color(0xFFFFF4D6),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
-                                  child: const Text(
-                                    '⭐ 4.8',
+                                  child: Text(
+                                    '⭐ ${DisplayHelper.formatRating(bread.averageRating, bread.reviewCount)}',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,

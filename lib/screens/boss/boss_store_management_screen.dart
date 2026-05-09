@@ -6,9 +6,9 @@ import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/screens/boss/boss_store_edit_screen.dart';
 import 'package:todaybread/screens/boss/boss_store_create_screen.dart';
-import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/business_hours_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 /// 사장님 매장관리 메인 화면입니다.
 ///
@@ -246,7 +246,7 @@ class _StoreBasicInfoTab extends StatelessWidget {
     final isOpen = isStoreOpenNow(store.businessHours);
     final primaryImageUrl = storeInfo.images.isEmpty
         ? null
-        : _resolveImageUrl(storeInfo.images.first.imageUrl);
+        : storeInfo.images.first.imageUrl;
 
     return ListView(
       children: [
@@ -259,20 +259,17 @@ class _StoreBasicInfoTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFF3F3F3),
               borderRadius: BorderRadius.circular(18),
-              image: primaryImageUrl == null
-                  ? null
-                  : DecorationImage(
-                      image: NetworkImage(primaryImageUrl),
-                      fit: BoxFit.cover,
-                    ),
             ),
-            child: primaryImageUrl == null
-                ? const Icon(
-                    Icons.storefront_rounded,
-                    size: 42,
-                    color: Color(0xFF7D7D7D),
-                  )
-                : null,
+            clipBehavior: Clip.antiAlias,
+            child: AppNetworkImage(
+              imageUrl: primaryImageUrl,
+              fit: BoxFit.cover,
+              placeholder: const Icon(
+                Icons.storefront_rounded,
+                size: 42,
+                color: Color(0xFF7D7D7D),
+              ),
+            ),
           ),
         ),
         _InfoSection(
@@ -307,13 +304,6 @@ class _StoreBasicInfoTab extends StatelessWidget {
         builder: (_) => BossStoreEditScreen(storeInfo: storeInfo, mode: mode),
       ),
     );
-  }
-
-  String _resolveImageUrl(String imageUrl) {
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    return '${DioClient.baseUrl}$imageUrl';
   }
 }
 

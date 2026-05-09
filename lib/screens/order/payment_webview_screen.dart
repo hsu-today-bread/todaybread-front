@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:todaybread/config/app_config.dart';
 import 'package:todaybread/screens/order/payment_result_screen.dart';
 import 'package:todaybread/services/network/api_exception.dart';
+import 'package:todaybread/services/order/order_service.dart';
 import 'package:todaybread/services/payment/payment_service.dart';
 import 'package:todaybread/utils/app_colors.dart';
 
@@ -37,9 +40,12 @@ class PaymentWebViewScreen extends StatefulWidget {
 class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   late final WebViewController _controller;
   bool _isConfirming = false;
+  bool _isCancelling = false;
+  bool _hasHandledTerminalRoute = false;
 
-  static const _successUrl = 'http://10.30.4.99:8080/api/payments/success';
-  static const _failUrl = 'http://10.30.4.99:8080/api/payments/fail';
+  String get _successUrl => AppConfig.paymentSuccessUrl;
+  String get _failUrl => AppConfig.paymentFailUrl;
+  bool get _isBusy => _isConfirming || _isCancelling;
 
   @override
   void initState() {
@@ -47,8 +53,14 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
     final tossOrderId = 'order_${widget.orderId}';
     final orderName = '${widget.storeName} 결제';
+    final clientKey = jsonEncode(widget.clientKey);
+    final encodedTossOrderId = jsonEncode(tossOrderId);
+    final encodedOrderName = jsonEncode(orderName);
+    final encodedSuccessUrl = jsonEncode(_successUrl);
+    final encodedFailUrl = jsonEncode(_failUrl);
 
-    final html = '''
+    final html =
+        '''
 <!DOCTYPE html>
 <html>
 <head>
@@ -60,15 +72,15 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   var s = document.createElement('script');
   s.src = 'https://js.tosspayments.com/v2/standard';
   s.onload = function() {
-    var tossPayments = TossPayments('${widget.clientKey}');
+    var tossPayments = TossPayments($clientKey);
     var payment = tossPayments.payment({customerKey: TossPayments.ANONYMOUS});
     payment.requestPayment({
       method: 'CARD',
       amount: { currency: 'KRW', value: ${widget.amount} },
-      orderId: '$tossOrderId',
-      orderName: '$orderName',
-      successUrl: '$_successUrl',
-      failUrl: '$_failUrl',
+      orderId: $encodedTossOrderId,
+      orderName: $encodedOrderName,
+      successUrl: $encodedSuccessUrl,
+      failUrl: $encodedFailUrl,
     });
   };
   document.head.appendChild(s);
@@ -79,33 +91,35 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onNavigationRequest: (request) {
-          final url = request.url;
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (request) {
+            final url = request.url;
 
-          if (url.startsWith(_successUrl)) {
-            _handleSuccess(Uri.parse(url));
-            return NavigationDecision.prevent;
-          }
-          if (url.startsWith(_failUrl)) {
-            _handleFail(Uri.parse(url));
-            return NavigationDecision.prevent;
-          }
+            if (url.startsWith(_successUrl)) {
+              _handleSuccess(Uri.parse(url));
+              return NavigationDecision.prevent;
+            }
+            if (url.startsWith(_failUrl)) {
+              _handleFail(Uri.parse(url));
+              return NavigationDecision.prevent;
+            }
 
-          // 외부 앱 스킴 처리 (intent://, supertoss://, kakaotalk:// 등)
-          final uri = Uri.tryParse(url);
-          if (uri != null &&
-              !uri.scheme.startsWith('http') &&
-              uri.scheme != 'about' &&
-              uri.scheme != 'data') {
-            _launchExternalApp(url);
-            return NavigationDecision.prevent;
-          }
+            // 외부 앱 스킴 처리 (intent://, supertoss://, kakaotalk:// 등)
+            final uri = Uri.tryParse(url);
+            if (uri != null &&
+                !uri.scheme.startsWith('http') &&
+                uri.scheme != 'about' &&
+                uri.scheme != 'data') {
+              _launchExternalApp(url);
+              return NavigationDecision.prevent;
+            }
 
-          return NavigationDecision.navigate;
-        },
-      ))
-      ..loadHtmlString(html, baseUrl: 'http://10.30.4.99:8080');
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadHtmlString(html, baseUrl: AppConfig.paymentCallbackBaseUrl);
   }
 
   Future<void> _launchExternalApp(String url) async {
@@ -114,8 +128,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       final schemeMatch = RegExp(r'scheme=([^;]+)').firstMatch(url);
       if (schemeMatch != null) {
         final scheme = schemeMatch.group(1)!;
-        final hostAndPath =
-            url.replaceFirst('intent://', '').split('#').first;
+        final hostAndPath = url.replaceFirst('intent://', '').split('#').first;
         target = '$scheme://$hostAndPath';
       }
     }
@@ -127,6 +140,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   }
 
   void _handleSuccess(Uri uri) {
+    if (_hasHandledTerminalRoute) {
+      return;
+    }
+    _hasHandledTerminalRoute = true;
+
     final paymentKey = uri.queryParameters['paymentKey'] ?? '';
     final orderId = uri.queryParameters['orderId'] ?? '';
     final amount = int.tryParse(uri.queryParameters['amount'] ?? '') ?? 0;
@@ -138,14 +156,24 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     );
   }
 
-  void _handleFail(Uri uri) {
+  Future<void> _handleFail(Uri uri) async {
+    if (_hasHandledTerminalRoute) {
+      return;
+    }
+    _hasHandledTerminalRoute = true;
+
     final errorCode = uri.queryParameters['code'] ?? '';
     final errorMessage = uri.queryParameters['message'] ?? '';
 
     if (errorCode == 'PAY_PROCESS_CANCELED' ||
         errorCode == 'USER_CANCEL' ||
         errorCode == 'PAY_PROCESS_ABORTED') {
-      Navigator.of(context).pop();
+      await _cancelPendingOrderAndPop();
+      return;
+    }
+
+    final cancelErrorMessage = await _cancelPendingOrder();
+    if (!mounted) {
       return;
     }
 
@@ -153,10 +181,75 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       MaterialPageRoute(
         builder: (_) => PaymentResultScreen.fail(
           errorCode: errorCode,
-          errorMessage: errorMessage,
+          errorMessage: _buildFailMessage(
+            errorMessage: errorMessage,
+            cancelErrorMessage: cancelErrorMessage,
+          ),
         ),
       ),
     );
+  }
+
+  Future<String?> _cancelPendingOrder() async {
+    if (_isCancelling) {
+      return null;
+    }
+
+    if (mounted) {
+      setState(() => _isCancelling = true);
+    }
+
+    try {
+      await OrderService.instance.cancelOrder(widget.orderId);
+      return null;
+    } catch (e) {
+      return ApiException.messageFrom(e);
+    } finally {
+      if (mounted) {
+        setState(() => _isCancelling = false);
+      }
+    }
+  }
+
+  Future<void> _cancelPendingOrderAndPop() async {
+    final cancelErrorMessage = await _cancelPendingOrder();
+    if (!mounted) {
+      return;
+    }
+
+    if (cancelErrorMessage != null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '결제는 취소됐지만 주문 취소 처리에 실패했습니다. 주문내역에서 확인해주세요. ($cancelErrorMessage)',
+            ),
+          ),
+        );
+    }
+
+    Navigator.of(context).pop();
+  }
+
+  String _buildFailMessage({
+    required String errorMessage,
+    required String? cancelErrorMessage,
+  }) {
+    final baseMessage = errorMessage.isNotEmpty
+        ? errorMessage
+        : '결제를 처리하는 중 문제가 발생했습니다.';
+
+    if (cancelErrorMessage != null) {
+      return '$baseMessage\n생성된 주문 취소에 실패했습니다. 주문내역에서 확인해주세요.';
+    }
+
+    return '$baseMessage\n생성된 주문은 취소되었습니다.';
+  }
+
+  Future<void> _onUserRequestedCancel() async {
+    _hasHandledTerminalRoute = true;
+    await _cancelPendingOrderAndPop();
   }
 
   Future<void> _confirmPayment({
@@ -168,8 +261,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     setState(() => _isConfirming = true);
 
     try {
-      final internalOrderId =
-          int.parse(tossOrderId.replaceFirst('order_', ''));
+      final internalOrderId = int.parse(tossOrderId.replaceFirst('order_', ''));
       final idempotencyKey = _generateIdempotencyKey();
 
       final result = await PaymentService.instance.confirmPayment(
@@ -204,19 +296,18 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   }
 
   void _onClose() {
-    if (_isConfirming) return;
+    if (_isBusy) return;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           '결제를 취소하시겠어요?',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
         ),
         content: const Text(
-          '현재 진행 중인 결제가 취소됩니다.',
+          '현재 진행 중인 결제와 생성된 결제 대기 주문이 함께 취소됩니다.',
           style: TextStyle(fontSize: 14, color: Colors.black54),
         ),
         actions: [
@@ -228,14 +319,11 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
-              Navigator.of(context).pop();
+              await _onUserRequestedCancel();
             },
-            child: const Text(
-              '취소',
-              style: TextStyle(color: Colors.black54),
-            ),
+            child: const Text('취소', style: TextStyle(color: Colors.black54)),
           ),
         ],
       ),
@@ -244,67 +332,77 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onClose();
+        }
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.white,
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: _isConfirming ? null : _onClose,
-          icon: Icon(
-            Icons.close,
-            color: _isConfirming ? Colors.grey : Colors.black,
-            size: 24,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.white,
+          centerTitle: true,
+          leading: IconButton(
+            onPressed: _isBusy ? null : _onClose,
+            icon: Icon(
+              Icons.close,
+              color: _isBusy ? Colors.grey : Colors.black,
+              size: 24,
+            ),
+          ),
+          title: const Text(
+            '결제',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
           ),
         ),
-        title: const Text(
-          '결제',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-      ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (_isConfirming)
-            Container(
-              color: Colors.black26,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        color: AppColors.primaryBackground,
-                        strokeWidth: 3,
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        '결제 확인 중…',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+        body: Stack(
+          children: [
+            WebViewWidget(controller: _controller),
+            if (_isBusy)
+              Container(
+                color: Colors.black26,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 24,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(
+                          color: AppColors.primaryBackground,
+                          strokeWidth: 3,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          _isCancelling ? '주문 취소 중…' : '결제 확인 중…',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

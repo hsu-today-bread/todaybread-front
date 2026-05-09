@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/models/bread/bread_common_response.dart';
+import 'package:todaybread/models/review/store_review_response.dart';
+import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/providers/store/store_detail_provider.dart';
 import 'package:todaybread/screens/bread/bread_detail_screen.dart';
 import 'package:todaybread/utils/app_assets.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/display_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 import 'package:todaybread/widgets/bread_list_card.dart';
 
 class StoreDetailScreen extends StatelessWidget {
@@ -72,242 +75,277 @@ class _StoreDetailView extends StatelessWidget {
 
           final store = provider.store!;
           final imageUrls = provider.storeImages
-              .map((value) => DisplayHelper.resolveImageUrl(value.imageUrl))
-              .whereType<String>()
+              .map((value) => value.imageUrl)
+              .where((value) => value.isNotEmpty)
               .toList();
 
           return Stack(
             children: [
               CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Stack(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 332,
-                      child: PageView.builder(
-                        itemCount: imageUrls.isEmpty ? 1 : imageUrls.length,
-                        onPageChanged: provider.setCurrentImageIndex,
-                        itemBuilder: (context, index) {
-                          if (imageUrls.isEmpty) {
-                            return Image.asset(
-                              AppAssets.breadImage,
-                              fit: BoxFit.cover,
-                            );
-                          }
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 332,
+                          child: PageView.builder(
+                            itemCount: imageUrls.isEmpty ? 1 : imageUrls.length,
+                            onPageChanged: provider.setCurrentImageIndex,
+                            itemBuilder: (context, index) {
+                              if (imageUrls.isEmpty) {
+                                return Image.asset(
+                                  AppAssets.breadImage,
+                                  fit: BoxFit.cover,
+                                );
+                              }
 
-                          return Image.network(
-                            imageUrls[index],
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Image.asset(
-                                AppAssets.breadImage,
+                              return AppNetworkImage(
+                                imageUrl: imageUrls[index],
                                 fit: BoxFit.cover,
+                                placeholder: Image.asset(
+                                  AppAssets.breadImage,
+                                  fit: BoxFit.cover,
+                                ),
                               );
                             },
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                        if (imageUrls.length > 1)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 18,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(imageUrls.length, (
+                                index,
+                              ) {
+                                final isActive =
+                                    provider.currentImageIndex == index;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  width: isActive ? 20 : 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? Colors.white
+                                        : Colors.white.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                      ],
                     ),
-                    if (imageUrls.length > 1)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 18,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(imageUrls.length, (index) {
-                            final isActive =
-                                provider.currentImageIndex == index;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: isActive ? 20 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? Colors.white
-                                    : Colors.white.withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 30),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        store.name,
-                        style: const TextStyle(
-                          fontSize: 29,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                          color: Color(0xFF151515),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 30),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  store.addressLine1,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.45,
-                                    color: Color(0xFF656565),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  store.addressLine2.trim().isEmpty
-                                      ? '상세 주소 정보 없음'
-                                      : store.addressLine2,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.45,
-                                    color: Color(0xFF656565),
-                                  ),
-                                ),
-                              ],
+                          Text(
+                            store.name,
+                            style: const TextStyle(
+                              fontSize: 29,
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
+                              color: Color(0xFF151515),
                             ),
                           ),
-                          const SizedBox(width: 14),
-                          _FavouriteButton(
-                            isFavourite: provider.isFavourite,
-                            isLoading: provider.isTogglingFavourite,
-                            onTap: () async {
-                              final message = await provider.toggleFavourite();
-                              if (message != null && context.mounted) {
-                                _showTodoSnackBar(context, message);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF4D6),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              '⭐ 4.8',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF5A4300),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              '주문 종료까지 남은 시간 : ${provider.remainingTimeText}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFFE0462E),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        height: 156,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _dummyReviews.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            final review = _dummyReviews[index];
-                            return _ReviewCard(review: review);
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              _showTodoSnackBar(context, '전체 리뷰 화면 연결 예정입니다.'),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(50),
-                            backgroundColor: AppColors.primaryBackground,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(height: 14),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '모든 리뷰 보기',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      store.addressLine1,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.45,
+                                        color: Color(0xFF656565),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      store.addressLine2.trim().isEmpty
+                                          ? '상세 주소 정보 없음'
+                                          : store.addressLine2,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.45,
+                                        color: Color(0xFF656565),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(width: 6),
-                              Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                              const SizedBox(width: 14),
+                              _FavouriteButton(
+                                isFavourite: provider.isFavourite,
+                                isLoading: provider.isTogglingFavourite,
+                                onTap: () async {
+                                  final message = await provider
+                                      .toggleFavourite();
+                                  if (message != null && context.mounted) {
+                                    _showTodoSnackBar(context, message);
+                                  }
+                                },
+                              ),
                             ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      const _SectionTitle(title: '메뉴'),
-                      const SizedBox(height: 14),
-                      if (provider.breads.isEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 28),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF7F3EE),
-                            borderRadius: BorderRadius.circular(18),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF4D6),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '⭐ ${DisplayHelper.formatRating(provider.storeDetail?.averageRating ?? 0, provider.storeDetail?.reviewCount ?? 0)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF5A4300),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              _SellingStatusChip(
+                                status: provider.sellingStatus,
+                                label: provider.sellingStatusLabel,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  provider.orderStatusText,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: provider.canOrder
+                                        ? const Color(0xFFE0462E)
+                                        : const Color(0xFF7A6A5A),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: const Text(
-                            '등록된 메뉴가 없습니다.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF6D6256),
+                          const SizedBox(height: 18),
+                          if (provider.reviews.isEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 28),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF7F3EE),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: const Text(
+                                '아직 등록된 리뷰가 없습니다.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF6D6256),
+                                ),
+                              ),
+                            )
+                          else
+                            SizedBox(
+                              height: 176,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: provider.reviews.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 12),
+                                itemBuilder: (context, index) {
+                                  final review = provider.reviews[index];
+                                  return _ReviewCard(review: review);
+                                },
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => _showTodoSnackBar(
+                                context,
+                                '전체 리뷰 화면 연결 예정입니다.',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(50),
+                                backgroundColor: AppColors.primaryBackground,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '모든 리뷰 보기',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 14,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        )
-                      else
-                        ...provider.breads.map(
-                          (bread) => _buildBreadCard(context, provider, bread),
-                        ),
-                    ],
+                          const SizedBox(height: 30),
+                          const _SectionTitle(title: '메뉴'),
+                          const SizedBox(height: 14),
+                          if (provider.breads.isEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 28),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF7F3EE),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: const Text(
+                                '등록된 메뉴가 없습니다.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF6D6256),
+                                ),
+                              ),
+                            )
+                          else
+                            ...provider.breads.map(
+                              (bread) =>
+                                  _buildBreadCard(context, provider, bread),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
               // 스크롤과 무관하게 항상 상단에 고정되는 뒤로가기 버튼
               SafeArea(
                 child: Padding(
@@ -340,7 +378,11 @@ class _StoreDetailView extends StatelessWidget {
       salePrice: bread.salePrice,
       originalPrice: bread.originalPrice,
       remainingTimeText: provider.remainingTimeText,
-      isSoldOut: bread.remainingQuantity <= 0,
+      isSoldOut: !provider.canOrder || bread.remainingQuantity <= 0,
+      ratingText: DisplayHelper.formatRating(
+        provider.storeDetail?.averageRating ?? 0,
+        provider.storeDetail?.reviewCount ?? 0,
+      ),
       onTap: () {
         Navigator.push(
           context,
@@ -350,6 +392,57 @@ class _StoreDetailView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SellingStatusChip extends StatelessWidget {
+  const _SellingStatusChip({required this.status, required this.label});
+
+  final StoreSellingStatus status;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = switch (status) {
+      StoreSellingStatus.selling => (
+        background: const Color(0xFFE9F7F4),
+        foreground: const Color(0xFF21796F),
+        icon: Icons.local_fire_department_rounded,
+      ),
+      StoreSellingStatus.openSoldOut => (
+        background: const Color(0xFFFFF0E8),
+        foreground: const Color(0xFFD95A2B),
+        icon: Icons.inventory_2_rounded,
+      ),
+      StoreSellingStatus.closed => (
+        background: const Color(0xFFF1EEE9),
+        foreground: const Color(0xFF74675A),
+        icon: Icons.lock_clock_rounded,
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: style.background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(style.icon, size: 14, color: style.foreground),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: style.foreground,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -402,7 +495,7 @@ class _FavouriteButton extends StatelessWidget {
 class _ReviewCard extends StatelessWidget {
   const _ReviewCard({required this.review});
 
-  final _ReviewPreview review;
+  final StoreReviewResponse review;
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +534,7 @@ class _ReviewCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  review.name,
+                  review.nickname,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -449,20 +542,21 @@ class _ReviewCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                '⭐ ${review.rating}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF7C6941),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          Text(
+            '⭐ ${review.rating.toStringAsFixed(1)}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF5A4300),
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             review.content,
-            maxLines: 4,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 13,
@@ -560,36 +654,6 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-
-class _ReviewPreview {
-  const _ReviewPreview({
-    required this.name,
-    required this.rating,
-    required this.content,
-  });
-
-  final String name;
-  final String rating;
-  final String content;
-}
-
-const List<_ReviewPreview> _dummyReviews = [
-  _ReviewPreview(
-    name: '빵순이92',
-    rating: '4.9',
-    content: '할인 폭이 좋아서 자주 들러요. 포장도 깔끔하고 빵 상태가 좋아서 만족했습니다.',
-  ),
-  _ReviewPreview(
-    name: '성수직장인',
-    rating: '4.8',
-    content: '퇴근길에 들르기 좋고 구성이 다양했어요. 남은 수량 표시도 직관적이면 더 좋을 것 같아요.',
-  ),
-  _ReviewPreview(
-    name: '오늘도식빵',
-    rating: '5.0',
-    content: '매장 응대가 친절했고 빵 설명도 자세하게 해주셔서 재방문 의사 있습니다.',
-  ),
-];
 
 void _showTodoSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).hideCurrentSnackBar();

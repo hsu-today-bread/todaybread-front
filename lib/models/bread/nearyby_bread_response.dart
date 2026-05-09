@@ -9,6 +9,8 @@ class NearbyBreadResponse {
   final bool isSelling;
   final String? lastOrderTime;
   final double distance;
+  final double averageRating;
+  final int reviewCount;
 
   NearbyBreadResponse({
     required this.id,
@@ -21,6 +23,8 @@ class NearbyBreadResponse {
     required this.isSelling,
     required this.lastOrderTime,
     required this.distance,
+    required this.averageRating,
+    required this.reviewCount,
   });
 
   factory NearbyBreadResponse.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class NearbyBreadResponse {
       isSelling: json['isSelling'] as bool? ?? false,
       lastOrderTime: json['lastOrderTime'] as String?,
       distance: (json['distance'] as num).toDouble(),
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

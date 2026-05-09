@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/providers/boss/boss_order_provider.dart';
 import 'package:todaybread/providers/boss/boss_provider.dart';
+import 'package:todaybread/providers/boss/boss_review_provider.dart';
 import 'package:todaybread/providers/boss/boss_sales_provider.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
@@ -49,6 +50,7 @@ class TodayBreadApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => BossProvider()),
         ChangeNotifierProvider(create: (_) => BossOrderProvider()),
+        ChangeNotifierProvider(create: (_) => BossReviewProvider()),
         ChangeNotifierProvider(create: (_) => BossSalesProvider()),
         ChangeNotifierProvider(create: (_) => KeywordProvider()),
         ChangeNotifierProvider(create: (_) => FavouriteStoreProvider()),
