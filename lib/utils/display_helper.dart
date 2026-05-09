@@ -21,6 +21,13 @@ class DisplayHelper {
     return '${distanceKm.toStringAsFixed(1)}km';
   }
 
+  static String formatRating(double averageRating, int reviewCount) {
+    if (reviewCount <= 0) {
+      return '리뷰 없음';
+    }
+    return averageRating.toStringAsFixed(1);
+  }
+
   static String buildLastOrderRemainingTimeText({
     required bool isSelling,
     required String? lastOrderTime,

@@ -9,6 +9,8 @@ class BreadDetailResponse {
   final int storeId;
   final String storeName;
   final bool isSelling;
+  final double averageRating;
+  final int reviewCount;
 
   const BreadDetailResponse({
     required this.id,
@@ -21,6 +23,8 @@ class BreadDetailResponse {
     required this.storeId,
     required this.storeName,
     required this.isSelling,
+    required this.averageRating,
+    required this.reviewCount,
   });
 
   factory BreadDetailResponse.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class BreadDetailResponse {
       storeId: (json['storeId'] as num).toInt(),
       storeName: json['storeName'] as String,
       isSelling: json['isSelling'] as bool? ?? false,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

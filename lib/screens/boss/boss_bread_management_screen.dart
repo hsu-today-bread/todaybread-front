@@ -5,8 +5,8 @@ import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/screens/boss/boss_bread_detail_screen.dart';
 import 'package:todaybread/screens/boss/boss_bread_create_screen.dart';
-import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 /// 사장님 메뉴관리 메인 화면입니다.
 ///
@@ -604,32 +604,16 @@ class _BreadThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedUrl = _resolveImageUrl(imageUrl);
-
-    if (resolvedUrl == null) {
-      return _buildFallback();
-    }
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        resolvedUrl,
+      child: AppNetworkImage(
+        imageUrl: imageUrl,
         width: 78,
         height: 78,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _buildFallback(),
+        placeholder: _buildFallback(),
       ),
     );
-  }
-
-  String? _resolveImageUrl(String? value) {
-    if (value == null || value.isEmpty) {
-      return null;
-    }
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      return value;
-    }
-    return '${DioClient.baseUrl}$value';
   }
 
   Widget _buildFallback() {

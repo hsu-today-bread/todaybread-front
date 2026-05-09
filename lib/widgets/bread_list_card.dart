@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:todaybread/utils/app_assets.dart';
-import 'package:todaybread/utils/display_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 class BreadListCard extends StatelessWidget {
   const BreadListCard({
@@ -15,7 +14,7 @@ class BreadListCard extends StatelessWidget {
     this.storeName,
     this.discountPercent,
     this.isSoldOut = false,
-    this.ratingText = '4.8',
+    this.ratingText,
   });
 
   final String name;
@@ -27,13 +26,11 @@ class BreadListCard extends StatelessWidget {
   final String? storeName;
   final int? discountPercent;
   final bool isSoldOut;
-  final String ratingText;
+  final String? ratingText;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final resolvedImageUrl = DisplayHelper.resolveImageUrl(imageUrl);
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -68,24 +65,17 @@ class BreadListCard extends StatelessWidget {
                           width: 106,
                           height: 106,
                           color: const Color(0xFFF4EEE7),
-                          child: resolvedImageUrl == null
-                              ? const Center(
-                                  child: Icon(
-                                    Icons.bakery_dining,
-                                    size: 38,
-                                    color: Color(0xFFB28B67),
-                                  ),
-                                )
-                              : Image.network(
-                                  resolvedImageUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Image.asset(
-                                      AppAssets.breadImage,
-                                      fit: BoxFit.cover,
-                                    );
-                                  },
-                                ),
+                          child: AppNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: const Center(
+                              child: Icon(
+                                Icons.bakery_dining,
+                                size: 38,
+                                color: Color(0xFFB28B67),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                       if (isSoldOut)
@@ -109,141 +99,144 @@ class BreadListCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                height: 1.28,
-                                color: Color(0xFF23180F),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text('⭐', style: TextStyle(fontSize: 13)),
-                          const SizedBox(width: 4),
-                          Text(
-                            ratingText,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF7E746A),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      if (storeName != null) ...[
-                        Text(
-                          storeName!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF7E746A),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                      ],
-                      Row(
-                        children: [
-                          const Text('📍', style: TextStyle(fontSize: 12)),
-                          const SizedBox(width: 4),
-                          Text(
-                            distanceText,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF7E746A),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          if (discountPercent != null && discountPercent! > 0) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE65A44),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
                               child: Text(
-                                '$discountPercent%',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Text(
-                            '${_formatPrice(salePrice)}원',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFFE65A44),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                '${_formatPrice(originalPrice)}원',
+                                name,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF9D948A),
-                                  decoration: TextDecoration.lineThrough,
-                                  decorationColor: Color(0xFF9D948A),
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.28,
+                                  color: Color(0xFF23180F),
                                 ),
                               ),
                             ),
+                            if (ratingText != null) ...[
+                              const SizedBox(width: 8),
+                              const Text('⭐', style: TextStyle(fontSize: 13)),
+                              const SizedBox(width: 4),
+                              Text(
+                                ratingText!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF7E746A),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        if (storeName != null) ...[
+                          Text(
+                            storeName!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF7E746A),
+                            ),
                           ),
+                          const SizedBox(height: 6),
                         ],
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                        Row(
+                          children: [
+                            const Text('📍', style: TextStyle(fontSize: 12)),
+                            const SizedBox(width: 4),
+                            Text(
+                              distanceText,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF7E746A),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            if (discountPercent != null &&
+                                discountPercent! > 0) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE65A44),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '$discountPercent%',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            Text(
+                              '${_formatPrice(salePrice)}원',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFFE65A44),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  '${_formatPrice(originalPrice)}원',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF9D948A),
+                                    decoration: TextDecoration.lineThrough,
+                                    decorationColor: Color(0xFF9D948A),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7F3EE),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          '남은 시간 : $remainingTimeText',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF5E5245),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F3EE),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '남은 시간 : $remainingTimeText',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF5E5245),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),

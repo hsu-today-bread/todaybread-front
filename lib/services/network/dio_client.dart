@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import 'package:todaybread/config/app_config.dart';
+
 import '../auth/auth_service.dart';
 import '../auth/auth_token_storage.dart';
 import 'api_exception.dart';
@@ -11,8 +13,7 @@ class DioClient {
   /// 외부 생성 방지를 위한 private 생성자입니다.
   DioClient._();
 
-  static const String _baseUrl = 'http://10.30.4.99:8080';
-  static String get baseUrl => _baseUrl;
+  static String get baseUrl => AppConfig.apiBaseUrl;
 
   /// 앱 내에서 하나만 사용하는 Dio 싱글턴 인스턴스입니다.
   static final Dio _dio = createPlainDio()
@@ -47,7 +48,7 @@ class DioClient {
   static Dio createPlainDio() {
     return Dio(
       BaseOptions(
-        baseUrl: _baseUrl,
+        baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 5),
         receiveTimeout: const Duration(seconds: 5),
         headers: {'Content-Type': 'application/json'},

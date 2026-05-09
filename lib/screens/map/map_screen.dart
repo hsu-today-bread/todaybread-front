@@ -5,6 +5,7 @@ import 'package:todaybread/models/store/nearby_store_response.dart';
 import 'package:todaybread/screens/store/store_detail_screen.dart';
 import 'package:todaybread/services/store/store_service.dart';
 import 'package:todaybread/utils/display_helper.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 import '../../utils/app_colors.dart';
 import '../../services/location/location_service.dart';
 
@@ -314,8 +315,6 @@ class _StoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = DisplayHelper.resolveImageUrl(store.primaryImageUrl);
-
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -337,21 +336,15 @@ class _StoreCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               clipBehavior: Clip.antiAlias,
-              child: imageUrl != null
-                  ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, e, st) => const Icon(
-                        Icons.storefront_outlined,
-                        color: Color(0xFFBBBBBB),
-                        size: 28,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.storefront_outlined,
-                      color: Color(0xFFBBBBBB),
-                      size: 28,
-                    ),
+              child: AppNetworkImage(
+                imageUrl: store.primaryImageUrl,
+                fit: BoxFit.cover,
+                placeholder: const Icon(
+                  Icons.storefront_outlined,
+                  color: Color(0xFFBBBBBB),
+                  size: 28,
+                ),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -412,6 +405,15 @@ class _StoreCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFFAAAAAA),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '⭐ ${DisplayHelper.formatRating(store.averageRating, store.reviewCount)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF888888),
                     ),
                   ),
                 ],

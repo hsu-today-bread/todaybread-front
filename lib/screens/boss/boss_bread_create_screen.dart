@@ -8,8 +8,8 @@ import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/providers/boss/boss_bread_create_provider.dart';
 import 'package:todaybread/providers/bread/bread_provider.dart';
 import 'package:todaybread/services/network/api_exception.dart';
-import 'package:todaybread/services/network/dio_client.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 /// 사장님 메뉴 등록 화면입니다.
 ///
@@ -414,7 +414,6 @@ class _BreadCreateStepBody extends StatelessWidget {
           ],
         );
       case 2:
-        final initialImageUrl = _resolveBreadImageUrl(provider.initialImageUrl);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -447,7 +446,9 @@ class _BreadCreateStepBody extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: const Color(0xFFD9D9D9)),
                 ),
-                child: provider.imageFile == null && initialImageUrl == null
+                child:
+                    provider.imageFile == null &&
+                        provider.initialImageUrl == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
@@ -478,10 +479,10 @@ class _BreadCreateStepBody extends StatelessWidget {
                                 fit: BoxFit.cover,
                               )
                             else
-                              Image.network(
-                                initialImageUrl!,
+                              AppNetworkImage(
+                                imageUrl: provider.initialImageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => Container(
+                                placeholder: Container(
                                   color: const Color(0xFFF1F1F1),
                                   alignment: Alignment.center,
                                   child: const Icon(
@@ -633,16 +634,6 @@ class _BreadCreateStepBody extends StatelessWidget {
         );
       },
     );
-  }
-
-  String? _resolveBreadImageUrl(String? value) {
-    if (value == null || value.isEmpty) {
-      return null;
-    }
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      return value;
-    }
-    return '${DioClient.baseUrl}$value';
   }
 
   InputDecoration _inputDecoration(String hintText) {

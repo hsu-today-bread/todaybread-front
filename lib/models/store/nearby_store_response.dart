@@ -9,6 +9,8 @@ class NearbyStoreResponse {
   final bool isSelling;
   final double distance;
   final String? lastOrderTime;
+  final double averageRating;
+  final int reviewCount;
 
   const NearbyStoreResponse({
     required this.storeId,
@@ -21,6 +23,8 @@ class NearbyStoreResponse {
     required this.isSelling,
     required this.distance,
     this.lastOrderTime,
+    required this.averageRating,
+    required this.reviewCount,
   });
 
   factory NearbyStoreResponse.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,8 @@ class NearbyStoreResponse {
       isSelling: json['isSelling'] as bool? ?? false,
       distance: (json['distance'] as num).toDouble(),
       lastOrderTime: json['lastOrderTime'] as String?,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
+      reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
 }

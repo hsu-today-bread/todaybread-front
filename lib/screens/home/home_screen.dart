@@ -339,6 +339,10 @@ class _HomeScreenState extends State<HomeScreen> {
       originalPrice: item.originalPrice,
       remainingTimeText: _buildRemainingTime(item),
       storeName: item.storeName,
+      ratingText: DisplayHelper.formatRating(
+        item.averageRating,
+        item.reviewCount,
+      ),
       discountPercent: item.originalPrice > 0
           ? ((item.originalPrice - item.salePrice) * 100 ~/ item.originalPrice)
           : null,

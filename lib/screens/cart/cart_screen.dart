@@ -6,6 +6,7 @@ import 'package:todaybread/screens/order/purchase_screen.dart';
 import 'package:todaybread/services/cart/cart_service.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/widgets/app_network_image.dart';
 
 /// 장바구니 아이템 로컬 모델
 class CartItem {
@@ -28,14 +29,14 @@ class CartItem {
   });
 
   factory CartItem.fromResponse(CartItemResponse r) => CartItem(
-        cartItemId: r.cartItemId,
-        breadId: r.breadId,
-        name: r.breadName,
-        description: r.description,
-        price: r.salePrice,
-        imageUrl: r.imageUrl,
-        quantity: r.quantity,
-      );
+    cartItemId: r.cartItemId,
+    breadId: r.breadId,
+    name: r.breadName,
+    description: r.description,
+    price: r.salePrice,
+    imageUrl: r.imageUrl,
+    quantity: r.quantity,
+  );
 }
 
 /// 장바구니 화면
@@ -80,8 +81,7 @@ class _CartScreenState extends State<CartScreen> {
       final response = await _cartService.getCart();
       if (!mounted) return;
 
-      final items =
-          response.items.map(CartItem.fromResponse).toList();
+      final items = response.items.map(CartItem.fromResponse).toList();
 
       setState(() {
         _items = items;
@@ -396,9 +396,9 @@ class _CartScreenState extends State<CartScreen> {
         item.quantity = oldQuantity;
       });
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ApiException.messageFrom(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ApiException.messageFrom(e))));
     }
   }
 
@@ -459,15 +459,13 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(width: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: item.imageUrl != null
-                    ? Image.network(
-                        item.imageUrl!,
-                        width: 72,
-                        height: 72,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, e, st) => _breadImagePlaceholder(),
-                      )
-                    : _breadImagePlaceholder(),
+                child: AppNetworkImage(
+                  imageUrl: item.imageUrl,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  placeholder: _breadImagePlaceholder(),
+                ),
               ),
             ],
           ),
@@ -579,8 +577,7 @@ class _CartScreenState extends State<CartScreen> {
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
           decoration: const BoxDecoration(
             color: Colors.white,
-            border:
-                Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
+            border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
           ),
           child: Row(
             children: [

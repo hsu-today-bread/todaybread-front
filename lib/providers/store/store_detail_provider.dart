@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/models/store/business_hours_response.dart';
+import 'package:todaybread/models/review/store_review_response.dart';
 import 'package:todaybread/models/store/store_common_response.dart';
 import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/models/store/store_image_response.dart';
 import 'package:todaybread/services/network/api_exception.dart';
+import 'package:todaybread/services/review/review_service.dart';
 import 'package:todaybread/services/store/store_service.dart';
 import 'package:todaybread/utils/display_helper.dart';
 
@@ -18,6 +20,7 @@ class StoreDetailProvider extends ChangeNotifier {
 
   final int storeId;
   final StoreService _storeService = StoreService.instance;
+  final ReviewService _reviewService = ReviewService.instance;
   Timer? _clockTimer;
 
   bool isLoading = false;
@@ -25,6 +28,7 @@ class StoreDetailProvider extends ChangeNotifier {
   bool isTogglingFavourite = false;
   String? errorMessage;
   StoreDetailResponse? storeDetail;
+  List<StoreReviewResponse> reviews = [];
   bool isFavourite = false;
   double? distanceKm;
   int currentImageIndex = 0;
@@ -34,6 +38,33 @@ class StoreDetailProvider extends ChangeNotifier {
   List<BreadCommonResponse> get breads => storeDetail?.breads ?? const [];
   List<BusinessHoursResponse> get businessHours =>
       store?.businessHours ?? const [];
+
+  StoreSellingStatus get sellingStatus =>
+      storeDetail?.sellingStatus ?? StoreSellingStatus.closed;
+
+  bool get canOrder => sellingStatus == StoreSellingStatus.selling;
+
+  String get sellingStatusLabel {
+    switch (sellingStatus) {
+      case StoreSellingStatus.selling:
+        return '판매중';
+      case StoreSellingStatus.openSoldOut:
+        return '품절';
+      case StoreSellingStatus.closed:
+        return '영업종료';
+    }
+  }
+
+  String get orderStatusText {
+    switch (sellingStatus) {
+      case StoreSellingStatus.selling:
+        return '주문 종료까지 남은 시간 : $remainingTimeText';
+      case StoreSellingStatus.openSoldOut:
+        return '현재 품절입니다. 재고가 추가되면 다시 주문할 수 있어요.';
+      case StoreSellingStatus.closed:
+        return '현재 영업 종료 상태입니다.';
+    }
+  }
 
   String get fullAddress {
     final currentStore = store;
@@ -59,8 +90,14 @@ class StoreDetailProvider extends ChangeNotifier {
   }
 
   String get remainingTimeText {
+    if (sellingStatus == StoreSellingStatus.openSoldOut) {
+      return '품절';
+    }
+    if (sellingStatus == StoreSellingStatus.closed) {
+      return '영업 종료';
+    }
     return DisplayHelper.buildLastOrderRemainingTimeText(
-      isSelling: storeDetail?.isSelling ?? false,
+      isSelling: canOrder,
       lastOrderTime: todayLastOrderTime,
       includeSeconds: true,
     );
@@ -76,11 +113,16 @@ class StoreDetailProvider extends ChangeNotifier {
 
       storeDetail = await _storeService.getStoreDetail(storeId);
       currentImageIndex = 0;
-      await Future.wait([_loadFavouriteState(), _loadDistance()]);
+      await Future.wait([
+        _loadFavouriteState(),
+        _loadDistance(),
+        _loadReviews(),
+      ]);
       hasFetched = true;
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
       storeDetail = null;
+      reviews = [];
       hasFetched = true;
     } finally {
       isLoading = false;
@@ -158,6 +200,18 @@ class StoreDetailProvider extends ChangeNotifier {
       distanceKm = distanceMeters / 1000;
     } catch (_) {
       distanceKm = null;
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    try {
+      final response = await _reviewService.getStoreReviews(
+        storeId: storeId,
+        size: 10,
+      );
+      reviews = response.content;
+    } catch (_) {
+      reviews = [];
     }
   }
 

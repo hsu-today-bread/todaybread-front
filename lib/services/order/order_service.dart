@@ -14,6 +14,11 @@ class OrderService {
   Future<OrderListResponse> getOrders({int page = 0, int size = 20}) =>
       _api.getOrders(page, size);
 
+  Future<OrderDetailResponse> getOrderDetail(int orderId) async {
+    final response = await DioClient.instance.get('/api/orders/$orderId');
+    return OrderDetailResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
   /// 장바구니 기반 주문을 생성합니다.
   Future<OrderDetailResponse> createOrderFromCart(String idempotencyKey) async {
     final response = await DioClient.instance.post(
