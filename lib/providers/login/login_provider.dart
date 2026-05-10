@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:todaybread/models/users/user_register_request.dart';
 import 'package:todaybread/services/auth/auth_service.dart';
 import 'package:todaybread/services/auth/auth_token_storage.dart';
+import 'package:todaybread/services/fcm/fcm_service.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 
@@ -49,6 +50,7 @@ class AuthProvider extends ChangeNotifier {
         );
         await AuthService.instance.saveLoginTokens(response);
         await refreshRoleFromStoredToken(notify: false);
+        await FcmService.instance.registerTokenAfterLogin();
       }
 
       return response;

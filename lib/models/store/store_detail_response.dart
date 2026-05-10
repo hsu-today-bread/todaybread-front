@@ -7,12 +7,14 @@ class StoreDetailResponse {
   final List<StoreImageResponse> images;
   final List<BreadCommonResponse> breads;
   final bool isSelling;
+  final String? sellingStatus;
 
   const StoreDetailResponse({
     required this.store,
     required this.images,
     required this.breads,
     required this.isSelling,
+    this.sellingStatus,
   });
 
   factory StoreDetailResponse.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class StoreDetailResponse {
           )
           .toList(),
       isSelling: json['isSelling'] as bool? ?? false,
+      sellingStatus: json['sellingStatus'] as String?,
     );
   }
 }

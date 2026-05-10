@@ -219,6 +219,8 @@ class _StoreDetailView extends StatelessWidget {
                               ),
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          _SellingStatusBadge(status: provider.sellingStatus),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -353,6 +355,37 @@ class _StoreDetailView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SellingStatusBadge extends StatelessWidget {
+  const _SellingStatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, bgColor, textColor) = switch (status) {
+      'SELLING' => ('판매중', const Color(0xFFE8F5E9), const Color(0xFF2E7D32)),
+      'OPEN_SOLD_OUT' => ('품절', const Color(0xFFFFF3E0), const Color(0xFFE65100)),
+      _ => ('영업종료', const Color(0xFFF5F5F5), const Color(0xFF757575)),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+        ),
+      ),
     );
   }
 }

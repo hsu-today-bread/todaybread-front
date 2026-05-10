@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/providers/interest_area/interest_area_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
+import 'package:todaybread/screens/interest_area/interest_area_search_screen.dart';
 import 'package:todaybread/utils/display_helper.dart';
 
 class WishScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class _WishScreenState extends State<WishScreen> {
         return;
       }
       context.read<WishlistProvider>().load();
+      context.read<InterestAreaProvider>().fetch();
     });
   }
 
@@ -78,7 +81,7 @@ class _WishScreenState extends State<WishScreen> {
                     child: ElevatedButton(
                       onPressed: wishlistProvider.isLoading
                           ? null
-                          : () => _addKeyword(context),
+                          : () => _onAddKeywordTap(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
                         foregroundColor: Colors.white,
@@ -282,6 +285,95 @@ class _WishScreenState extends State<WishScreen> {
     );
   }
 
+  Future<void> _onAddKeywordTap(BuildContext context) async {
+    final interestAreaProvider = context.read<InterestAreaProvider>();
+
+    // 최신 관심지역 상태 확인
+    await interestAreaProvider.fetch();
+
+    if (!context.mounted) return;
+
+    if (interestAreaProvider.interestArea == null) {
+      _showInterestAreaRequiredSheet(context);
+    } else {
+      await _addKeyword(context);
+    }
+  }
+
+  void _showInterestAreaRequiredSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '관심지역을 먼저 설정해주세요',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                '키워드 알림을 받으려면 관심지역 설정이 필요해요.\n설정한 지역 3km 안의 매장에서 올라오는 빵을 알려드릴게요.',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.6,
+                  color: Color(0xFF666666),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(sheetContext).pop();
+                    final result = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(
+                        builder: (_) => const InterestAreaSearchScreen(),
+                      ),
+                    );
+                    if (!context.mounted) return;
+                    if (result == true) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('관심지역이 설정됐어요.')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBackground,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    '관심지역 설정하기',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _addKeyword(BuildContext context) async {
     final text = _keywordController.text.trim();
     if (text.isEmpty) return;
@@ -289,8 +381,13 @@ class _WishScreenState extends State<WishScreen> {
     try {
       await context.read<WishlistProvider>().addKeyword(text);
       _keywordController.clear();
-    } catch (_) {
-      // errorMessage는 provider에서 이미 세팅되므로 UI가 자동으로 표시함
+    } catch (e) {
+      if (!context.mounted) return;
+      // INTEREST_AREA_REQUIRED 에러 예외 처리
+      final provider = context.read<WishlistProvider>();
+      if (provider.errorMessage != null) {
+        // errorMessage는 provider에서 이미 세팅되어 UI가 자동으로 표시함
+      }
     }
   }
 }

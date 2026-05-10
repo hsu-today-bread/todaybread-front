@@ -58,6 +58,13 @@ class StoreDetailProvider extends ChangeNotifier {
     return null;
   }
 
+  /// SELLING | OPEN_SOLD_OUT | CLOSED (or null if not provided by API)
+  String get sellingStatus {
+    final raw = storeDetail?.sellingStatus;
+    if (raw != null) return raw;
+    return (storeDetail?.isSelling ?? false) ? 'SELLING' : 'CLOSED';
+  }
+
   String get remainingTimeText {
     return DisplayHelper.buildLastOrderRemainingTimeText(
       isSelling: storeDetail?.isSelling ?? false,
