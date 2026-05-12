@@ -472,14 +472,14 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
 
   Future<void> _pickFromGallery() async {
     final picker = ImagePicker();
-    final images = await picker.pickMultiImage(imageQuality: 85);
+    final images = await picker.pickMultiImage(limit: 5);
     if (images.isEmpty) {
       return;
     }
     setState(() {
       _selectedImages
         ..clear()
-        ..addAll(images.take(5));
+        ..addAll(images);
     });
   }
 

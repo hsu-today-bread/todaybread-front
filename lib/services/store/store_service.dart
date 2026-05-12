@@ -1,6 +1,7 @@
-import 'dart:io';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/store/favourite_store_response.dart';
 import 'package:todaybread/models/store/nearby_store_response.dart';
@@ -12,6 +13,7 @@ import 'package:todaybread/models/store/store_image_response.dart';
 import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/models/store/store_status_response.dart';
 import 'package:todaybread/services/network/dio_client.dart';
+import 'package:todaybread/services/network/multipart_image_helper.dart';
 import 'package:todaybread/services/store/store_api.dart';
 
 /// 가게 도메인 서비스입니다.
@@ -54,24 +56,29 @@ class StoreService {
     StoreCommonRequest request,
     List<XFile> images,
   ) async {
-    final directory = await Directory.systemTemp.createTemp(
-      'todaybread_store_',
+    final formData = FormData();
+    formData.files.add(
+      MapEntry(
+        'request',
+        MultipartFile.fromString(
+          jsonEncode(request.toJson()),
+          filename: 'request.json',
+          contentType: MediaType('application', 'json'),
+        ),
+      ),
     );
-    final requestFile = File('${directory.path}/request.json');
-    await requestFile.writeAsString(jsonEncode(request.toJson()));
-
-    final imageFiles = images.map((image) => File(image.path)).toList();
-
-    try {
-      return await _api.createStore(requestFile, imageFiles);
-    } finally {
-      if (await requestFile.exists()) {
-        await requestFile.delete();
-      }
-      if (await directory.exists()) {
-        await directory.delete();
-      }
+    for (final image in images) {
+      formData.files.add(
+        MapEntry('images', await MultipartImageHelper.fromXFile(image)),
+      );
     }
+
+    final response = await DioClient.instance.post<Map<String, dynamic>>(
+      '/api/boss/store',
+      data: formData,
+      options: Options(contentType: Headers.multipartFormDataContentType),
+    );
+    return StoreInfoResponse.fromJson(response.data!);
   }
 
   Future<StoreCommonResponse> updateStore(StoreCommonRequest request) async {
@@ -79,7 +86,22 @@ class StoreService {
   }
 
   Future<List<StoreImageResponse>> updateImages(List<XFile> images) async {
-    final imageFiles = images.map((image) => File(image.path)).toList();
-    return await _api.updateImages(imageFiles);
+    final formData = FormData();
+    for (final image in images) {
+      formData.files.add(
+        MapEntry('images', await MultipartImageHelper.fromXFile(image)),
+      );
+    }
+
+    final response = await DioClient.instance.put<List<dynamic>>(
+      '/api/boss/store/images',
+      data: formData,
+      options: Options(contentType: Headers.multipartFormDataContentType),
+    );
+    return response.data!
+        .map(
+          (value) => StoreImageResponse.fromJson(value as Map<String, dynamic>),
+        )
+        .toList();
   }
 }

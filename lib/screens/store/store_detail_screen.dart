@@ -5,6 +5,7 @@ import 'package:todaybread/models/review/store_review_response.dart';
 import 'package:todaybread/models/store/store_detail_response.dart';
 import 'package:todaybread/providers/store/store_detail_provider.dart';
 import 'package:todaybread/screens/bread/bread_detail_screen.dart';
+import 'package:todaybread/screens/review/store_review_list_screen.dart';
 import 'package:todaybread/utils/app_assets.dart';
 import 'package:todaybread/utils/app_colors.dart';
 import 'package:todaybread/utils/display_helper.dart';
@@ -282,10 +283,17 @@ class _StoreDetailView extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () => _showTodoSnackBar(
-                                context,
-                                '전체 리뷰 화면 연결 예정입니다.',
-                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => StoreReviewListScreen(
+                                      storeId: provider.storeId,
+                                      storeName: store.name,
+                                    ),
+                                  ),
+                                );
+                              },
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size.fromHeight(50),
                                 backgroundColor: AppColors.primaryBackground,
@@ -378,6 +386,11 @@ class _StoreDetailView extends StatelessWidget {
       salePrice: bread.salePrice,
       originalPrice: bread.originalPrice,
       remainingTimeText: provider.remainingTimeText,
+      discountPercent: bread.originalPrice > 0
+          ? ((bread.originalPrice - bread.salePrice) *
+                100 ~/
+                bread.originalPrice)
+          : null,
       isSoldOut: !provider.canOrder || bread.remainingQuantity <= 0,
       ratingText: DisplayHelper.formatRating(
         provider.storeDetail?.averageRating ?? 0,

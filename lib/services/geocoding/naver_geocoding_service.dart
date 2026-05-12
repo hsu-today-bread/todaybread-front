@@ -29,7 +29,9 @@ class GeocodingResult {
 
 class NaverGeocodingService {
   static const _clientId = String.fromEnvironment('NAVER_MAP_CLIENT_ID');
-  static const _clientSecret = String.fromEnvironment('NAVER_MAP_CLIENT_SECRET');
+  static const _clientSecret = String.fromEnvironment(
+    'NAVER_MAP_CLIENT_SECRET',
+  );
 
   static final _dio = Dio(
     BaseOptions(
@@ -44,11 +46,12 @@ class NaverGeocodingService {
   );
 
   static Future<List<GeocodingResult>> search(String query) async {
-    if (query.trim().isEmpty) return [];
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) return [];
 
     final response = await _dio.get(
       '/map-geocode/v2/geocode',
-      queryParameters: {'query': query.trim()},
+      queryParameters: {'query': normalizedQuery},
     );
 
     final addresses = response.data['addresses'] as List<dynamic>? ?? [];

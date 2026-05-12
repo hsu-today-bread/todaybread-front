@@ -487,7 +487,7 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     final formattedPrice = _formatPrice(order.totalAmount);
     final dateText = _formatOrderDate(order.createdAt);
     final canReview = order.status == 'PICKED_UP';
-    final hasWrittenReview = _hasWrittenReview(items);
+    final hasWrittenReview = _hasWrittenReview(order, items);
 
     return Container(
       width: double.infinity,
@@ -666,7 +666,9 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
       });
     }
 
-    final reviewItem = _findReviewableItem(currentDetail.items) ?? item;
+    final reviewItem = item?.orderItemId == null
+        ? _findReviewableItem(currentDetail.items)
+        : item;
     if (reviewItem == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -831,18 +833,43 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     return null;
   }
 
-  bool _hasWrittenReview(List<OrderItemResponse> items) {
-    return items.any(
-      (item) =>
-          item.orderItemId != null &&
-          _reviewedOrderItemIds.contains(item.orderItemId),
-    );
+  bool _hasWrittenReview(OrderResponse order, List<OrderItemResponse> items) {
+    final orderItemIds = items
+        .map((item) => item.orderItemId)
+        .whereType<int>()
+        .toSet();
+    if (_reviewedOrderItemIds.any(orderItemIds.contains)) {
+      return true;
+    }
+    if (_myReviews.any(
+      (review) =>
+          review.orderItemId != null &&
+          orderItemIds.contains(review.orderItemId),
+    )) {
+      return true;
+    }
+    return _matchingReviews(order, items).isNotEmpty;
   }
 
   List<MyReviewResponse> _matchingReviews(
     OrderResponse order,
     List<OrderItemResponse> items,
   ) {
+    final orderItemIds = items
+        .map((item) => item.orderItemId)
+        .whereType<int>()
+        .toSet();
+    final exactMatches = _myReviews
+        .where(
+          (review) =>
+              review.orderItemId != null &&
+              orderItemIds.contains(review.orderItemId),
+        )
+        .toList();
+    if (exactMatches.isNotEmpty) {
+      return exactMatches;
+    }
+
     final breadNames = items.map((item) => item.breadName).toSet();
     return _myReviews
         .where(

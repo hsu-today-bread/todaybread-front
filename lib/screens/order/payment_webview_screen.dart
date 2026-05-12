@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,13 +9,7 @@ import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/order/order_service.dart';
 import 'package:todaybread/services/payment/payment_service.dart';
 import 'package:todaybread/utils/app_colors.dart';
-
-String _generateIdempotencyKey() {
-  final rand = Random.secure();
-  final values = List<int>.generate(8, (_) => rand.nextInt(256));
-  final hex = values.map((v) => v.toRadixString(16).padLeft(2, '0')).join();
-  return 'pay_${DateTime.now().millisecondsSinceEpoch}_$hex';
-}
+import 'package:todaybread/utils/idempotency_key.dart';
 
 /// 토스페이먼츠 결제창 화면 (WebView + JS SDK, API 개별 연동 키 호환)
 class PaymentWebViewScreen extends StatefulWidget {
@@ -262,7 +255,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
     try {
       final internalOrderId = int.parse(tossOrderId.replaceFirst('order_', ''));
-      final idempotencyKey = _generateIdempotencyKey();
+      final idempotencyKey = IdempotencyKey.uuidV4();
 
       final result = await PaymentService.instance.confirmPayment(
         paymentKey: paymentKey,

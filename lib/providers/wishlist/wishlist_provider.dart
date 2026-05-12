@@ -20,6 +20,7 @@ class WishlistProvider extends ChangeNotifier {
   InterestAreaResponse? interestArea;
   bool isLoading = false;
   bool isInterestAreaLoading = false;
+  bool hasLoadedInterestArea = false;
   String? errorMessage;
   String? interestAreaErrorMessage;
 
@@ -53,6 +54,7 @@ class WishlistProvider extends ChangeNotifier {
 
     try {
       interestArea = await _interestAreaService.getInterestArea();
+      hasLoadedInterestArea = true;
       interestAreaErrorMessage = null;
     } catch (e) {
       interestAreaErrorMessage = ApiException.messageFrom(e);
@@ -87,6 +89,10 @@ class WishlistProvider extends ChangeNotifier {
     );
 
     try {
+      if (!hasLoadedInterestArea) {
+        interestArea = await _interestAreaService.getInterestArea();
+        hasLoadedInterestArea = true;
+      }
       interestArea = interestArea == null
           ? await _interestAreaService.createInterestArea(request)
           : await _interestAreaService.updateInterestArea(request);
@@ -106,6 +112,7 @@ class WishlistProvider extends ChangeNotifier {
 
     try {
       await _interestAreaService.deleteInterestArea();
+      hasLoadedInterestArea = true;
       return true;
     } catch (e) {
       interestArea = previous;
@@ -123,6 +130,7 @@ class WishlistProvider extends ChangeNotifier {
       errorMessage = ApiException.messageFrom(e);
       if (_isInterestAreaRequired(e)) {
         interestArea = null;
+        hasLoadedInterestArea = true;
         interestAreaErrorMessage = errorMessage;
       }
       notifyListeners();
