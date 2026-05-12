@@ -152,6 +152,19 @@ class FcmService {
 
   /// 로그인 완료 후 호출 — Token 발급 및 서버 등록, 갱신 감지 시작
   Future<void> registerTokenAfterLogin() async {
+    // iOS는 getToken() 전에 APNS 토큰이 준비되어야 함 — 최대 5초 대기
+    if (Platform.isIOS) {
+      String? apnsToken;
+      for (int i = 0; i < 5; i++) {
+        apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken != null) break;
+        await Future.delayed(const Duration(seconds: 1));
+      }
+      if (apnsToken == null) {
+        debugPrint('[FcmService] APNS 토큰 수신 실패 — FCM 토큰 발급 건너뜀');
+        return;
+      }
+    }
     final token = await _messaging.getToken();
     if (token != null) {
       debugPrint('FCM Token: $token');

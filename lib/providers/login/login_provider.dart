@@ -50,7 +50,9 @@ class AuthProvider extends ChangeNotifier {
         );
         await AuthService.instance.saveLoginTokens(response);
         await refreshRoleFromStoredToken(notify: false);
-        await FcmService.instance.registerTokenAfterLogin();
+        FcmService.instance.registerTokenAfterLogin().catchError((e) {
+          debugPrint('FCM 토큰 등록 실패 (로그인은 성공): $e');
+        });
       }
 
       return response;
