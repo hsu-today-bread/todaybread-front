@@ -14,6 +14,7 @@ import 'package:todaybread/providers/boss/boss_sales_provider.dart';
 import 'package:todaybread/providers/interest_area/interest_area_provider.dart';
 import 'package:todaybread/providers/keyword/keyword_provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/main/main_tab_provider.dart';
 import 'package:todaybread/providers/store/favourite_store_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
@@ -73,6 +74,7 @@ class TodayBreadApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FavouriteStoreProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
         ChangeNotifierProvider(create: (_) => InterestAreaProvider()),
+        ChangeNotifierProvider(create: (_) => MainTabProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
