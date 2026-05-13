@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
@@ -7,7 +8,11 @@ import 'package:todaybread/screens/boss/boss_bread_management_screen.dart';
 import 'package:todaybread/screens/boss/boss_order_history_screen.dart';
 import 'package:todaybread/screens/boss/boss_sales_screen.dart';
 import 'package:todaybread/providers/wishlist/wishlist_provider.dart';
+import 'package:todaybread/screens/bread/bread_detail_screen.dart';
+import 'package:todaybread/screens/store/store_detail_screen.dart';
 import 'package:todaybread/screens/wish/wish_screen.dart';
+import 'package:todaybread/services/fcm/fcm_service.dart';
+import 'package:todaybread/utils/app_navigator.dart';
 
 import '../../widgets/main_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
@@ -35,13 +40,7 @@ class _MainShellState extends State<MainShell>
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      context.read<UserProfileProvider>().hydrateFromLocal(notify: true);
-      context.read<AuthProvider>().refreshRoleFromStoredToken();
-    });
+
     _transitionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 220),
@@ -58,12 +57,76 @@ class _MainShellState extends State<MainShell>
           ),
         );
     _transitionController.value = 1;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<UserProfileProvider>().hydrateFromLocal(notify: true);
+      context.read<AuthProvider>().refreshRoleFromStoredToken();
+
+      // FCM 알림 탭 핸들러 등록
+      FcmService.instance.onMessageTap = _handleNotificationTap;
+
+      // 앱 종료 상태에서 알림 탭으로 열린 경우 처리
+      FcmService.instance.checkInitialMessage();
+    });
   }
 
   @override
   void dispose() {
+    FcmService.instance.onMessageTap = null;
     _transitionController.dispose();
     super.dispose();
+  }
+
+  /// FCM 알림 클릭 시 호출 — data의 type에 따라 화면 이동
+  ///
+  /// 백엔드 payload 타입:
+  ///   ORDER_CREATED        — 사장님: 주문 내역 화면
+  ///   KEYWORD_STOCK        — 유저: 빵 상세 우선, 없으면 가게 상세
+  ///   FAVORITE_STORE_STOCK — 유저: 빵 상세 우선, 없으면 가게 상세
+  void _handleNotificationTap(RemoteMessage message) {
+    final data = message.data;
+    final type = data['type'] as String?;
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
+
+    switch (type) {
+      case 'ORDER_CREATED':
+        // 사장님 주문 알림 → 주문 내역 화면
+        nav.push(
+          MaterialPageRoute(builder: (_) => const BossOrderHistoryScreen()),
+        );
+
+      case 'KEYWORD_STOCK':
+      case 'FAVORITE_STORE_STOCK':
+        // 유저 재고 알림 — breadId가 있으면 빵 상세 우선, 없으면 가게 상세
+        final storeId = int.tryParse(data['storeId'] ?? '');
+        final breadId = int.tryParse(data['breadId'] ?? '');
+        if (storeId == null) {
+          debugPrint('알림 payload에 storeId 없음: $data');
+          return;
+        }
+        if (breadId != null) {
+          nav.push(
+            MaterialPageRoute(
+              builder: (_) => BreadDetailScreen(
+                breadId: breadId,
+                storeId: storeId,
+                fallbackToStoreOnLoadFailure: true,
+              ),
+            ),
+          );
+        } else {
+          nav.push(
+            MaterialPageRoute(
+              builder: (_) => StoreDetailScreen(storeId: storeId),
+            ),
+          );
+        }
+
+      default:
+        debugPrint('알 수 없는 알림 타입: $type / data: $data');
+    }
   }
 
   static const int _wishTabIndex = 2;

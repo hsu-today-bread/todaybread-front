@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:todaybread/models/bread/nearyby_bread_response.dart';
 import 'package:todaybread/screens/bread/bread_detail_screen.dart';
 import 'package:todaybread/screens/cart/cart_screen.dart';
+import 'package:todaybread/screens/notification/notification_inbox_screen.dart';
 import 'package:todaybread/services/bread/bread_service.dart';
 import 'package:todaybread/utils/display_helper.dart';
 import 'package:todaybread/widgets/bread_list_card.dart';
@@ -125,7 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
       actions: [
         /// 알림 아이콘 버튼
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationInboxScreen(),
+              ),
+            );
+          },
           icon: const Icon(
             Icons.notifications_none,
             color: Colors.white,

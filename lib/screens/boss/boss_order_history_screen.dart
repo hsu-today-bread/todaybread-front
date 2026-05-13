@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/models/boss/boss_order_response.dart';
@@ -14,20 +16,39 @@ class BossOrderHistoryScreen extends StatefulWidget {
 }
 
 class _BossOrderHistoryScreenState extends State<BossOrderHistoryScreen> {
+  static const Duration _refreshInterval = Duration(seconds: 3);
+
   final TextEditingController _searchController = TextEditingController();
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<BossOrderProvider>().fetchOrders();
+      _startPolling();
     });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _startPolling() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+      if (!mounted) {
+        return;
+      }
+      final provider = context.read<BossOrderProvider>();
+      if (provider.isLoading || provider.processingOrderId != null) {
+        return;
+      }
+      provider.fetchOrders(silent: true);
+    });
   }
 
   List<BossOrderResponse> _filteredOrders(List<BossOrderResponse> source) {

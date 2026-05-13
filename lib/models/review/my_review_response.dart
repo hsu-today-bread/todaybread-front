@@ -25,6 +25,7 @@ class MyReviewPageResponse {
 
 class MyReviewResponse {
   final int reviewId;
+  final int? orderItemId;
   final String breadName;
   final String? breadImageUrl;
   final String storeName;
@@ -36,6 +37,7 @@ class MyReviewResponse {
 
   const MyReviewResponse({
     required this.reviewId,
+    this.orderItemId,
     required this.breadName,
     this.breadImageUrl,
     required this.storeName,
@@ -50,6 +52,7 @@ class MyReviewResponse {
     final json = Map<String, dynamic>.from(data as Map);
     return MyReviewResponse(
       reviewId: (json['reviewId'] as num?)?.toInt() ?? 0,
+      orderItemId: (json['orderItemId'] as num?)?.toInt(),
       breadName: json['breadName'] as String? ?? '',
       breadImageUrl: json['breadImageUrl'] as String?,
       storeName: json['storeName'] as String? ?? '',

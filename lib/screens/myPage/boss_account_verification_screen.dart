@@ -8,7 +8,7 @@ import 'package:todaybread/screens/boss/boss_store_create_screen.dart';
 import '../../utils/app_colors.dart';
 
 /// 사업자 계정 인증 화면
-/// 사업자 번호를 입력받아 사장님 계정 전환을 진행한다.
+/// 사업자 번호, 개업일자, 대표자명을 입력받아 사장님 계정 전환을 진행한다.
 class BossAccountVerificationScreen extends StatefulWidget {
   const BossAccountVerificationScreen({super.key});
 
@@ -21,13 +21,21 @@ class _BossAccountVerificationScreenState
     extends State<BossAccountVerificationScreen> {
   final TextEditingController _businessNumberController =
       TextEditingController();
+  final TextEditingController _businessStartDateController =
+      TextEditingController();
+  final TextEditingController _representativeNameController =
+      TextEditingController();
 
-  bool get _hasValidBusinessNumber =>
-      _businessNumberController.text.trim().length == 10;
+  bool get _canSubmit =>
+      _businessNumberController.text.trim().length == 10 &&
+      _businessStartDateController.text.trim().length == 8 &&
+      _representativeNameController.text.trim().isNotEmpty;
 
   @override
   void dispose() {
     _businessNumberController.dispose();
+    _businessStartDateController.dispose();
+    _representativeNameController.dispose();
     super.dispose();
   }
 
@@ -54,8 +62,8 @@ class _BossAccountVerificationScreenState
   }
 
   Future<void> _verifyBusinessNumber() async {
-    if (!_hasValidBusinessNumber) {
-      await _showMessageDialog('사업자 번호는 숫자 10자리로 입력해주세요.');
+    if (!_canSubmit) {
+      await _showMessageDialog('모든 항목을 올바르게 입력해주세요.');
       return;
     }
 
@@ -64,6 +72,8 @@ class _BossAccountVerificationScreenState
 
     final response = await bossProvider.approveBoss(
       bossNumber: _businessNumberController.text.trim(),
+      businessStartDate: _businessStartDateController.text.trim(),
+      representativeName: _representativeNameController.text.trim(),
       authProvider: authProvider,
     );
 
@@ -113,17 +123,7 @@ class _BossAccountVerificationScreenState
               children: [
                 _buildAppBar(context),
                 const SizedBox(height: 28),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '사업자 번호',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
+                _buildLabel('사업자 번호'),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _businessNumberController,
@@ -133,23 +133,30 @@ class _BossAccountVerificationScreenState
                     LengthLimitingTextInputFormatter(10),
                   ],
                   onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: '사업자 번호를 입력해주세요',
-                    filled: true,
-                    fillColor: Colors.white,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 15,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
-                    ),
-                  ),
+                  decoration: _inputDecoration('사업자 번호 10자리를 입력해주세요'),
+                ),
+                const SizedBox(height: 20),
+                _buildLabel('개업일자'),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _businessStartDateController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                  decoration: _inputDecoration('개업일자 8자리를 입력해주세요 (예: 20200101)'),
+                ),
+                const SizedBox(height: 20),
+                _buildLabel('대표자명'),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _representativeNameController,
+                  keyboardType: TextInputType.text,
+                  inputFormatters: [LengthLimitingTextInputFormatter(50)],
+                  onChanged: (_) => setState(() {}),
+                  decoration: _inputDecoration('대표자명을 입력해주세요'),
                 ),
                 const Spacer(),
                 SizedBox(
@@ -189,6 +196,35 @@ class _BossAccountVerificationScreenState
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFFD9D9D9)),
       ),
     );
   }

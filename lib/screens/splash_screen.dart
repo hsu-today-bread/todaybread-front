@@ -11,6 +11,7 @@ import '../utils/app_text_styles.dart';
 import '../widgets/loading_lottie.dart';
 import 'main/main_shell.dart';
 import 'onboarding_screen.dart';
+import '../services/fcm/fcm_service.dart';
 
 ///앱 실행 시 가장 먼저 보여지는 스플래시 뷰
 ///
@@ -43,6 +44,11 @@ class _SplashScreenState extends State<SplashScreen> {
       if (hasValidSession) {
         await authProvider.refreshRoleFromStoredToken(notify: false);
         userProfileProvider.hydrateFromLocal();
+        try {
+          await FcmService.instance.registerTokenAfterLogin();
+        } catch (e) {
+          debugPrint('[SplashScreen] FCM token restore failed: $e');
+        }
       } else {
         userProfileProvider.clearProfile();
       }

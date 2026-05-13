@@ -8,6 +8,7 @@ import 'package:todaybread/models/review/my_review_response.dart';
 import 'package:todaybread/models/review/review_create_response.dart';
 import 'package:todaybread/models/review/store_review_response.dart';
 import 'package:todaybread/services/network/dio_client.dart';
+import 'package:todaybread/services/network/multipart_image_helper.dart';
 import 'package:todaybread/services/review/review_api.dart';
 
 class ReviewService {
@@ -80,7 +81,7 @@ class ReviewService {
 
     for (final image in images.take(2)) {
       formData.files.add(
-        MapEntry('images', await MultipartFile.fromFile(image.path)),
+        MapEntry('images', await MultipartImageHelper.fromXFile(image)),
       );
     }
 

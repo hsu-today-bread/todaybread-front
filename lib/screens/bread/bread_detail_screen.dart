@@ -13,23 +13,34 @@ class BreadDetailScreen extends StatelessWidget {
     super.key,
     required this.breadId,
     required this.storeId,
+    this.fallbackToStoreOnLoadFailure = false,
   });
 
   final int breadId;
   final int storeId;
+  final bool fallbackToStoreOnLoadFailure;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) =>
           BreadDetailProvider(breadId: breadId, storeId: storeId)..fetch(),
-      child: const _BreadDetailView(),
+      child: _BreadDetailView(
+        storeId: storeId,
+        fallbackToStoreOnLoadFailure: fallbackToStoreOnLoadFailure,
+      ),
     );
   }
 }
 
 class _BreadDetailView extends StatelessWidget {
-  const _BreadDetailView();
+  const _BreadDetailView({
+    required this.storeId,
+    required this.fallbackToStoreOnLoadFailure,
+  });
+
+  final int storeId;
+  final bool fallbackToStoreOnLoadFailure;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +59,20 @@ class _BreadDetailView extends StatelessWidget {
           }
 
           if (provider.breadDetail == null || provider.storeDetail == null) {
+            if (fallbackToStoreOnLoadFailure) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) {
+                  return;
+                }
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => StoreDetailScreen(storeId: storeId),
+                  ),
+                );
+              });
+              return const Center(child: CircularProgressIndicator());
+            }
+
             return _ErrorState(
               message: provider.errorMessage ?? '메뉴 상세를 불러오지 못했습니다.',
               onRetry: provider.fetch,

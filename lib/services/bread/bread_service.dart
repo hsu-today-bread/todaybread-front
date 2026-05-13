@@ -1,13 +1,16 @@
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:todaybread/models/bread/bread_common_request.dart';
 import 'package:todaybread/models/bread/bread_common_response.dart';
 import 'package:todaybread/models/bread/bread_detail_response.dart';
 import 'package:todaybread/models/bread/nearyby_bread_response.dart';
 import 'package:todaybread/services/bread/bread_api.dart';
+import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/network/dio_client.dart';
+import 'package:todaybread/services/network/multipart_image_helper.dart';
 
 /// 메뉴 도메인 서비스입니다.
 ///
@@ -41,27 +44,31 @@ class BreadService {
     BreadCommonRequest request,
     XFile? image,
   ) async {
-    final directory = await Directory.systemTemp.createTemp(
-      'todaybread_bread_',
-    );
-    final requestFile = File('${directory.path}/request.json');
-    await requestFile.writeAsString(jsonEncode(request.toJson()));
-
     if (image == null) {
-      throw ArgumentError('상품 사진을 등록해주세요.');
+      throw ApiException(message: '상품 사진을 등록해주세요.');
     }
-    final imageFile = File(image.path);
 
-    try {
-      return await _api.createBread(requestFile, imageFile);
-    } finally {
-      if (await requestFile.exists()) {
-        await requestFile.delete();
-      }
-      if (await directory.exists()) {
-        await directory.delete();
-      }
-    }
+    final formData = FormData();
+    formData.files.add(
+      MapEntry(
+        'request',
+        MultipartFile.fromString(
+          jsonEncode(request.toJson()),
+          filename: 'request.json',
+          contentType: MediaType('application', 'json'),
+        ),
+      ),
+    );
+    formData.files.add(
+      MapEntry('image', await MultipartImageHelper.fromXFile(image)),
+    );
+
+    final response = await DioClient.instance.post<Map<String, dynamic>>(
+      '/api/boss/bread',
+      data: formData,
+      options: Options(contentType: Headers.multipartFormDataContentType),
+    );
+    return BreadCommonResponse.fromJson(response.data!);
   }
 
   Future<BreadCommonResponse> updateBread({
@@ -69,27 +76,29 @@ class BreadService {
     required BreadCommonRequest request,
     XFile? image,
   }) async {
-    final directory = await Directory.systemTemp.createTemp(
-      'todaybread_bread_',
+    final formData = FormData();
+    formData.files.add(
+      MapEntry(
+        'request',
+        MultipartFile.fromString(
+          jsonEncode(request.toJson()),
+          filename: 'request.json',
+          contentType: MediaType('application', 'json'),
+        ),
+      ),
     );
-    final requestFile = File('${directory.path}/request.json');
-    await requestFile.writeAsString(jsonEncode(request.toJson()));
-
-    final imageFile = image == null ? null : File(image.path);
-
-    try {
-      if (imageFile == null) {
-        return await _api.updateBreadWithoutImage(breadId, requestFile);
-      }
-      return await _api.updateBread(breadId, requestFile, imageFile);
-    } finally {
-      if (await requestFile.exists()) {
-        await requestFile.delete();
-      }
-      if (await directory.exists()) {
-        await directory.delete();
-      }
+    if (image != null) {
+      formData.files.add(
+        MapEntry('image', await MultipartImageHelper.fromXFile(image)),
+      );
     }
+
+    final response = await DioClient.instance.put<Map<String, dynamic>>(
+      '/api/boss/bread/$breadId',
+      data: formData,
+      options: Options(contentType: Headers.multipartFormDataContentType),
+    );
+    return BreadCommonResponse.fromJson(response.data!);
   }
 
   Future<void> updateBreadStock({

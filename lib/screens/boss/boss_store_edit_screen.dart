@@ -1,10 +1,15 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:todaybread/config/app_config.dart';
 import 'package:todaybread/models/store/business_hours_request.dart';
 import 'package:todaybread/models/store/store_common_request.dart';
+import 'package:todaybread/models/store/store_image_response.dart';
 import 'package:todaybread/models/store/store_info_response.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/utils/app_colors.dart';
@@ -39,7 +44,8 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _descriptionController;
-  final List<XFile> _selectedImages = [];
+  late List<StoreImageResponse> _keptImages;
+  final List<XFile> _newImages = [];
 
   late List<BusinessHoursRequest> _businessHours;
   late BusinessHoursRequest _templateBusinessHours;
@@ -51,6 +57,7 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
   void initState() {
     super.initState();
     final store = widget.storeInfo.store;
+    _keptImages = List.from(widget.storeInfo.images);
     _address1Controller = TextEditingController(text: store.addressLine1);
     _address2Controller = TextEditingController(text: store.addressLine2);
     _nameController = TextEditingController(text: store.name);
@@ -203,13 +210,13 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
   }
 
   Widget _buildImageEditor() {
-    final currentImages = widget.storeInfo.images;
+    final totalCount = _keptImages.length + _newImages.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '새 매장 이미지를 선택해주세요',
+          '매장 이미지 관리',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -218,7 +225,7 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
         ),
         const SizedBox(height: 8),
         const Text(
-          '선택 시 기존 이미지는 전체 교체됩니다. 최대 5장까지 가능합니다.',
+          'X 버튼으로 이미지를 삭제하거나 새 이미지를 추가할 수 있습니다. 최대 5장까지 가능합니다.',
           style: TextStyle(
             fontSize: 13,
             height: 1.45,
@@ -229,56 +236,102 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children:
-              (_selectedImages.isEmpty
-                      ? currentImages
-                            .map(
-                              (image) => ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: AppNetworkImage(
-                                  imageUrl: image.imageUrl,
-                                  width: 96,
-                                  height: 96,
-                                  fit: BoxFit.cover,
-                                  placeholder: _imageFallback(),
-                                ),
-                              ),
-                            )
-                            .toList()
-                      : _selectedImages
-                            .map(
-                              (image) => ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.file(
-                                  File(image.path),
-                                  width: 96,
-                                  height: 96,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            )
-                            .toList())
-                  .cast<Widget>(),
-        ),
-        const SizedBox(height: 18),
-        Row(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _pickFromGallery,
-                child: const Text('갤러리 선택'),
+            // 기존 이미지 (유지 중인 것)
+            ..._keptImages.map((image) => _buildImageTile(
+              child: AppNetworkImage(
+                imageUrl: image.imageUrl,
+                width: 96,
+                height: 96,
+                fit: BoxFit.cover,
+                placeholder: _imageFallback(),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _pickFromCamera,
-                child: const Text('카메라 촬영'),
+              onDelete: () => setState(() => _keptImages.remove(image)),
+            )),
+            // 새로 추가한 이미지
+            ..._newImages.map((image) => _buildImageTile(
+              child: Image.file(
+                File(image.path),
+                width: 96,
+                height: 96,
+                fit: BoxFit.cover,
               ),
-            ),
+              onDelete: () => setState(() => _newImages.remove(image)),
+            )),
+            // 추가 버튼 (5장 미만일 때)
+            if (totalCount < 5)
+              GestureDetector(
+                onTap: _showImageSourcePicker,
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFD9D9D9)),
+                  ),
+                  child: const Icon(Icons.add, color: Color(0xFF8D8D8D), size: 32),
+                ),
+              ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildImageTile({required Widget child, required VoidCallback onDelete}) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: child,
+        ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onDelete,
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showImageSourcePicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('갤러리 선택'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFromGallery();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('카메라 촬영'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFromCamera();
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -471,33 +524,41 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
   }
 
   Future<void> _pickFromGallery() async {
+    final remaining = 5 - _keptImages.length - _newImages.length;
+    if (remaining <= 0) return;
     final picker = ImagePicker();
-    final images = await picker.pickMultiImage(imageQuality: 85);
-    if (images.isEmpty) {
-      return;
-    }
-    setState(() {
-      _selectedImages
-        ..clear()
-        ..addAll(images.take(5));
-    });
+    final images = await picker.pickMultiImage(limit: remaining);
+    if (images.isEmpty) return;
+    setState(() => _newImages.addAll(images));
   }
 
   Future<void> _pickFromCamera() async {
+    final remaining = 5 - _keptImages.length - _newImages.length;
+    if (remaining <= 0) return;
     final picker = ImagePicker();
     final image = await picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 85,
     );
-    if (image == null) {
-      return;
-    }
-    setState(() {
-      if (_selectedImages.length >= 5) {
-        _selectedImages.removeAt(0);
-      }
-      _selectedImages.add(image);
-    });
+    if (image == null) return;
+    setState(() => _newImages.add(image));
+  }
+
+  /// 기존 이미지 URL을 임시 파일로 다운로드합니다.
+  Future<XFile> _downloadImageAsXFile(StoreImageResponse image) async {
+    final dio = Dio();
+    final baseUrl = AppConfig.apiBaseUrl;
+    final url = image.imageUrl.startsWith('http')
+        ? image.imageUrl
+        : '$baseUrl${image.imageUrl}';
+    final Response<Uint8List> response = await dio.get<Uint8List>(
+      url,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/kept_${image.id}.jpg')
+      ..writeAsBytesSync(response.data!);
+    return XFile(file.path);
   }
 
   void _handlePhoneCheck() {
@@ -521,18 +582,27 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     });
 
     if (widget.mode == StoreEditMode.image) {
-      if (_selectedImages.isEmpty) {
+      if (_keptImages.isEmpty && _newImages.isEmpty) {
         setState(() {
-          _localError = '매장 이미지를 1장 이상 선택해주세요.';
+          _localError = '매장 이미지를 1장 이상 유지하거나 추가해주세요.';
         });
         return;
       }
-      final response = await context.read<StoreProvider>().updateImages(
-        _selectedImages,
-      );
-      if (!mounted) {
+      // 유지할 기존 이미지를 다운로드 후 새 이미지와 합쳐서 전송
+      List<XFile> allImages;
+      try {
+        final downloaded = await Future.wait(
+          _keptImages.map(_downloadImageAsXFile),
+        );
+        allImages = [...downloaded, ..._newImages];
+      } catch (_) {
+        setState(() {
+          _localError = '이미지 처리 중 오류가 발생했습니다. 다시 시도해주세요.';
+        });
         return;
       }
+      final response = await context.read<StoreProvider>().updateImages(allImages);
+      if (!mounted) return;
       if (response != null) {
         Navigator.pop(context, true);
       }

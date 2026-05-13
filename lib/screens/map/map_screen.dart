@@ -113,6 +113,7 @@ class _MapScreenState extends State<MapScreen> {
       final marker = NMarker(
         id: 'store_${store.storeId}',
         position: NLatLng(store.latitude, store.longitude),
+        iconTintColor: store.isSelling ? Colors.transparent : Colors.grey,
         caption: store.isSelling
             ? const NOverlayCaption(
                 text: '● 판매중',

@@ -15,15 +15,21 @@ class BossOrderProvider extends ChangeNotifier {
   Future<List<BossOrderResponse>?> fetchOrders({
     int page = 0,
     int size = 50,
+    bool silent = false,
   }) async {
     try {
-      isLoading = true;
+      if (!silent) {
+        isLoading = true;
+      }
       errorMessage = null;
-      notifyListeners();
+      if (!silent) {
+        notifyListeners();
+      }
 
       final response = await _service.getOrders(page: page, size: size);
       orders = response.orders;
       hasFetched = true;
+      errorMessage = null;
       return response.orders;
     } catch (e) {
       errorMessage = ApiException.messageFrom(e);
@@ -33,7 +39,9 @@ class BossOrderProvider extends ChangeNotifier {
       hasFetched = true;
       return null;
     } finally {
-      isLoading = false;
+      if (!silent) {
+        isLoading = false;
+      }
       notifyListeners();
     }
   }

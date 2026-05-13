@@ -1,11 +1,10 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:todaybread/screens/order/payment_webview_screen.dart';
 import 'package:todaybread/services/network/api_exception.dart';
 import 'package:todaybread/services/order/order_service.dart';
 import 'package:todaybread/services/payment/payment_service.dart';
 import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/utils/idempotency_key.dart';
 
 // ── 공통 유틸 ────────────────────────────────────────────────────────────────
 
@@ -14,13 +13,6 @@ String _formatPrice(int price) {
     RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
     (m) => '${m[1]},',
   );
-}
-
-String _generateIdempotencyKey() {
-  final rand = Random.secure();
-  final bytes = List<int>.generate(8, (_) => rand.nextInt(256));
-  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  return 'order_${DateTime.now().millisecondsSinceEpoch}_$hex';
 }
 
 // ── PurchaseItem 모델 ─────────────────────────────────────────────────────────
@@ -308,8 +300,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                       onPressed: _isLoading ? null : _startTossPayment,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3182F6),
-                        disabledBackgroundColor:
-                            const Color(0xFF3182F6).withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(
+                          0xFF3182F6,
+                        ).withValues(alpha: 0.6),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -348,7 +341,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final idempotencyKey = _generateIdempotencyKey();
+      final idempotencyKey = IdempotencyKey.uuidV4();
 
       // 주문 생성 (장바구니 or 바로구매) + Client Key 동시 조회
       final orderFuture = widget.isDirectOrder
@@ -385,9 +378,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(ApiException.messageFrom(e))),
-        );
+        ..showSnackBar(SnackBar(content: Text(ApiException.messageFrom(e))));
     }
   }
 }

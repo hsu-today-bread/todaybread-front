@@ -190,68 +190,7 @@ class _ReviewCreateScreenState extends State<ReviewCreateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE9E9E9)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x22000000),
-                            blurRadius: 14,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: SizedBox(
-                              width: 76,
-                              height: 76,
-                              child: AppNetworkImage(
-                                imageUrl: widget.item.breadImageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: Image.asset(
-                                  AppAssets.breadImage,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(
-                                  fontFamily: 'PretendardVariable',
-                                  fontSize: 15,
-                                  height: 1.45,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF202020),
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: widget.order.storeName,
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text:
-                                        '에서 주문하신 ${widget.item.breadName}은 어떠셨나요?',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildOrderSummaryCard(),
                     const SizedBox(height: 28),
                     Center(
                       child: _StarRatingSelector(
@@ -281,7 +220,7 @@ class _ReviewCreateScreenState extends State<ReviewCreateScreen> {
                       maxLines: 8,
                       maxLength: 500,
                       decoration: InputDecoration(
-                        hintText: '매장 및 빵에 대한 리뷰를 적어주세요!',
+                        hintText: '매장에 대한 리뷰를 적어주세요!',
                         hintStyle: const TextStyle(color: Color(0xFFB5B5B5)),
                         filled: true,
                         fillColor: const Color(0xFFFAFAFA),
@@ -351,6 +290,69 @@ class _ReviewCreateScreenState extends State<ReviewCreateScreen> {
     );
   }
 
+  Widget _buildOrderSummaryCard() {
+    final items = widget.order.items;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE9E9E9)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 14,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontFamily: 'PretendardVariable',
+                fontSize: 15,
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF202020),
+              ),
+              children: [
+                TextSpan(
+                  text: widget.order.storeName,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const TextSpan(text: '에서의 픽업 경험은 어떠셨나요?'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            '구매 상품',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF5A5A5A),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _PurchasedItemRow(item: item),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildImagePicker() {
     return Wrap(
       spacing: 10,
@@ -413,6 +415,54 @@ class _ReviewCreateScreenState extends State<ReviewCreateScreen> {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+class _PurchasedItemRow extends StatelessWidget {
+  const _PurchasedItemRow({required this.item});
+
+  final OrderItemResponse item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: AppNetworkImage(
+              imageUrl: item.breadImageUrl,
+              fit: BoxFit.cover,
+              placeholder: Image.asset(AppAssets.breadImage, fit: BoxFit.cover),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            item.breadName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF202020),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${item.quantity}개',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF8A8A8A),
+          ),
+        ),
       ],
     );
   }
