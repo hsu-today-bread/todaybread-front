@@ -1,7 +1,7 @@
 class AppConfig {
   AppConfig._();
 
-  static const String _defaultApiBaseUrl = 'http://10.0.2.2:8080';
+  static const String _defaultApiBaseUrl = 'http://10.30.5.230:8080';
 
   static const String _rawApiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',

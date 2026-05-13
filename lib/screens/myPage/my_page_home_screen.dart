@@ -21,7 +21,9 @@ import 'my_profile_screen.dart';
 /// 마이페이지 메인 화면
 /// 프로필 요약, 계정 상태, 주문 내역을 보여준다.
 class MyPageHomeScreen extends StatefulWidget {
-  const MyPageHomeScreen({super.key});
+  const MyPageHomeScreen({super.key, this.orderRefreshSignal = 0});
+
+  final int orderRefreshSignal;
 
   @override
   State<MyPageHomeScreen> createState() => _MyPageHomeScreenState();
@@ -39,6 +41,14 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
   void initState() {
     super.initState();
     _loadOrders();
+  }
+
+  @override
+  void didUpdateWidget(covariant MyPageHomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.orderRefreshSignal != widget.orderRefreshSignal) {
+      _loadOrders();
+    }
   }
 
   Future<void> _loadOrders() async {

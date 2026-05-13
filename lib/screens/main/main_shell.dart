@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
+import 'package:todaybread/providers/main/main_tab_provider.dart';
 import 'package:todaybread/providers/user/user_profile_provider.dart';
 import 'package:todaybread/providers/boss/boss_sales_provider.dart';
 import 'package:todaybread/screens/boss/boss_bread_management_screen.dart';
@@ -35,11 +36,20 @@ class _MainShellState extends State<MainShell>
   late final AnimationController _transitionController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
+  late final MainTabProvider _mainTabProvider;
+  int _lastHandledTabRequestId = 0;
+  int _myPageRefreshSignal = 0;
+
+  static const int _wishTabIndex = 2;
+  static const int _bossSalesTabIndex = 2;
+  static const int _myPageTabIndex = 3;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    _mainTabProvider = context.read<MainTabProvider>();
+    _mainTabProvider.addListener(_handleTabRequest);
 
     _transitionController = AnimationController(
       vsync: this,
@@ -74,6 +84,7 @@ class _MainShellState extends State<MainShell>
   @override
   void dispose() {
     FcmService.instance.onMessageTap = null;
+    _mainTabProvider.removeListener(_handleTabRequest);
     _transitionController.dispose();
     super.dispose();
   }
@@ -129,19 +140,43 @@ class _MainShellState extends State<MainShell>
     }
   }
 
-  static const int _wishTabIndex = 2;
-  static const int _bossSalesTabIndex = 2;
+  void _handleTabRequest() {
+    final requestId = _mainTabProvider.requestId;
+    if (_lastHandledTabRequestId == requestId) return;
+    _lastHandledTabRequestId = requestId;
+
+    final requestedIndex = _mainTabProvider.requestedIndex;
+    if (requestedIndex == null || !mounted) return;
+    _selectTab(requestedIndex, forceRefresh: true);
+  }
 
   void _onTap(int index) {
-    if (_selectedIndex == index) return;
+    _selectTab(index, forceRefresh: index == _myPageTabIndex);
+  }
+
+  void _selectTab(int index, {bool forceRefresh = false}) {
     final role = context.read<AuthProvider>().role;
+    final pages = _pagesForRole(role);
+    if (index < 0 || index >= pages.length) return;
+
+    final isSameTab = _selectedIndex == index;
+    final shouldRefreshMyPage =
+        role == UserRole.user &&
+        index == _myPageTabIndex &&
+        (forceRefresh || !isSameTab);
+
+    if (isSameTab && !shouldRefreshMyPage) return;
+
     setState(() {
       _selectedIndex = index;
+      if (shouldRefreshMyPage) {
+        _myPageRefreshSignal++;
+      }
     });
-    if (role == UserRole.user && index == _wishTabIndex) {
+    if (!isSameTab && role == UserRole.user && index == _wishTabIndex) {
       context.read<WishlistProvider>().load();
     }
-    if (role == UserRole.boss && index == _bossSalesTabIndex) {
+    if (!isSameTab && role == UserRole.boss && index == _bossSalesTabIndex) {
       final now = DateTime.now();
       context.read<BossSalesProvider>().fetchMonthlySales(
         DateTime(now.year, now.month),
@@ -150,9 +185,11 @@ class _MainShellState extends State<MainShell>
     }
     // IndexedStack은 유지해서 각 탭의 상태를 보존하고,
     // 보이는 화면만 짧게 fade + slide 시켜 가볍게 전환감을 줍니다.
-    _transitionController
-      ..reset()
-      ..forward();
+    if (!isSameTab) {
+      _transitionController
+        ..reset()
+        ..forward();
+    }
   }
 
   @override
@@ -199,6 +236,11 @@ class _MainShellState extends State<MainShell>
       ];
     }
 
-    return const [HomeScreen(), MapScreen(), WishScreen(), MyPageHomeScreen()];
+    return [
+      const HomeScreen(),
+      const MapScreen(),
+      const WishScreen(),
+      MyPageHomeScreen(orderRefreshSignal: _myPageRefreshSignal),
+    ];
   }
 }
