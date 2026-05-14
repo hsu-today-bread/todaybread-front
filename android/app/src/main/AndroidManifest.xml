@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 위치 권한 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- 토스페이먼츠 결제 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="todaybread"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,6 +39,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- 네이버 지도 Client ID 추가 -->
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="${NAVER_MAP_CLIENT_ID}"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -41,5 +55,43 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- 토스페이먼츠 카드/간편결제 앱 -->
+        <package android:name="viva.republica.toss"/>
+        <package android:name="com.kakao.talk"/>
+        <package android:name="com.nhn.android.search"/>
+        <package android:name="com.kbcard.cxh.appcard"/>
+        <package android:name="com.kbstar.liivbank"/>
+        <package android:name="com.kbstar.reboot"/>
+        <package android:name="com.kbstar.kbbank"/>
+        <package android:name="kvp.jjy.MispAndroid320"/>
+        <package android:name="nh.smart.nhallonepay"/>
+        <package android:name="com.lcacApp"/>
+        <package android:name="com.lottemembers.android"/>
+        <package android:name="kr.co.samsungcard.mpocket"/>
+        <package android:name="net.ib.android.smcard"/>
+        <package android:name="com.shinhan.smartcaremgr"/>
+        <package android:name="com.shinhan.sbanking"/>
+        <package android:name="com.shcard.smartpay"/>
+        <package android:name="com.shinhancard.smartshinhan"/>
+        <package android:name="com.hyundaicard.appcard"/>
+        <package android:name="com.lumensoft.touchenappfree"/>
+        <package android:name="com.hanaskcard.paycla"/>
+        <package android:name="com.hanaskcard.rocomo.potal"/>
+        <package android:name="kr.co.hanamembers.hmscustomer"/>
+        <package android:name="kr.co.citibank.citimobile"/>
+        <package android:name="com.wooricard.wpay"/>
+        <package android:name="com.wooricard.smartapp"/>
+        <package android:name="com.wooribank.smart.npib"/>
+        <package android:name="com.nhnent.payapp"/>
+        <package android:name="com.ssg.serviceapp.android.egiftcertificate"/>
+        <package android:name="com.lguplus.paynow"/>
+        <package android:name="com.kftc.bankpay.android"/>
+        <package android:name="com.TouchEn.mVaccine.webs"/>
+        <package android:name="kr.co.shiftworks.vguardweb"/>
+        <package android:name="com.ahnlab.v3mobileplus"/>
+        <package android:name="com.kakaobank.channel"/>
+        <package android:name="com.samsung.android.spay"/>
+        <package android:name="com.samsung.android.spaylite"/>
+        <package android:name="com.mobiletoong.travelwallet"/>
     </queries>
 </manifest>

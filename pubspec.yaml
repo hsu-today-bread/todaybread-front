@@ -31,20 +31,49 @@ dependencies:
   flutter:
     sdk: flutter
 
+  provider: ^6.1.2
+  lottie: ^3.1.2
+  dio: ^5.4.0
+  retrofit: 4.8.0
+  json_annotation: ^4.9.0
+  flutter_naver_map: ^1.2.3
+  flutter_secure_storage: ^9.2.2
+  geolocator: ^13.0.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  image_picker: ^1.1.2
+  http_parser: ^4.1.2
+  webview_flutter: ^4.10.0
+  url_launcher: ^6.2.5
+  tosspayments_widget_sdk_flutter: ^2.2.0
+
+
+
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.3.0
+  firebase_core: ^4.7.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^17.2.3
+  path_provider: ^2.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.8
+  retrofit_generator: ^7.0.8
+  json_serializable: ^6.8.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^6.0.0
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -56,6 +85,17 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/lottie/
+    - assets/images/
+
+  fonts:
+    - family: NoonnuBasicGothic
+      fonts:
+        - asset: assets/fonts/NoonnuBasicGothicRegular.ttf
+    - family: PretendardVariable
+      fonts:
+        - asset: assets/fonts/PretendardVariable.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
