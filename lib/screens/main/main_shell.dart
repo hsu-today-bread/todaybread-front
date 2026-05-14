@@ -38,8 +38,10 @@ class _MainShellState extends State<MainShell>
   late final Animation<Offset> _slideAnimation;
   late final MainTabProvider _mainTabProvider;
   int _lastHandledTabRequestId = 0;
+  int _homeRefreshSignal = 0;
   int _myPageRefreshSignal = 0;
 
+  static const int _homeTabIndex = 0;
   static const int _wishTabIndex = 2;
   static const int _bossSalesTabIndex = 2;
   static const int _myPageTabIndex = 3;
@@ -169,6 +171,9 @@ class _MainShellState extends State<MainShell>
 
     setState(() {
       _selectedIndex = index;
+      if (!isSameTab && role == UserRole.user && index == _homeTabIndex) {
+        _homeRefreshSignal++;
+      }
       if (shouldRefreshMyPage) {
         _myPageRefreshSignal++;
       }
@@ -228,16 +233,16 @@ class _MainShellState extends State<MainShell>
     }
 
     if (role == UserRole.unknown) {
-      return const [
-        HomeScreen(),
-        MapScreen(),
-        SizedBox.shrink(),
-        MyPageHomeScreen(),
+      return [
+        HomeScreen(refreshSignal: _homeRefreshSignal),
+        const MapScreen(),
+        const SizedBox.shrink(),
+        const MyPageHomeScreen(),
       ];
     }
 
     return [
-      const HomeScreen(),
+      HomeScreen(refreshSignal: _homeRefreshSignal),
       const MapScreen(),
       const WishScreen(),
       MyPageHomeScreen(orderRefreshSignal: _myPageRefreshSignal),

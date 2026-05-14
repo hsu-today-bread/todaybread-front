@@ -37,13 +37,14 @@ void main() async {
   await UserLocalStore.init();
   await NotificationLocalStore.init();
   await FcmService.instance.init(); // onMessageTap은 MainShell에서 세팅
+  final naverMapClientId = const String.fromEnvironment('NAVER_MAP_CLIENT_ID');
   await FlutterNaverMap().init(
-    clientId: const String.fromEnvironment('NAVER_MAP_CLIENT_ID'),
+    clientId: naverMapClientId,
     onAuthFailed: (e) => debugPrint('네이버 지도 인증 실패: $e'),
   );
 
   debugPrint(
-    'Client ID 확인: ${const String.fromEnvironment('NAVER_MAP_CLIENT_ID')}',
+    'Naver Map Client ID configured: ${naverMapClientId.trim().isNotEmpty}',
   );
 
   runApp(const TodayBreadApp());

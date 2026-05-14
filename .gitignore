@@ -65,4 +65,5 @@ ios/Runner/GoogleService-Info.plist
 .vscode/
 
 # Secrets (contains API keys — do not commit, use secrets.json.example as template)
+secret.json
 secrets.json

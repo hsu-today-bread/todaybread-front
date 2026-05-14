@@ -734,15 +734,42 @@ class _AddressStepState extends State<_AddressStep> {
       setState(() {
         _results = results;
         _isSearching = false;
-        if (results.isEmpty) _searchError = '검색 결과가 없습니다.';
+        if (results.isEmpty) {
+          _searchError = '검색 결과가 없습니다. 도로명이나 지번을 조금 더 자세히 입력해주세요.';
+        }
       });
     } catch (e) {
+      debugPrint('[Geocoding] search error: $e');
       if (!mounted) return;
       setState(() {
+        _results = [];
         _isSearching = false;
-        _searchError = '주소 검색 중 오류가 발생했습니다.';
+        _searchError = _searchErrorMessage(e);
       });
     }
+  }
+
+  String _searchErrorMessage(Object error) {
+    if (error is GeocodingException) {
+      switch (error.type) {
+        case GeocodingErrorType.missingCredentials:
+          return '주소 검색 설정이 없습니다. 앱을 완전히 종료한 뒤 실행 옵션을 확인해주세요.';
+        case GeocodingErrorType.unauthorized:
+        case GeocodingErrorType.forbidden:
+        case GeocodingErrorType.apiDenied:
+          return '주소 검색 인증에 실패했습니다. Naver Client ID/Secret과 Geocoding 활성화를 확인해주세요.';
+        case GeocodingErrorType.quotaExceeded:
+          return '주소 검색 사용량 또는 서비스 설정을 확인해주세요.';
+        case GeocodingErrorType.badRequest:
+          return '도로명이나 지번 주소를 조금 더 정확히 입력해주세요.';
+        case GeocodingErrorType.network:
+          return '네트워크 연결을 확인한 뒤 다시 시도해주세요.';
+        case GeocodingErrorType.invalidResponse:
+        case GeocodingErrorType.unknown:
+          return '주소 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      }
+    }
+    return '주소 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
   }
 
   void _selectResult(GeocodingResult result) {

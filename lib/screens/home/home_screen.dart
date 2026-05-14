@@ -22,7 +22,9 @@ import '../../utils/app_colors.dart';
 /// - 상품 카드 리스트 (스크롤뷰)
 /// - 하단 네비게이션바: 홈 / 지도로 보기 / 빵 / MY
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.refreshSignal = 0});
+
+  final int refreshSignal;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -69,6 +71,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _startClockTimer();
     _fetchNearbyItems();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshSignal != widget.refreshSignal) {
+      _fetchNearbyItems();
+    }
   }
 
   @override
