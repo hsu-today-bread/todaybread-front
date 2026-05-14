@@ -6,7 +6,7 @@ class AppColors {
   AppColors._();
 
   /// 주요 배경색(브랜드 메인 컬러)
-  static const Color primaryBackground = Color(0xFF45ADA1);
+  static const Color primaryBackground = Color(0xFF55433C);
 
   /// 기본 흰색
   static const Color white = Colors.white;
@@ -15,8 +15,8 @@ class AppColors {
   static const Color black = Colors.black;
 
   /// 타이틀 텍스트 색상
-  static const Color titleText = Colors.white;
+  static const Color titleText = Colors.black;
 
   /// 서브타이틀 텍스트 색상
-  static const Color subtitleText = Colors.white70;
+  static const Color subtitleText = Colors.black87;
 }
