@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:todaybread/models/notification/app_notification.dart';
+import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/screens/boss/boss_order_history_screen.dart';
 import 'package:todaybread/screens/bread/bread_detail_screen.dart';
 import 'package:todaybread/screens/store/store_detail_screen.dart';
@@ -24,8 +26,11 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
   }
 
   void _load() {
+    final isBoss = context.read<AuthProvider>().isBoss;
     setState(() {
-      _notifications = NotificationLocalStore.getNotifications();
+      _notifications = NotificationLocalStore.getNotifications()
+          .where((n) => isBoss || n.data['type'] != 'ORDER_CREATED')
+          .toList();
     });
   }
 
@@ -37,8 +42,10 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
     _load();
 
     final type = notification.data['type'];
+    final isBoss = context.read<AuthProvider>().isBoss;
     switch (type) {
       case 'ORDER_CREATED':
+        if (!isBoss) return;
         await Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const BossOrderHistoryScreen()),
         );

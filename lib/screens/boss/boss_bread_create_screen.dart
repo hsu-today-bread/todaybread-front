@@ -330,7 +330,7 @@ class _BreadCreateStepBody extends StatelessWidget {
             TextFormField(
               initialValue: provider.name,
               onChanged: context.read<BossBreadCreateProvider>().updateName,
-              decoration: _inputDecoration('반반치킨'),
+              decoration: _inputDecoration('단팥빵'),
             ),
           ],
         );

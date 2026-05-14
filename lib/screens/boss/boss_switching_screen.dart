@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:todaybread/providers/login/login_provider.dart';
 import 'package:todaybread/providers/store/store_provider.dart';
 import 'package:todaybread/screens/main/main_shell.dart';
+import 'package:todaybread/services/fcm/fcm_service.dart';
 
 class BossSwitchingScreen extends StatefulWidget {
   const BossSwitchingScreen({super.key});
@@ -43,6 +44,7 @@ class _BossSwitchingScreenState extends State<BossSwitchingScreen> {
       return;
     }
 
+    await FcmService.instance.clearAllNotifications();
     await context.read<AuthProvider>().refreshRoleFromStoredToken();
     if (!mounted) {
       return;

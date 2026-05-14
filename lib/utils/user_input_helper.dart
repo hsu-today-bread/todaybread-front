@@ -106,7 +106,18 @@ class StorePhoneNumberTextInputFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final formatted = UserInputHelper.normalizeStorePhoneNumber(newValue.text);
+    final oldDigits = oldValue.text.replaceAll(RegExp(r'\D'), '');
+    final newDigits = newValue.text.replaceAll(RegExp(r'\D'), '');
+
+    // 삭제했는데 digit 수가 그대로라면 하이픈만 지운 것 → digit도 하나 제거
+    String source = newValue.text;
+    if (oldValue.text.length > newValue.text.length &&
+        oldDigits.length == newDigits.length &&
+        newDigits.isNotEmpty) {
+      source = newDigits.substring(0, newDigits.length - 1);
+    }
+
+    final formatted = UserInputHelper.normalizeStorePhoneNumber(source);
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),

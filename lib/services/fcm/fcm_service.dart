@@ -123,6 +123,7 @@ class FcmService {
       channelDescription: '키워드, 단골 매장, 주문 관련 알림',
       importance: Importance.high,
       priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
     );
     const iosDetails = DarwinNotificationDetails();
     const details = NotificationDetails(
@@ -137,6 +138,12 @@ class FcmService {
       details,
       payload: id.toString(), // 탭 시 메시지 복원에 사용
     );
+  }
+
+  /// OS 알림창 + 앱 내 알림함을 모두 초기화합니다.
+  Future<void> clearAllNotifications() async {
+    await _localNotifications.cancelAll();
+    await NotificationLocalStore.clear();
   }
 
   /// 알림 끄기 — 서버에서 현재 유저의 FCM token 비활성화

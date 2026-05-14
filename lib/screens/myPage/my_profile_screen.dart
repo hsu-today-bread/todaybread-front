@@ -54,8 +54,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         _buildProfileImage(),
                         const SizedBox(height: 32),
                         _buildMenuCard(),
-                        const SizedBox(height: 20),
-                        _buildInterestAreaCard(),
+                        if (!context.watch<AuthProvider>().isBoss) ...[
+                          const SizedBox(height: 20),
+                          _buildInterestAreaCard(),
+                        ],
                       ],
                     ),
                   ),
@@ -131,24 +133,6 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                       );
                     },
                   ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 18,
-              bottom: 16,
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5E5E5),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Icon(
-                  Icons.photo_camera_outlined,
-                  size: 18,
-                  color: Color(0xFF9A9A9A),
                 ),
               ),
             ),
@@ -742,6 +726,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       return;
     }
 
+    await FcmService.instance.clearAllNotifications();
     profileProvider.clearProfile(notify: true);
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const SplashScreen()),

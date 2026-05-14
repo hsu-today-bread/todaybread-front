@@ -116,8 +116,46 @@ class _BossAccountVerificationScreenState
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F7F7),
-        body: SafeArea(
+        bottomNavigationBar: SafeArea(
           child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _verifyBusinessNumber,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBackground,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        '인증하기',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
             child: Column(
               children: [
@@ -158,40 +196,7 @@ class _BossAccountVerificationScreenState
                   onChanged: (_) => setState(() {}),
                   decoration: _inputDecoration('대표자명을 입력해주세요'),
                 ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _verifyBusinessNumber,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBackground,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            '인증하기',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                  ),
-                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

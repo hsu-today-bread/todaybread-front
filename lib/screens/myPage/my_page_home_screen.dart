@@ -814,6 +814,33 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                     color: Color(0xFF202020),
                   ),
                 ),
+                if (review.imageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: review.imageUrls.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      itemBuilder: (_, index) => ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          review.imageUrls[index],
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100,
+                            height: 100,
+                            color: const Color(0xFFEEEEEE),
+                            child: const Icon(Icons.broken_image_outlined,
+                                color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

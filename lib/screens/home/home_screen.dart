@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double _distanceFilter = 0.0;
 
   /// 거리 슬라이더 눈금 라벨 목록
-  final List<String> _distanceLabels = ['3km', '5km', '10km'];
+  final List<String> _distanceLabels = ['1km', '3km', '5km'];
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -445,6 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             value: tempDistance,
                             min: 0.0,
                             max: 1.0,
+                            divisions: 2,
                             onChanged: (value) {
                               setModalState(() {
                                 tempDistance = value;
@@ -660,12 +661,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int get _selectedRadiusKm {
     if (_distanceFilter < 0.34) {
-      return 3;
+      return 1;
     }
     if (_distanceFilter < 0.67) {
-      return 5;
+      return 3;
     }
-    return 10;
+    return 5;
   }
 
   String get _selectedSortQuery {

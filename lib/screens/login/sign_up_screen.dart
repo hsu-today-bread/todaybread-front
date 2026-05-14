@@ -240,8 +240,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
             },
           ),
         ),
-        body: SafeArea(
+        bottomNavigationBar: SafeArea(
           child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: isSubmitting ? null : _register,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBackground,
+                  foregroundColor: AppColors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.white,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        '가입하기',
+                        style: AppTextStyles.primaryAction,
+                      ),
+              ),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,38 +547,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   '* 010-1234-5678 형식으로 입력해주세요.',
                   style: AppTextStyles.helperCaption,
                 ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: isSubmitting ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBackground,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: isSubmitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            '가입하기',
-                            style: AppTextStyles.primaryAction,
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
               ],
             ),
           ),
