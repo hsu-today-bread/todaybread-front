@@ -16,12 +16,14 @@ class PaymentWebViewScreen extends StatefulWidget {
   const PaymentWebViewScreen({
     super.key,
     required this.orderId,
+    required this.orderIdempotencyKey,
     required this.amount,
     required this.storeName,
     required this.clientKey,
   });
 
   final int orderId;
+  final String orderIdempotencyKey;
   final int amount;
   final String storeName;
   final String clientKey;
@@ -35,19 +37,21 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   bool _isConfirming = false;
   bool _isCancelling = false;
   bool _hasHandledTerminalRoute = false;
+  late final String _confirmIdempotencyKey = IdempotencyKey.uuidV4();
 
   String get _successUrl => AppConfig.paymentSuccessUrl;
   String get _failUrl => AppConfig.paymentFailUrl;
   bool get _isBusy => _isConfirming || _isCancelling;
+  String get _tossOrderId =>
+      'tb_${widget.orderId}_${widget.orderIdempotencyKey.replaceAll('-', '')}';
 
   @override
   void initState() {
     super.initState();
 
-    final tossOrderId = 'order_${widget.orderId}';
     final orderName = '${widget.storeName} 결제';
     final clientKey = jsonEncode(widget.clientKey);
-    final encodedTossOrderId = jsonEncode(tossOrderId);
+    final encodedTossOrderId = jsonEncode(_tossOrderId);
     final encodedOrderName = jsonEncode(orderName);
     final encodedSuccessUrl = jsonEncode(_successUrl);
     final encodedFailUrl = jsonEncode(_failUrl);
@@ -139,12 +143,12 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     _hasHandledTerminalRoute = true;
 
     final paymentKey = uri.queryParameters['paymentKey'] ?? '';
-    final orderId = uri.queryParameters['orderId'] ?? '';
+    final tossOrderId = uri.queryParameters['orderId'] ?? _tossOrderId;
     final amount = int.tryParse(uri.queryParameters['amount'] ?? '') ?? 0;
 
     _confirmPayment(
       paymentKey: paymentKey,
-      tossOrderId: orderId,
+      tossOrderId: tossOrderId,
       amount: amount,
     );
   }
@@ -254,14 +258,12 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
     setState(() => _isConfirming = true);
 
     try {
-      final internalOrderId = int.parse(tossOrderId.replaceFirst('order_', ''));
-      final idempotencyKey = IdempotencyKey.uuidV4();
-
       final result = await PaymentService.instance.confirmPayment(
         paymentKey: paymentKey,
-        orderId: internalOrderId,
+        orderId: widget.orderId,
+        tossOrderId: tossOrderId,
         amount: amount,
-        idempotencyKey: idempotencyKey,
+        idempotencyKey: _confirmIdempotencyKey,
       );
 
       if (!mounted) return;

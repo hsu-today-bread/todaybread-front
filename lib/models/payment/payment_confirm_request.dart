@@ -2,17 +2,20 @@
 class PaymentConfirmRequest {
   final String paymentKey;
   final int orderId;
+  final String tossOrderId;
   final int amount;
 
   const PaymentConfirmRequest({
     required this.paymentKey,
     required this.orderId,
+    required this.tossOrderId,
     required this.amount,
   });
 
   Map<String, dynamic> toJson() => {
-        'paymentKey': paymentKey,
-        'orderId': orderId,
-        'amount': amount,
-      };
+    'paymentKey': paymentKey,
+    'orderId': orderId,
+    'tossOrderId': tossOrderId,
+    'amount': amount,
+  };
 }

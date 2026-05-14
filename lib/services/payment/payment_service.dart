@@ -19,6 +19,7 @@ class PaymentService {
   Future<PaymentConfirmResponse> confirmPayment({
     required String paymentKey,
     required int orderId,
+    required String tossOrderId,
     required int amount,
     required String idempotencyKey,
   }) async {
@@ -27,11 +28,13 @@ class PaymentService {
       data: PaymentConfirmRequest(
         paymentKey: paymentKey,
         orderId: orderId,
+        tossOrderId: tossOrderId,
         amount: amount,
       ).toJson(),
       options: Options(headers: {'Idempotency-Key': idempotencyKey}),
     );
     return PaymentConfirmResponse.fromJson(
-        response.data as Map<String, dynamic>);
+      response.data as Map<String, dynamic>,
+    );
   }
 }

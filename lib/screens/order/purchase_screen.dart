@@ -367,6 +367,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
         MaterialPageRoute(
           builder: (_) => PaymentWebViewScreen(
             orderId: order.orderId as int,
+            orderIdempotencyKey: idempotencyKey,
             amount: order.totalAmount as int,
             storeName: order.storeName as String,
             clientKey: clientKey,
