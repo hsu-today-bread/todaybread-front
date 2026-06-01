@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todaybread/widgets/pressable.dart';
+import 'package:todaybread/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/providers/bread/bread_detail_provider.dart';
 import 'package:todaybread/screens/order/purchase_screen.dart';
@@ -55,7 +57,7 @@ class _BreadDetailView extends StatelessWidget {
       body: Builder(
         builder: (context) {
           if (provider.isLoading && !provider.hasFetched) {
-            return const Center(child: CircularProgressIndicator());
+            return const BreadDetailSkeleton();
           }
 
           if (provider.breadDetail == null || provider.storeDetail == null) {
@@ -532,17 +534,18 @@ class _CircleOverlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.92),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 42,
-          height: 42,
-          child: Icon(icon, size: 20, color: Colors.black),
+    return PressableScale(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(21),
+      child: Container(
+        width: 42,
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.92),
+          shape: BoxShape.circle,
         ),
+        child: Icon(icon, size: 20, color: Colors.black),
       ),
     );
   }

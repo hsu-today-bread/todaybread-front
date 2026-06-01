@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todaybread/utils/app_colors.dart';
+import 'package:todaybread/widgets/pressable.dart';
 import 'package:todaybread/widgets/app_network_image.dart';
 
 class BreadListCard extends StatelessWidget {
@@ -31,215 +33,226 @@ class BreadListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8E2DB)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x1A2D2118),
-                blurRadius: 16,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Opacity(
-            opacity: isSoldOut ? 0.5 : 1.0,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          width: 106,
-                          height: 106,
-                          color: const Color(0xFFF4EEE7),
-                          child: AppNetworkImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: const Center(
-                              child: Icon(
-                                Icons.bakery_dining,
-                                size: 38,
-                                color: Color(0xFFB28B67),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (isSoldOut)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.45),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                '품절',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.28,
-                                  color: Color(0xFF23180F),
-                                ),
-                              ),
-                            ),
-                            if (ratingText != null) ...[
-                              const SizedBox(width: 8),
-                              const Text('⭐', style: TextStyle(fontSize: 13)),
-                              const SizedBox(width: 4),
-                              Text(
-                                ratingText!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF7E746A),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        if (storeName != null) ...[
-                          Text(
-                            storeName!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF7E746A),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                        ],
-                        Row(
-                          children: [
-                            const Text('📍', style: TextStyle(fontSize: 12)),
-                            const SizedBox(width: 4),
-                            Text(
-                              distanceText,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF7E746A),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            if (discountPercent != null &&
-                                discountPercent! > 0) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE65A44),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '$discountPercent%',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Text(
-                              '${_formatPrice(salePrice)}원',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFFE65A44),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  '${_formatPrice(originalPrice)}원',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF9D948A),
-                                    decoration: TextDecoration.lineThrough,
-                                    decorationColor: Color(0xFF9D948A),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF7F3EE),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            '남은 시간 : $remainingTimeText',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF5E5245),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Opacity(
+          opacity: isSoldOut ? 0.5 : 1.0,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildThumbnail(),
+                const SizedBox(width: 14),
+                Expanded(child: _buildInfo()),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// 좌측 썸네일 (품절 시 오버레이)
+  Widget _buildThumbnail() {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 96,
+            height: 96,
+            color: AppColors.surface,
+            child: AppNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: const Center(
+                child: Icon(
+                  Icons.bakery_dining_rounded,
+                  size: 36,
+                  color: Color(0xFFC0A589),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (isSoldOut)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                child: Text(
+                  '품절',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 우측 정보 영역
+  Widget _buildInfo() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 상품명 + 별점
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  height: 1.28,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            if (ratingText != null) ...[
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.star_rounded,
+                size: 15,
+                color: Color(0xFFFFB400),
+              ),
+              const SizedBox(width: 2),
+              Text(
+                ratingText!,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+
+        // 가게명 · 거리
+        Row(
+          children: [
+            const Icon(
+              Icons.location_on_rounded,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: 3),
+            Flexible(
+              child: Text(
+                storeName != null ? '$storeName · $distanceText' : distanceText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // 할인율 배지 + 가격 + 원가
+        Row(
+          children: [
+            if (discountPercent != null && discountPercent! > 0) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.dealBadgeBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '$discountPercent%',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.dealBadgeText,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              '${_formatPrice(salePrice)}원',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.dealPrice,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                '${_formatPrice(originalPrice)}원',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textHint,
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: AppColors.textHint,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        // 남은 시간 칩
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.schedule_rounded,
+                size: 13,
+                color: AppColors.surfaceMutedText,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                remainingTimeText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.surfaceMutedText,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

@@ -239,8 +239,8 @@ class _StoreDetailView extends StatelessWidget {
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                     color: provider.canOrder
-                                        ? const Color(0xFFE0462E)
-                                        : const Color(0xFF7A6A5A),
+                                        ? AppColors.dealPrice
+                                        : AppColors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -252,7 +252,7 @@ class _StoreDetailView extends StatelessWidget {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 28),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF7F3EE),
+                                color: AppColors.surfaceMuted,
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: const Text(
@@ -261,7 +261,7 @@ class _StoreDetailView extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF6D6256),
+                                  color: AppColors.surfaceMutedText,
                                 ),
                               ),
                             )
@@ -330,7 +330,7 @@ class _StoreDetailView extends StatelessWidget {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 28),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF7F3EE),
+                                color: AppColors.surfaceMuted,
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               child: const Text(
@@ -339,7 +339,7 @@ class _StoreDetailView extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF6D6256),
+                                  color: AppColors.surfaceMutedText,
                                 ),
                               ),
                             )
@@ -474,7 +474,7 @@ class _FavouriteButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isFavourite ? const Color(0xFFFFF1F0) : const Color(0xFFF7F3EE),
+      color: isFavourite ? const Color(0xFFFFF1F0) : AppColors.surfaceMuted,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: isLoading ? null : onTap,
@@ -495,7 +495,7 @@ class _FavouriteButton extends StatelessWidget {
                         : Icons.favorite_border_rounded,
                     color: isFavourite
                         ? const Color(0xFFE0465D)
-                        : const Color(0xFF6B6259),
+                        : AppColors.textSecondary,
                     size: 26,
                   ),
           ),
@@ -517,15 +517,8 @@ class _ReviewCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8E2DB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x122D2118),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,12 +529,12 @@ class _ReviewCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF7F3EE),
+                  color: AppColors.surfaceMuted,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.person_rounded,
-                  color: Color(0xFF8B7B68),
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(width: 10),

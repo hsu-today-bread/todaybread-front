@@ -23,6 +23,7 @@ import 'package:todaybread/screens/splash_screen.dart';
 import 'package:todaybread/services/local/notification_local_store.dart';
 import 'package:todaybread/services/local/user_local_store.dart';
 import 'package:todaybread/utils/app_navigator.dart';
+import 'package:todaybread/utils/app_page_transitions.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -81,7 +82,10 @@ class TodayBreadApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: '오늘의 빵',
         navigatorKey: navigatorKey,
-        theme: ThemeData(fontFamily: 'PretendardVariable'),
+        theme: ThemeData(
+          fontFamily: 'PretendardVariable',
+          pageTransitionsTheme: kSmoothPageTransitionsTheme,
+        ),
         home: const SplashScreen(),
       ),
     );

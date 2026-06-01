@@ -10,6 +10,8 @@ import 'package:todaybread/screens/notification/notification_inbox_screen.dart';
 import 'package:todaybread/services/bread/bread_service.dart';
 import 'package:todaybread/utils/display_helper.dart';
 import 'package:todaybread/widgets/bread_list_card.dart';
+import 'package:todaybread/widgets/pressable.dart';
+import 'package:todaybread/widgets/skeleton.dart';
 
 import '../../services/network/api_exception.dart';
 import '../../utils/app_colors.dart';
@@ -207,16 +209,17 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 10),
 
           /// 필터 버튼
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF3D3D3D),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: _showFilterBottomSheet,
-              icon: const Icon(Icons.tune, color: Colors.white, size: 22),
+          PressableScale(
+            onTap: _showFilterBottomSheet,
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.brandBrown,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.tune, color: Colors.white, size: 22),
             ),
           ),
         ],
@@ -247,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildContentBody() {
     if (_isLoadingItems && !_hasLoadedItems) {
-      return const Center(child: CircularProgressIndicator());
+      return const BreadListSkeleton();
     }
 
     if (_loadError != null && _items.isEmpty) {
@@ -305,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final bool isSelected = _selectedSortIndex == index;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
+              child: PressableScale(
                 onTap: () {
                   setState(() {
                     _selectedSortIndex = index;
@@ -318,11 +321,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF3D3D3D) : Colors.white,
+                    color: isSelected ? AppColors.brandBrown : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFF3D3D3D)
+                          ? AppColors.brandBrown
                           : const Color(0xFFDDDDDD),
                       width: 1.5,
                     ),

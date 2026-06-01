@@ -341,14 +341,7 @@ class _ReviewListCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8E2DB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x122D2118),
-            blurRadius: 14,
-            offset: Offset(0, 7),
-          ),
-        ],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,7 +434,7 @@ class _ReviewListCard extends StatelessWidget {
                       child: AppNetworkImage(
                         imageUrl: review.imageUrls[index],
                         fit: BoxFit.cover,
-                        placeholder: Container(color: const Color(0xFFF1EFEA)),
+                        placeholder: Container(color: AppColors.surface),
                       ),
                     ),
                   );

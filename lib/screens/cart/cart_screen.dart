@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:todaybread/widgets/skeleton.dart';
 import 'package:todaybread/models/cart/cart_item_response.dart';
 import 'package:todaybread/screens/order/purchase_screen.dart';
 import 'package:todaybread/services/cart/cart_service.dart';
@@ -192,7 +193,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const BreadListSkeleton(count: 3);
     }
     if (_loadError != null) {
       return Center(

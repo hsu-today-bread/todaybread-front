@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todaybread/widgets/pressable.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/models/order/order_detail_response.dart';
@@ -387,25 +388,15 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
+    return PressableScale(
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Ink(
+      child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE8E8E8)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 14,
-                offset: Offset(0, 8),
-              ),
-            ],
+            boxShadow: AppColors.cardShadow,
           ),
           child: Row(
             children: [
@@ -452,7 +443,6 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 

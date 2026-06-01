@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:todaybread/widgets/skeleton.dart';
 import '../../utils/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:todaybread/models/interest_area/interest_area_response.dart';
@@ -117,7 +118,7 @@ class _WishScreenState extends State<WishScreen> {
               ],
               const SizedBox(height: 8),
               if (wishlistProvider.isLoading)
-                const Center(child: CircularProgressIndicator())
+                const ChipRowSkeleton()
               else
                 Wrap(
                   spacing: 8,
@@ -165,7 +166,7 @@ class _WishScreenState extends State<WishScreen> {
               ),
               const SizedBox(height: 16),
               if (wishlistProvider.isLoading)
-                const Center(child: CircularProgressIndicator())
+                const BreadCardSkeletonColumn(count: 2)
               else if (wishlistProvider.favouriteStores.isEmpty)
                 const Center(
                   child: Padding(
