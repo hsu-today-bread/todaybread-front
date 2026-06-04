@@ -94,7 +94,7 @@ class _WishScreenState extends State<WishScreen> {
                           : () => _addKeyword(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimaryBackground,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -503,7 +503,7 @@ class _InterestAreaCard extends StatelessWidget {
                   onPressed: isLoading ? null : onSetup,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBackground,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

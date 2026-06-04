@@ -12,6 +12,18 @@ class FcmService {
   FcmService._();
   static final FcmService instance = FcmService._();
 
+  static const String _generalChannelId = 'todaybread_channel';
+  static const String _generalChannelName = '오늘의 빵 알림';
+  static const String _generalChannelDescription = '키워드, 단골 매장 관련 알림';
+  static const String orderChannelId = 'todaybread_order_channel_v1';
+  static const String _orderChannelName = '오늘의 빵 주문 알림';
+  static const String _orderChannelDescription = '사장님 새 주문 알림';
+  static const String _orderNotificationType = 'ORDER_CREATED';
+  static const String orderSoundName = 'order_created';
+  static const String orderIosSoundFileName = 'order_created.caf';
+  static const AndroidNotificationSound _orderAndroidSound =
+      RawResourceAndroidNotificationSound(orderSoundName);
+
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -68,17 +80,26 @@ class FcmService {
     );
 
     // Android 알림 채널 생성
-    const channel = AndroidNotificationChannel(
-      'todaybread_channel',
-      '오늘의 빵 알림',
-      description: '키워드, 단골 매장, 주문 관련 알림',
+    const generalChannel = AndroidNotificationChannel(
+      _generalChannelId,
+      _generalChannelName,
+      description: _generalChannelDescription,
       importance: Importance.high,
     );
-    await _localNotifications
+    const orderChannel = AndroidNotificationChannel(
+      orderChannelId,
+      _orderChannelName,
+      description: _orderChannelDescription,
+      importance: Importance.high,
+      sound: _orderAndroidSound,
+      audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
+    );
+    final androidNotifications = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(channel);
+        >();
+    await androidNotifications?.createNotificationChannel(generalChannel);
+    await androidNotifications?.createNotificationChannel(orderChannel);
   }
 
   /// Foreground 상태에서 메시지 수신 시 local notification으로 표시
@@ -117,16 +138,34 @@ class FcmService {
     final id = notification.hashCode;
     _pendingMessages[id] = message;
 
-    const androidDetails = AndroidNotificationDetails(
-      'todaybread_channel',
-      '오늘의 빵 알림',
-      channelDescription: '키워드, 단골 매장, 주문 관련 알림',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-    );
-    const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(
+    final isOrderCreated = _isOrderCreated(message);
+    final androidDetails = isOrderCreated
+        ? const AndroidNotificationDetails(
+            orderChannelId,
+            _orderChannelName,
+            channelDescription: _orderChannelDescription,
+            importance: Importance.high,
+            priority: Priority.high,
+            playSound: true,
+            sound: _orderAndroidSound,
+            audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
+            icon: '@mipmap/ic_launcher',
+          )
+        : const AndroidNotificationDetails(
+            _generalChannelId,
+            _generalChannelName,
+            channelDescription: _generalChannelDescription,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          );
+    final iosDetails = isOrderCreated
+        ? const DarwinNotificationDetails(
+            presentSound: true,
+            sound: orderIosSoundFileName,
+          )
+        : const DarwinNotificationDetails();
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -138,6 +177,10 @@ class FcmService {
       details,
       payload: id.toString(), // 탭 시 메시지 복원에 사용
     );
+  }
+
+  bool _isOrderCreated(RemoteMessage message) {
+    return message.data['type']?.toString() == _orderNotificationType;
   }
 
   /// OS 알림창 + 앱 내 알림함을 모두 초기화합니다.

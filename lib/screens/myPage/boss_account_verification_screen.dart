@@ -50,7 +50,7 @@ class _BossAccountVerificationScreenState
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.primaryBackground,
-                foregroundColor: AppColors.white,
+                foregroundColor: AppColors.onPrimaryBackground,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('확인'),
@@ -126,7 +126,7 @@ class _BossAccountVerificationScreenState
                 onPressed: isLoading ? null : _verifyBusinessNumber,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -184,7 +184,9 @@ class _BossAccountVerificationScreenState
                     LengthLimitingTextInputFormatter(8),
                   ],
                   onChanged: (_) => setState(() {}),
-                  decoration: _inputDecoration('개업일자 8자리를 입력해주세요 (예: 20200101)'),
+                  decoration: _inputDecoration(
+                    '개업일자 8자리를 입력해주세요 (예: 20200101)',
+                  ),
                 ),
                 const SizedBox(height: 20),
                 _buildLabel('대표자명'),

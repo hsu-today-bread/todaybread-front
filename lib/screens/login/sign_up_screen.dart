@@ -91,7 +91,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.primaryBackground,
-                foregroundColor: AppColors.white,
+                foregroundColor: AppColors.onPrimaryBackground,
               ),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
@@ -221,8 +221,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: AppColors.primaryBackground,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: AppColors.white,
@@ -232,7 +232,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           scrolledUnderElevation: 0,
           title: const Text('회원가입', style: AppTextStyles.appBarTitle),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(
+              Icons.arrow_back,
+              color: AppColors.onPrimaryBackground,
+            ),
 
             /// 로그인스크린1로 이동
             onPressed: () {
@@ -250,7 +253,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 onPressed: isSubmitting ? null : _register,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: AppColors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -267,10 +270,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                         ),
                       )
-                    : const Text(
-                        '가입하기',
-                        style: AppTextStyles.primaryAction,
-                      ),
+                    : const Text('가입하기', style: AppTextStyles.primaryAction),
               ),
             ),
           ),
@@ -327,7 +327,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ? AppColors.primaryBackground
                               : const Color(0xFFEAEAEA),
                           foregroundColor: _hasIdText
-                              ? AppColors.white
+                              ? AppColors.onPrimaryBackground
                               : const Color(0xFF8D8D8D),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -432,7 +432,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ? AppColors.primaryBackground
                               : const Color(0xFFEAEAEA),
                           foregroundColor: _hasNicknameText
-                              ? AppColors.white
+                              ? AppColors.onPrimaryBackground
                               : const Color(0xFF8D8D8D),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -524,7 +524,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ? AppColors.primaryBackground
                               : const Color(0xFFEAEAEA),
                           foregroundColor: _hasPhoneText
-                              ? AppColors.white
+                              ? AppColors.onPrimaryBackground
                               : const Color(0xFF8D8D8D),
                           elevation: 0,
                           shape: RoundedRectangleBorder(

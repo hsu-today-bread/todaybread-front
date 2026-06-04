@@ -297,7 +297,7 @@ class _StoreDetailView extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size.fromHeight(50),
                                 backgroundColor: AppColors.primaryBackground,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppColors.onPrimaryBackground,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -656,7 +656,7 @@ class _ErrorState extends StatelessWidget {
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                 ),
                 child: const Text('다시 시도'),
               ),

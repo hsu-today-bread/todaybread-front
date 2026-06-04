@@ -80,8 +80,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
     }
     setState(() => _isVerifying = true);
     try {
-      final response =
-          await LoginService.instance.verifyIdentity(phone, email);
+      final response = await LoginService.instance.verifyIdentity(phone, email);
       if (response.verified) {
         setState(() {
           _identityVerified = true;
@@ -106,10 +105,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
     setState(() => _isResettingPassword = true);
     try {
       final response = await LoginService.instance.resetPassword(
-        ResetPasswordRequest(
-          email: _verifiedEmail!,
-          newPassword: newPassword,
-        ),
+        ResetPasswordRequest(email: _verifiedEmail!, newPassword: newPassword),
       );
       if (response.success) {
         _showSnackBar('비밀번호가 재설정되었습니다.');
@@ -125,8 +121,9 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -134,8 +131,8 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: AppColors.primaryBackground,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: AppColors.white,
@@ -145,7 +142,10 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
           scrolledUnderElevation: 0,
           title: const Text('아이디/비밀번호 찾기', style: AppTextStyles.appBarTitle),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(
+              Icons.arrow_back,
+              color: AppColors.onPrimaryBackground,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -185,7 +185,9 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 14),
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(8),
@@ -206,7 +208,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                       onPressed: _isFindingEmail ? null : _findEmail,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
-                        foregroundColor: AppColors.white,
+                        foregroundColor: AppColors.onPrimaryBackground,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -217,7 +219,9 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                                strokeWidth: 2,
+                                color: AppColors.onPrimaryBackground,
+                              ),
                             )
                           : const Text(
                               '이메일 찾기',
@@ -288,7 +292,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                         onPressed: _isVerifying ? null : _verifyIdentity,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBackground,
-                          foregroundColor: AppColors.white,
+                          foregroundColor: AppColors.onPrimaryBackground,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -299,7 +303,9 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                  strokeWidth: 2,
+                                  color: AppColors.onPrimaryBackground,
+                                ),
                               )
                             : const Text(
                                 '비밀번호 찾기',
@@ -327,8 +333,9 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide:
-                              const BorderSide(color: Color(0xFFD9D9D9)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD9D9D9),
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -338,11 +345,10 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed:
-                            _isResettingPassword ? null : _resetPassword,
+                        onPressed: _isResettingPassword ? null : _resetPassword,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBackground,
-                          foregroundColor: AppColors.white,
+                          foregroundColor: AppColors.onPrimaryBackground,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -353,7 +359,9 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                  strokeWidth: 2,
+                                  color: AppColors.onPrimaryBackground,
+                                ),
                               )
                             : const Text(
                                 '비밀번호 재설정',

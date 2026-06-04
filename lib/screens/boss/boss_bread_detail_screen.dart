@@ -219,7 +219,8 @@ class _BossBreadDetailScreenState extends State<BossBreadDetailScreen> {
                                   disabledBackgroundColor: const Color(
                                     0xFFD8D8D8,
                                   ),
-                                  foregroundColor: Colors.white,
+                                  foregroundColor:
+                                      AppColors.onPrimaryBackground,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
@@ -247,9 +248,9 @@ class _BossBreadDetailScreenState extends State<BossBreadDetailScreen> {
                 child: ElevatedButton(
                   onPressed: isSaving ? null : _confirmDelete,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE7776B),
+                    backgroundColor: AppColors.primaryBackground,
                     disabledBackgroundColor: const Color(0xFFD8D8D8),
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -395,8 +396,8 @@ class _BossBreadDetailScreenState extends State<BossBreadDetailScreen> {
             ),
             TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: const Color(0xFFE7776B),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primaryBackground,
+                foregroundColor: AppColors.onPrimaryBackground,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('삭제'),

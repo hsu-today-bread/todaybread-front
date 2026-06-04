@@ -369,7 +369,7 @@ class _BusinessHoursDayCard extends StatelessWidget {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBackground,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.onPrimaryBackground,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),

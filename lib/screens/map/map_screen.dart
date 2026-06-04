@@ -144,7 +144,10 @@ class _MapScreenState extends State<MapScreen> {
         backgroundColor: AppColors.primaryBackground,
         title: const Text(
           '내 주변 빵집',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.onPrimaryBackground,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         elevation: 0,

@@ -452,7 +452,7 @@ class _BottomActionBar extends StatelessWidget {
                   minimumSize: const Size.fromHeight(56),
                   backgroundColor: AppColors.primaryBackground,
                   disabledBackgroundColor: const Color(0xFFD6D6D6),
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -578,7 +578,7 @@ class _ErrorState extends StatelessWidget {
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                 ),
                 child: const Text('다시 시도'),
               ),

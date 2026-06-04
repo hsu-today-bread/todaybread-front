@@ -6,7 +6,10 @@ class AppColors {
   AppColors._();
 
   /// 주요 배경색(브랜드 메인 컬러)
-  static const Color primaryBackground = Color(0xFF55433C);
+  static const Color primaryBackground = Color(0xFFFFD166);
+
+  /// 주요 배경색 위에 사용하는 텍스트/아이콘 색상
+  static const Color onPrimaryBackground = Color(0xFF4A2C1A);
 
   /// 기본 흰색
   static const Color white = Colors.white;

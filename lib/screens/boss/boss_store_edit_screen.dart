@@ -123,7 +123,7 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
                   onPressed: storeProvider.isLoading ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBackground,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -238,26 +238,30 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
           runSpacing: 10,
           children: [
             // 기존 이미지 (유지 중인 것)
-            ..._keptImages.map((image) => _buildImageTile(
-              child: AppNetworkImage(
-                imageUrl: image.imageUrl,
-                width: 96,
-                height: 96,
-                fit: BoxFit.cover,
-                placeholder: _imageFallback(),
+            ..._keptImages.map(
+              (image) => _buildImageTile(
+                child: AppNetworkImage(
+                  imageUrl: image.imageUrl,
+                  width: 96,
+                  height: 96,
+                  fit: BoxFit.cover,
+                  placeholder: _imageFallback(),
+                ),
+                onDelete: () => setState(() => _keptImages.remove(image)),
               ),
-              onDelete: () => setState(() => _keptImages.remove(image)),
-            )),
+            ),
             // 새로 추가한 이미지
-            ..._newImages.map((image) => _buildImageTile(
-              child: Image.file(
-                File(image.path),
-                width: 96,
-                height: 96,
-                fit: BoxFit.cover,
+            ..._newImages.map(
+              (image) => _buildImageTile(
+                child: Image.file(
+                  File(image.path),
+                  width: 96,
+                  height: 96,
+                  fit: BoxFit.cover,
+                ),
+                onDelete: () => setState(() => _newImages.remove(image)),
               ),
-              onDelete: () => setState(() => _newImages.remove(image)),
-            )),
+            ),
             // 추가 버튼 (5장 미만일 때)
             if (totalCount < 5)
               GestureDetector(
@@ -270,7 +274,11 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFD9D9D9)),
                   ),
-                  child: const Icon(Icons.add, color: Color(0xFF8D8D8D), size: 32),
+                  child: const Icon(
+                    Icons.add,
+                    color: Color(0xFF8D8D8D),
+                    size: 32,
+                  ),
                 ),
               ),
           ],
@@ -279,13 +287,13 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
     );
   }
 
-  Widget _buildImageTile({required Widget child, required VoidCallback onDelete}) {
+  Widget _buildImageTile({
+    required Widget child,
+    required VoidCallback onDelete,
+  }) {
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: child,
-        ),
+        ClipRRect(borderRadius: BorderRadius.circular(14), child: child),
         Positioned(
           top: 4,
           right: 4,
@@ -382,7 +390,7 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
                 onPressed: _handlePhoneCheck,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -601,7 +609,9 @@ class _BossStoreEditScreenState extends State<BossStoreEditScreen> {
         });
         return;
       }
-      final response = await context.read<StoreProvider>().updateImages(allImages);
+      final response = await context.read<StoreProvider>().updateImages(
+        allImages,
+      );
       if (!mounted) return;
       if (response != null) {
         Navigator.pop(context, true);

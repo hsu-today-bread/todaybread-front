@@ -110,8 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: AppColors.primaryBackground,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: AppColors.white,
@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: AppColors.onPrimaryBackground,
                           height: 1.25,
                         ),
                       ),
@@ -227,7 +227,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: _isSubmitting ? null : _login,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryBackground,
-                                  foregroundColor: AppColors.white,
+                                  foregroundColor:
+                                      AppColors.onPrimaryBackground,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
@@ -301,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryBackground,
-                            foregroundColor: AppColors.white,
+                            foregroundColor: AppColors.onPrimaryBackground,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),

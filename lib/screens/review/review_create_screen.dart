@@ -257,7 +257,7 @@ class _ReviewCreateScreenState extends State<ReviewCreateScreen> {
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBackground,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     disabledBackgroundColor: AppColors.primaryBackground
                         .withValues(alpha: 0.5),
                     elevation: 0,
@@ -271,7 +271,7 @@ class _ReviewCreateScreenState extends State<ReviewCreateScreen> {
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: Colors.white,
+                            color: AppColors.onPrimaryBackground,
                           ),
                         )
                       : const Text(

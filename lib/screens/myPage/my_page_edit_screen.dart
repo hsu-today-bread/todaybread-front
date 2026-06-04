@@ -150,7 +150,7 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
             TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.primaryBackground,
-                foregroundColor: AppColors.white,
+                foregroundColor: AppColors.onPrimaryBackground,
               ),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
@@ -309,7 +309,7 @@ class _MyPageEditScreenState extends State<MyPageEditScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBackground,
                       disabledBackgroundColor: const Color(0xFFEAEAEA),
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onPrimaryBackground,
                       disabledForegroundColor: const Color(0xFF8D8D8D),
                       elevation: 0,
                       shape: RoundedRectangleBorder(

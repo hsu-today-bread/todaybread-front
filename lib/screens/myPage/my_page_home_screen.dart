@@ -187,8 +187,8 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE0E0E0),
-                    foregroundColor: Colors.grey[700],
+                    backgroundColor: AppColors.primaryBackground,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     elevation: 0,
                     padding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
@@ -625,8 +625,8 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
                   disabledBackgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
+                  disabledForegroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -833,8 +833,10 @@ class _MyPageHomeScreenState extends State<MyPageHomeScreen> {
                             width: 100,
                             height: 100,
                             color: const Color(0xFFEEEEEE),
-                            child: const Icon(Icons.broken_image_outlined,
-                                color: Colors.grey),
+                            child: const Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),

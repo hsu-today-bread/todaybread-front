@@ -266,12 +266,11 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                     width: double.infinity,
                     height: 44,
                     child: ElevatedButton(
-                      onPressed: () => _navigateToInterestAreaSearch(
-                        isCreating: true,
-                      ),
+                      onPressed: () =>
+                          _navigateToInterestAreaSearch(isCreating: true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBackground,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimaryBackground,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -344,9 +343,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _navigateToInterestAreaSearch(
-                            isCreating: false,
-                          ),
+                          onPressed: () =>
+                              _navigateToInterestAreaSearch(isCreating: false),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primaryBackground,
                             side: const BorderSide(
@@ -394,19 +392,13 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     );
   }
 
-  Future<void> _navigateToInterestAreaSearch({
-    required bool isCreating,
-  }) async {
+  Future<void> _navigateToInterestAreaSearch({required bool isCreating}) async {
     final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const InterestAreaSearchScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const InterestAreaSearchScreen()),
     );
     if (!mounted || result != true) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(isCreating ? '관심지역이 설정됐어요.' : '관심지역이 변경됐어요.'),
-      ),
+      SnackBar(content: Text(isCreating ? '관심지역이 설정됐어요.' : '관심지역이 변경됐어요.')),
     );
   }
 
@@ -431,10 +423,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              '삭제',
-              style: TextStyle(color: Color(0xFFE53935)),
-            ),
+            child: const Text('삭제', style: TextStyle(color: Color(0xFFE53935))),
           ),
         ],
       ),
@@ -446,14 +435,13 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 
     final message = result.success
         ? (result.keywordNotificationDisabled
-            ? '관심지역이 삭제되어 키워드 알림이 비활성화됐어요.'
-            : '관심지역이 삭제됐어요.')
-        : (context.read<InterestAreaProvider>().errorMessage ??
-            '삭제에 실패했습니다.');
+              ? '관심지역이 삭제되어 키워드 알림이 비활성화됐어요.'
+              : '관심지역이 삭제됐어요.')
+        : (context.read<InterestAreaProvider>().errorMessage ?? '삭제에 실패했습니다.');
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildNotificationToggleRow() {
@@ -487,7 +475,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                   value: _notificationsEnabled,
                   onChanged: (_) => _toggleNotification(),
                   activeThumbColor: AppColors.primaryBackground,
-                  activeTrackColor: AppColors.primaryBackground.withValues(alpha: 0.4),
+                  activeTrackColor: AppColors.primaryBackground.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
         ],
       ),
@@ -504,17 +494,17 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         await FcmService.instance.disableToken();
         if (!mounted) return;
         setState(() => _notificationsEnabled = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('푸시 알림이 꺼졌습니다.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('푸시 알림이 꺼졌습니다.')));
       } else {
         // 켜기 — token 재발급 후 서버 재등록
         await FcmService.instance.registerTokenAfterLogin();
         if (!mounted) return;
         setState(() => _notificationsEnabled = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('푸시 알림이 켜졌습니다.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('푸시 알림이 켜졌습니다.')));
       }
     } catch (_) {
       if (!mounted) return;
@@ -679,7 +669,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         onPressed: authProvider.isLoading ? null : onConfirm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBackground,
-                          foregroundColor: Colors.white,
+                          foregroundColor: AppColors.onPrimaryBackground,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),

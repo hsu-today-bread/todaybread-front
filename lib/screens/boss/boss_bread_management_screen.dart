@@ -89,7 +89,7 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryBackground,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppColors.onPrimaryBackground,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -145,7 +145,7 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBackground,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.onPrimaryBackground,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -238,8 +238,8 @@ class _BossBreadManagementScreenState extends State<BossBreadManagementScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.of(dialogContext).pop(true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE7776B),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.primaryBackground,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -409,10 +409,8 @@ class _BreadMenuCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onToggleSoldOut,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isSoldOut
-                          ? AppColors.primaryBackground
-                          : const Color(0xFFE7776B),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primaryBackground,
+                      foregroundColor: AppColors.onPrimaryBackground,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -561,7 +559,7 @@ class _StockInputDialogState extends State<_StockInputDialog> {
                 onPressed: _handleConfirm,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

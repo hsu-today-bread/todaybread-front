@@ -176,7 +176,11 @@ class _CartScreenState extends State<CartScreen> {
       elevation: 0,
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+        icon: const Icon(
+          Icons.arrow_back,
+          color: AppColors.onPrimaryBackground,
+          size: 24,
+        ),
       ),
       centerTitle: true,
       title: const Text(
@@ -184,7 +188,7 @@ class _CartScreenState extends State<CartScreen> {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: AppColors.onPrimaryBackground,
         ),
       ),
     );
@@ -619,7 +623,7 @@ class _CartScreenState extends State<CartScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: AppColors.onPrimaryBackground,
                       ),
                     ),
                   ),

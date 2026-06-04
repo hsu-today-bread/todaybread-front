@@ -177,7 +177,7 @@ class PaymentResultScreen extends StatelessWidget {
               onPressed: () => _goOrderHistory(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBackground,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onPrimaryBackground,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -221,7 +221,7 @@ class PaymentResultScreen extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBackground,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onPrimaryBackground,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),

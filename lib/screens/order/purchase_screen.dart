@@ -128,7 +128,7 @@ Future<bool?> _showNoticeDialog(BuildContext context) {
                   onPressed: () => Navigator.of(dialogContext).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBackground,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -299,11 +299,10 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _startTossPayment,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3182F6),
-                        disabledBackgroundColor: const Color(
-                          0xFF3182F6,
-                        ).withValues(alpha: 0.6),
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primaryBackground,
+                        disabledBackgroundColor: AppColors.primaryBackground
+                            .withValues(alpha: 0.6),
+                        foregroundColor: AppColors.onPrimaryBackground,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -315,7 +314,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                color: Colors.white,
+                                color: AppColors.onPrimaryBackground,
                               ),
                             )
                           : const Text(

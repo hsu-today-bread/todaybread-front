@@ -34,14 +34,14 @@ class AppTextStyles {
   static const TextStyle startButton = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    color: AppColors.white,
+    color: AppColors.onPrimaryBackground,
   );
 
   /// 앱바 타이틀 텍스트 스타일
   static const TextStyle appBarTitle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
-    color: AppColors.white,
+    color: AppColors.onPrimaryBackground,
   );
 
   /// 폼 라벨 텍스트 스타일
@@ -74,6 +74,6 @@ class AppTextStyles {
   static const TextStyle primaryAction = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
-    color: AppColors.white,
+    color: AppColors.onPrimaryBackground,
   );
 }

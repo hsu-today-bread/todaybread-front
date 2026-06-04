@@ -227,7 +227,7 @@ class _StoreReviewListScreenState extends State<StoreReviewListScreen> {
                 onPressed: _loadFirstPage,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                   elevation: 0,
                 ),
                 child: const Text('다시 시도'),

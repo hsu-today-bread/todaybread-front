@@ -318,7 +318,7 @@ class _OrderCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBackground,
                 disabledBackgroundColor: const Color(0xFFD8D8D8),
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onPrimaryBackground,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

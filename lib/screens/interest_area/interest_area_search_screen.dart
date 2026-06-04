@@ -68,9 +68,7 @@ class _InterestAreaSearchScreenState extends State<InterestAreaSearchScreen> {
       Navigator.of(context).pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage ?? '관심지역 설정에 실패했습니다.'),
-        ),
+        SnackBar(content: Text(provider.errorMessage ?? '관심지역 설정에 실패했습니다.')),
       );
     }
   }
@@ -139,7 +137,7 @@ class _InterestAreaSearchScreenState extends State<InterestAreaSearchScreen> {
                   onPressed: _isSearching ? null : _search,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBackground,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 14,
@@ -155,7 +153,7 @@ class _InterestAreaSearchScreenState extends State<InterestAreaSearchScreen> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.onPrimaryBackground,
                           ),
                         )
                       : const Text('검색'),
@@ -169,10 +167,7 @@ class _InterestAreaSearchScreenState extends State<InterestAreaSearchScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 _searchError!,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF888888),
-                ),
+                style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
               ),
             ),
           Expanded(
@@ -201,7 +196,8 @@ class _InterestAreaSearchScreenState extends State<InterestAreaSearchScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: result.roadAddress.isNotEmpty &&
+                        subtitle:
+                            result.roadAddress.isNotEmpty &&
                                 result.jibunAddress.isNotEmpty &&
                                 result.roadAddress != result.displayAddress
                             ? Text(

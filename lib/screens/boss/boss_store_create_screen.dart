@@ -128,7 +128,7 @@ class _BossStoreCreateView extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size.fromHeight(54),
                             backgroundColor: AppColors.primaryBackground,
-                            foregroundColor: Colors.white,
+                            foregroundColor: AppColors.onPrimaryBackground,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -231,7 +231,7 @@ class _BossStoreCreateView extends StatelessWidget {
                 TextButton(
                   style: TextButton.styleFrom(
                     backgroundColor: AppColors.primaryBackground,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimaryBackground,
                   ),
                   onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('확인'),
@@ -261,7 +261,7 @@ class _BossStoreCreateView extends StatelessWidget {
               TextButton(
                 style: TextButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                 ),
                 onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('확인'),
@@ -294,7 +294,7 @@ class _BossStoreCreateView extends StatelessWidget {
               TextButton(
                 style: TextButton.styleFrom(
                   backgroundColor: AppColors.primaryBackground,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimaryBackground,
                 ),
                 onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('확인'),

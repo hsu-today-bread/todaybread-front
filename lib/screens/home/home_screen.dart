@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          color: AppColors.onPrimaryBackground,
         ),
       ),
       actions: [
@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           icon: const Icon(
             Icons.notifications_none,
-            color: Colors.white,
+            color: AppColors.onPrimaryBackground,
             size: 26,
           ),
         ),
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           icon: const Icon(
             Icons.shopping_cart_outlined,
-            color: Colors.white,
+            color: AppColors.onPrimaryBackground,
             size: 26,
           ),
         ),
@@ -211,12 +211,16 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF3D3D3D),
+              color: AppColors.primaryBackground,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
               onPressed: _showFilterBottomSheet,
-              icon: const Icon(Icons.tune, color: Colors.white, size: 22),
+              icon: const Icon(
+                Icons.tune,
+                color: AppColors.onPrimaryBackground,
+                size: 22,
+              ),
             ),
           ),
         ],
@@ -318,11 +322,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF3D3D3D) : Colors.white,
+                    color: isSelected
+                        ? AppColors.primaryBackground
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFF3D3D3D)
+                          ? AppColors.primaryBackground
                           : const Color(0xFFDDDDDD),
                       width: 1.5,
                     ),
@@ -332,7 +338,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: isSelected
+                          ? AppColors.onPrimaryBackground
+                          : Colors.black87,
                     ),
                   ),
                 ),
@@ -516,7 +524,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: AppColors.onPrimaryBackground,
                         ),
                       ),
                     ),
