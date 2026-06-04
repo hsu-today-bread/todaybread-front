@@ -11,6 +11,12 @@ class AppColors {
   /// 주요 배경색 위에 사용하는 텍스트/아이콘 색상
   static const Color onPrimaryBackground = Color(0xFF4A2C1A);
 
+  /// 작은 버튼 등 부분적으로 사용하는 어두운 강조 색상
+  static const Color accentDark = Color(0xFF55433C);
+
+  /// 토스 결제 브랜드 색상(파랑)
+  static const Color tossBlue = Color(0xFF3182F6);
+
   /// 기본 흰색
   static const Color white = Colors.white;
 

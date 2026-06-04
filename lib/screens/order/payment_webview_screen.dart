@@ -42,6 +42,17 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   String get _successUrl => AppConfig.paymentSuccessUrl;
   String get _failUrl => AppConfig.paymentFailUrl;
   bool get _isBusy => _isConfirming || _isCancelling;
+
+  /// 콜백 URL 매칭을 path 기준으로 수행한다.
+  /// 토스가 리다이렉트할 때 WebView/브라우저가 http 기본 포트(:80)나
+  /// https 기본 포트(:443)를 제거하기 때문에, 전체 문자열 prefix 비교(startsWith)는
+  /// successUrl에 포트가 포함된 경우 매칭에 실패한다.
+  /// path만 비교하면 호스트/포트 정규화의 영향을 받지 않는다.
+  bool _matchesCallback(Uri requestUri, String configuredUrl) {
+    final configured = Uri.tryParse(configuredUrl);
+    if (configured == null) return false;
+    return requestUri.path == configured.path;
+  }
   String get _tossOrderId =>
       'tb_${widget.orderId}_${widget.orderIdempotencyKey.replaceAll('-', '')}';
 
@@ -92,18 +103,18 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         NavigationDelegate(
           onNavigationRequest: (request) {
             final url = request.url;
+            final uri = Uri.tryParse(url);
 
-            if (url.startsWith(_successUrl)) {
-              _handleSuccess(Uri.parse(url));
+            if (uri != null && _matchesCallback(uri, _successUrl)) {
+              _handleSuccess(uri);
               return NavigationDecision.prevent;
             }
-            if (url.startsWith(_failUrl)) {
-              _handleFail(Uri.parse(url));
+            if (uri != null && _matchesCallback(uri, _failUrl)) {
+              _handleFail(uri);
               return NavigationDecision.prevent;
             }
 
             // 외부 앱 스킴 처리 (intent://, supertoss://, kakaotalk:// 등)
-            final uri = Uri.tryParse(url);
             if (uri != null &&
                 !uri.scheme.startsWith('http') &&
                 uri.scheme != 'about' &&

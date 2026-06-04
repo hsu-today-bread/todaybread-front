@@ -66,9 +66,10 @@ class DioClient {
     final apiError = ApiException.fromDio(error);
     final requestOptions = error.requestOptions;
 
-    // access token 만료일 때만 한 번 재발급 후 원래 요청을 재시도합니다.
+    // access token 만료(AUTH_001) 또는 검증 실패(AUTH_002)일 때
+    // 한 번 재발급 후 원래 요청을 재시도합니다.
     if (error.response?.statusCode == 401 &&
-        apiError.code == 'AUTH_001' &&
+        (apiError.code == 'AUTH_001' || apiError.code == 'AUTH_002') &&
         requestOptions.extra['retried'] != true &&
         requestOptions.path != '/api/auth/reissue') {
       try {

@@ -323,12 +323,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.primaryBackground
+                        ? AppColors.accentDark
                         : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.primaryBackground
+                          ? AppColors.accentDark
                           : const Color(0xFFDDDDDD),
                       width: 1.5,
                     ),
@@ -339,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isSelected
-                          ? AppColors.onPrimaryBackground
+                          ? Colors.white
                           : Colors.black87,
                     ),
                   ),

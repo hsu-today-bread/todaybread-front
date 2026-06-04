@@ -17,8 +17,22 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  NCameraPosition? _initialPosition;
+  /// 위치를 확보하기 전 지도를 먼저 띄우기 위한 기본 카메라 위치(서울 시청).
+  /// 실제 위치가 도착하면 카메라를 그쪽으로 이동시킨다.
+  static const NCameraPosition _defaultCameraPosition = NCameraPosition(
+    target: NLatLng(37.5666, 126.9784),
+    zoom: 14,
+  );
+
   NaverMapController? _mapController;
+
+  /// 지도가 준비되기 전에 위치가 먼저 도착한 경우 보관했다가 onMapReady에서 적용한다.
+  NLatLng? _pendingCameraTarget;
+
+  /// 위젯으로 직접 색을 입힌 마커 아이콘(틴트가 아닌 실제 색). 한 번 만들어 재사용한다.
+  NOverlayImage? _sellingIcon;
+  NOverlayImage? _closedIcon;
+
   List<NearbyStoreResponse> _stores = [];
   bool _loading = true;
   String? _error;
@@ -34,12 +48,8 @@ class _MapScreenState extends State<MapScreen> {
     try {
       final position = await _getFastPosition();
       if (!mounted) return;
-      setState(() {
-        _initialPosition = NCameraPosition(
-          target: NLatLng(position.latitude, position.longitude),
-          zoom: 14,
-        );
-      });
+      // 위치가 도착하면 (이미 렌더링 중인) 지도 카메라를 사용자 위치로 이동시킨다.
+      _moveCameraTo(NLatLng(position.latitude, position.longitude));
       final stores = await StoreService.instance.getNearbyStores(
         lat: position.latitude,
         lng: position.longitude,
@@ -65,8 +75,28 @@ class _MapScreenState extends State<MapScreen> {
     return determinePosition();
   }
 
+  /// 지도 컨트롤러가 준비됐으면 즉시 카메라를 이동하고,
+  /// 아직이면 대기시켜 두었다가 onMapReady에서 적용한다.
+  void _moveCameraTo(NLatLng target) {
+    final controller = _mapController;
+    if (controller != null) {
+      controller.updateCamera(
+        NCameraUpdate.withParams(target: target, zoom: 14),
+      );
+    } else {
+      _pendingCameraTarget = target;
+    }
+  }
+
   void _onMapReady(NaverMapController controller) {
     _mapController = controller;
+    final pending = _pendingCameraTarget;
+    if (pending != null) {
+      controller.updateCamera(
+        NCameraUpdate.withParams(target: pending, zoom: 14),
+      );
+      _pendingCameraTarget = null;
+    }
     _addMarkers();
   }
 
@@ -107,13 +137,44 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _addMarkers() {
+  /// 판매중/판매종료 마커 아이콘을 위젯에서 한 번만 렌더링해 캐싱한다.
+  ///
+  /// 기본 마커에 iconTintColor를 주면 원본 핀 색과 섞여 의도한 색이 나오지 않으므로,
+  /// 색을 직접 입힌 아이콘 위젯을 이미지로 변환해 사용한다.
+  Future<void> _ensureMarkerIcons() async {
+    if (_sellingIcon != null && _closedIcon != null) return;
+    if (!mounted) return;
+    const iconSize = Size(44, 44);
+    _sellingIcon = await NOverlayImage.fromWidget(
+      widget: const Icon(
+        Icons.location_on,
+        color: Color(0xFF2E7D32), // 판매중: 초록(강조)
+        size: 44,
+      ),
+      size: iconSize,
+      context: context,
+    );
+    if (!mounted) return;
+    _closedIcon = await NOverlayImage.fromWidget(
+      widget: const Icon(
+        Icons.location_on,
+        color: Color(0xFF757575), // 판매종료: 진한 회색(비활성)
+        size: 44,
+      ),
+      size: iconSize,
+      context: context,
+    );
+  }
+
+  Future<void> _addMarkers() async {
     if (_mapController == null) return;
+    await _ensureMarkerIcons();
+    if (!mounted || _mapController == null) return;
     final markers = _stores.map((store) {
       final marker = NMarker(
         id: 'store_${store.storeId}',
         position: NLatLng(store.latitude, store.longitude),
-        iconTintColor: store.isSelling ? Colors.transparent : Colors.grey,
+        icon: store.isSelling ? _sellingIcon : _closedIcon,
         caption: store.isSelling
             ? const NOverlayCaption(
                 text: '● 판매중',
@@ -152,14 +213,11 @@ class _MapScreenState extends State<MapScreen> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: _initialPosition == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
+      body: Stack(
               children: [
                 NaverMap(
-                  options: NaverMapViewOptions(
-                    activeLayerGroups: [NLayerGroup.building],
-                    initialCameraPosition: _initialPosition!,
+                  options: const NaverMapViewOptions(
+                    initialCameraPosition: _defaultCameraPosition,
                     mapType: NMapType.basic,
                     locationButtonEnable: true,
                   ),

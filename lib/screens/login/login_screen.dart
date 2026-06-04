@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text(
                         '이메일과 비밀번호를 입력하여\n로그인 해주세요',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 22,
                           fontWeight: FontWeight.w700,
                           color: AppColors.onPrimaryBackground,
                           height: 1.25,

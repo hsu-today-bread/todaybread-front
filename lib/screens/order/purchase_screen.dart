@@ -299,10 +299,10 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _startTossPayment,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBackground,
-                        disabledBackgroundColor: AppColors.primaryBackground
+                        backgroundColor: AppColors.tossBlue,
+                        disabledBackgroundColor: AppColors.tossBlue
                             .withValues(alpha: 0.6),
-                        foregroundColor: AppColors.onPrimaryBackground,
+                        foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -314,7 +314,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                color: AppColors.onPrimaryBackground,
+                                color: Colors.white,
                               ),
                             )
                           : const Text(
