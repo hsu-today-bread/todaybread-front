@@ -35,7 +35,8 @@ Naver 지도/Geocoding과 API 서버 주소는 로컬 키 파일로 주입합니
 flutter run --dart-define-from-file=secret.json
 ```
 
-- `NAVER_MAP_CLIENT_ID`, `NAVER_MAP_CLIENT_SECRET`, `API_BASE_URL` 값이 필요합니다.
+- `API_BASE_URL`, `PAYMENT_CALLBACK_BASE_URL`, `NAVER_MAP_CLIENT_ID`, `NAVER_MAP_CLIENT_SECRET` 값이 필요합니다.
+- `PAYMENT_CALLBACK_BASE_URL`이 비어 있으면 `API_BASE_URL`을 사용합니다.
 - 현재 Geocoding REST 호출은 이 프로젝트 키가 권한을 가진 `https://maps.apigw.ntruss.com` 호스트를 사용합니다.
 - `String.fromEnvironment` 값은 컴파일 타임에 고정되므로 키 파일을 수정한 뒤에는 hot reload가 아니라 앱을 완전히 재실행해야 합니다.
 - 키가 저장소나 로그에 노출된 경우 Naver Cloud Console에서 Client Secret을 재발급하세요.

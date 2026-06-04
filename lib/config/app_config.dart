@@ -1,18 +1,22 @@
 class AppConfig {
   AppConfig._();
 
-  static const String _defaultApiBaseUrl = 'http://10.30.5.230:8080';
-
-  static const String _rawApiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: _defaultApiBaseUrl,
-  );
+  static const String _rawApiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
   static const String _rawPaymentCallbackBaseUrl = String.fromEnvironment(
     'PAYMENT_CALLBACK_BASE_URL',
   );
 
-  static String get apiBaseUrl => _normalizeBaseUrl(_rawApiBaseUrl);
+  static String get apiBaseUrl {
+    final value = _normalizeBaseUrl(_rawApiBaseUrl);
+    if (value.isEmpty) {
+      throw StateError(
+        'API_BASE_URL is not configured. '
+        'Run with --dart-define-from-file=secret.json.',
+      );
+    }
+    return value;
+  }
 
   static String get paymentCallbackBaseUrl {
     final value = _rawPaymentCallbackBaseUrl.trim().isEmpty
